@@ -1,0 +1,117 @@
+import type { TFunction } from 'i18next'
+import { useEffect, useRef, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
+import { parseDateKey } from '../../domain/date'
+import { MOOD_EMOJI, type Mood } from '../../domain/types'
+import type { HeatCell } from '../../stats/computeStats'
+import { LEVEL_OPACITY } from '../../stats/wordLevels'
+
+const MOODS: Mood[] = [1, 2, 3, 4, 5]
+
+/** Label sel (dipakai untuk title dan aria-label). */
+export function heatCellLabel(cell: HeatCell, t: TFunction, language: string): string {
+  const date = new Intl.DateTimeFormat(language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(
+    parseDateKey(cell.date),
+  )
+  if (cell.future) return `${date}: ${t('stats.cellFuture')}`
+  if (!cell.entry) return `${date}: ${t('stats.cellNoEntry')}`
+  const words = t('stats.cellWords', { count: cell.entry.words, words: new Intl.NumberFormat(language).format(cell.entry.words) })
+  const mood = cell.entry.mood === null ? t('stats.noMood').toLowerCase() : `${MOOD_EMOJI[cell.entry.mood]} ${t(`mood.${cell.entry.mood}`)}`
+  return `${date}: ${mood}, ${words}`
+}
+
+function cellStyle(cell: HeatCell): CSSProperties | undefined {
+  if (cell.entry) {
+    return { background: `var(--mood-${cell.entry.mood ?? 'none'})`, opacity: LEVEL_OPACITY[cell.entry.level] }
+  }
+  return undefined
+}
+
+interface HeatmapProps {
+  cells: HeatCell[]
+  weeks: number
+  mode: 'month' | 'year'
+  compact?: boolean
+  /** Periode berjalan (stats.range.isCurrent): mode tahun di-scroll ke minggu ini. */
+  scrollToToday?: boolean
+}
+
+export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = false }: HeatmapProps) {
+  const { t, i18n } = useTranslation()
+  const language = i18n.language
+  const scroller = useRef<HTMLDivElement>(null)
+
+  // Sel terakhir yang sudah lewat = hari ini di periode berjalan
+  const current = mode === 'year' && scrollToToday ? (cells.filter((c) => c.inRange && !c.future).at(-1)?.date ?? null) : null
+  useEffect(() => {
+    const el = scroller.current
+    const cell = current ? el?.querySelector<HTMLElement>('[data-current]') : null
+    // Kolom hari ini berhenti satu sel dari tepi kanan, bukan di akhir tahun yang masih kosong
+    if (el && cell) el.scrollLeft = Math.max(0, cell.offsetLeft + 2 * cell.offsetWidth - el.clientWidth)
+  }, [current])
+
+  const renderCell = (cell: HeatCell) => {
+    if (!cell.inRange) return <span key={cell.date} className="heat-cell heat-pad" aria-hidden="true" />
+    const label = heatCellLabel(cell, t, language)
+    const mark = cell.date === current ? '' : undefined
+    if (cell.future) return <span key={cell.date} className="heat-cell heat-future" role="img" aria-label={label} title={label} />
+    if (compact) return <span key={cell.date} className="heat-cell" role="img" aria-label={label} style={cellStyle(cell)} data-current={mark} />
+    return (
+      <Link key={cell.date} to={`/day/${cell.date}`} className="heat-cell" aria-label={label} title={label} style={cellStyle(cell)} data-current={mark} />
+    )
+  }
+
+  const monthName = new Intl.DateTimeFormat(language, { month: 'short' })
+  const weekday = new Intl.DateTimeFormat(language, { weekday: 'short' })
+
+  return (
+    <div className={`heatmap heatmap-${mode}${compact ? ' heatmap-compact' : ''}`} role="group" aria-label={t('stats.heatmapLabel')}>
+      {mode === 'year' ? (
+        <div className="heat-scroll" ref={scroller}>
+          <div className="heat-inner">
+            {!compact && (
+              <div className="heat-months" style={{ gridTemplateColumns: `repeat(${weeks}, var(--cell))` }} aria-hidden="true">
+                {cells.map((c, i) =>
+                  c.inRange && c.date.endsWith('-01') ? (
+                    <span key={c.date} className="heat-month" style={{ gridColumn: Math.floor(i / 7) + 1 }}>
+                      {monthName.format(parseDateKey(c.date))}
+                    </span>
+                  ) : null,
+                )}
+              </div>
+            )}
+            {/* Ringkas (Wrapped): kolom mengisi lebar slide, tanpa scroll */}
+            <div className="heat-grid" style={compact ? { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` } : undefined}>
+              {cells.map(renderCell)}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="heat-weekdays" aria-hidden="true">
+            {[0, 1, 2, 3, 4, 5, 6].map((d) => (
+              <span key={d}>{weekday.format(new Date(2024, 0, 1 + d))}</span>
+            ))}
+          </div>
+          <div className="heat-grid">{cells.map(renderCell)}</div>
+        </>
+      )}
+      {!compact && (
+        <div className="heat-legend">
+          {MOODS.map((m) => (
+            <span key={m}>
+              <span className="swatch" style={{ background: `var(--mood-${m})` }} />
+              {t(`mood.${m}`)}
+            </span>
+          ))}
+          <span>
+            <span className="swatch" style={{ background: 'var(--mood-none)' }} />
+            {t('stats.noMood')}
+          </span>
+          <span>{t('stats.legendWords')}</span>
+        </div>
+      )}
+    </div>
+  )
+}

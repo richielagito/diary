@@ -1,0 +1,5 @@
+export const MEMORY_MAX = 100
+export const MEMORY_TEXT_MAX = 200
+export const EXTRACT_MESSAGE_LIMIT = 40
+export const EXTRACT_MESSAGE_CHARS = 1000
+export const AUTO_EXTRACT_MIN_USER_MESSAGES = 3

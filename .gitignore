@@ -1,0 +1,14 @@
+node_modules
+dist
+dev-dist
+test-results
+playwright-report
+
+# env lokal (API key dev)
+.env
+.env.*
+!.env.example
+
+# tooling lokal
+.claude/
+.superpowers/
