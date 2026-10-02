@@ -61,8 +61,42 @@ describe('key wrapping', () => {
   })
 
   it('treats Unicode-equivalent passphrases as the same', async () => {
-    const { wrappedKey } = await createKey('café di pagi hari', FAST)
-    await expect(openKey('café di pagi hari', wrappedKey)).resolves.toBeDefined()
+    // Written as escapes on purpose (a formatter could unify raw characters): e-acute as one code point, then as "e"
+    // followed by a combining accent.
+    const { wrappedKey } = await createKey('caf\u00e9 di pagi hari', FAST)
+    await expect(openKey('cafe\u0301 di pagi hari', wrappedKey)).resolves.toBeDefined()
+  })
+})
+
+// IF THIS TEST FAILS, DO NOT "FIX" THE CONSTANTS. They were produced once by this code and stand for the data every
+// existing user already has on the server. A failure means that a change to the passphrase normalisation, the key
+// derivation (PBKDF2 parameters, HKDF labels), the record id formula (collection + "\n" + key) or the blob layout would
+// make existing users' data unreadable. Such a change must not ship without a migration.
+describe('format pinned by known answers', () => {
+  // Created once with createKey('kata sandi caf\u00e9 \ufb01nal', 100_000): e-acute as one code point, "fi" as a ligature.
+  const WRAPPED = {
+    keyId: 'JcgSwKwc-KVevdvyFv_F2A',
+    salt: 'JAmWMdQ6jfK8o32ujhlLQw',
+    wrapped: 'iA8jEM27zz92iHwDcUVgB6FmkS_PLuJPmpe1rVUfPiUe1QzxeEN6bZCgkZMw8AO-1LKY_IkRjABBXk6m',
+    iterations: 100_000,
+  }
+  const RECORD_ID = '-0fOqNkZu2KHZD3GA35Y5Q'
+  const BLOB =
+    'NeQmPA0G7yKPem4BAW5Mo+NtRTsQ5Q5jox93jNkF6DyzHRLH9rJuba3QN+fYw5PxkMIGzDbMrIGNjvF1o3UGUP4kCLkSF0di4ceUjd1vROIUWib1buNyiA6+auP4FbjBWqDjbovxwathR0BxZwB5A/XlmUQ3QUG7O8hp5ssxCJcXIXT5mWsVJ7vzl6UKkyRucMSj2P6NT1lwPXBDbQ=='
+  const ENVELOPE = {
+    v: 1,
+    c: 'entries',
+    k: '2026-10-01',
+    t: 1790812800000,
+    d: { date: '2026-10-01', markdown: 'hari tenang #self\\_care', mood: 4 },
+  }
+
+  it('opens a stored key, derives the same record id and reads a stored blob', async () => {
+    // Typed differently from how the key was created: "e" plus a combining accent, still with the ligature. Only NFKC
+    // turns both spellings into the same bytes (NFC keeps the ligature, no normalisation keeps the combining accent).
+    const keys = await openKey('kata sandi cafe\u0301 \ufb01nal', WRAPPED)
+    expect(await recordId(keys, 'entries', '2026-10-01')).toBe(RECORD_ID)
+    expect(await open(keys, RECORD_ID, BLOB)).toEqual(ENVELOPE)
   })
 })
 
