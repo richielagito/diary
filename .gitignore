@@ -1,5 +1,7 @@
 node_modules
 dist
+dist-e2e
+dist-e2e-nosync
 dev-dist
 test-results
 playwright-report
