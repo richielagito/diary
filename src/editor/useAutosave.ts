@@ -7,6 +7,8 @@ interface Options {
   date: DateKey
   save: (date: DateKey, markdown: string) => Promise<unknown>
   delay?: number
+  /** Teks tersimpan yang menjadi dasar tulisan sekarang; dicatat bersama draft yang gagal tersimpan. */
+  draftBase?: () => string
 }
 
 interface Pending {
@@ -15,20 +17,28 @@ interface Pending {
 }
 
 /** Teks yang gagal tersimpan setelah editornya ditutup, menunggu dibuka lagi di tanggal yang sama. */
-const unsavedDrafts = new Map<DateKey, string>()
+const unsavedDrafts = new Map<DateKey, UnsavedDraft>()
 
-export function rememberUnsavedDraft(date: DateKey, markdown: string) {
-  unsavedDrafts.set(date, markdown)
+/** `base`: teks tersimpan yang menjadi dasar draft, dipakai untuk menggabung kalau yang tersimpan berubah sementara itu. */
+export interface UnsavedDraft {
+  markdown: string
+  base?: string
+}
+
+export function rememberUnsavedDraft(date: DateKey, markdown: string, base?: string) {
+  unsavedDrafts.set(date, { markdown, base })
 }
 
 /** Ambil lalu hapus draft yang belum tersimpan untuk tanggal ini. */
-export function takeUnsavedDraft(date: DateKey): string | undefined {
+export function takeUnsavedDraft(date: DateKey): UnsavedDraft | undefined {
   const draft = unsavedDrafts.get(date)
   unsavedDrafts.delete(date)
   return draft
 }
 
-export function useAutosave({ date, save, delay = 800 }: Options) {
+export function useAutosave({ date, save, delay = 800, draftBase }: Options) {
+  const draftBaseRef = useRef(draftBase)
+  draftBaseRef.current = draftBase
   const [status, setStatus] = useState<SaveStatus>('idle')
   const pending = useRef<Pending | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -54,7 +64,8 @@ export function useAutosave({ date, save, delay = 800 }: Options) {
       // Teks tetap di pending dan di editor; dicoba lagi pada schedule berikutnya.
       // Kalau editor sudah ditutup, teks disimpan sebagai draft supaya muncul lagi saat tanggal ini dibuka.
       if (mounted.current) setStatus('error')
-      else rememberUnsavedDraft(job.date, job.markdown)
+      // Draft yang sudah dicatat pemanggil (teks gabungan) tidak ditimpa teks mentah.
+      else if (!unsavedDrafts.has(job.date)) rememberUnsavedDraft(job.date, job.markdown, draftBaseRef.current?.())
     }
   }, [])
 

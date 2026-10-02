@@ -66,7 +66,8 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
         if (!editor) return
         const { from, to } = editor.state.selection
         const wasFocused = editor.isFocused
-        editor.commands.setContent(md, { contentType: 'markdown', emitUpdate: false })
+        // Bukan langkah undo: satu Ctrl+Z tidak boleh mengembalikan teks lama dan menghapus tulisan dari perangkat lain.
+        editor.chain().setMeta('addToHistory', false).setContent(md, { contentType: 'markdown', emitUpdate: false }).run()
         // Tanpa fokus tidak ada caret yang perlu dijaga (dan menggeser seleksi memicu saran tag).
         if (!wasFocused) return
         const max = editor.state.doc.content.size

@@ -5,6 +5,8 @@ import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
 import { renderApp } from '../../test/renderApp'
 import { stubLayout } from '../../test/stubLayout'
 
+afterEach(() => vi.restoreAllMocks())
+
 const open = (date: string, seed?: { markdown?: string; mood?: Mood }) =>
   renderApp(`/day/${date}`, { entries: seed ? [{ date, ...seed }] : [] })
 
@@ -68,12 +70,15 @@ test('a change from another device that arrives while typing is merged, not over
     },
     { timeout: 3000 },
   )
+  const stored = (await diary.get('2026-09-20'))!.markdown
+  expect(stored.match(/paragraf hp/g)).toHaveLength(1)
+  expect(stored.split('---')).toHaveLength(2)
 })
 
 test('an autosave that started from an older text does not overwrite a newer one', async () => {
   stubLayout()
   // The page never hears about the change (spied on the prototype, before the page subscribes): only the repository can stop the overwrite.
-  const watch = vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
   const { diary, user, db } = await open('2026-09-20', { markdown: 'awal' })
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
   await user.click(box)
@@ -89,7 +94,6 @@ test('an autosave that started from an older text does not overwrite a newer one
     { timeout: 3000 },
   )
   expect(box).toHaveTextContent('paragraf hp')
-  watch.mockRestore()
 })
 
 test('its own autosaves are not mistaken for changes from elsewhere', async () => {
@@ -109,7 +113,7 @@ test('its own autosaves are not mistaken for changes from elsewhere', async () =
 test('text typed just before leaving the page is merged with a newer stored text', async () => {
   stubLayout()
   // Same as above: the page must not hear the change through its subscription.
-  const watch = vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
   const view = await open('2026-09-20', { markdown: 'awal' })
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
   await view.user.click(box)
@@ -121,7 +125,76 @@ test('text typed just before leaving the page is merged with a newer stored text
     expect(stored).toContain('kalimat laptop')
     expect(stored).toContain('paragraf hp')
   })
-  watch.mockRestore()
+})
+
+test('two saves that overlap do not lose the newer keystrokes', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  // Text saves requested during the first 2.2 s are held, then run in the order they were requested.
+  const original = diary.save.bind(diary)
+  let holding = true
+  const held: (() => void)[] = []
+  vi.spyOn(diary, 'save').mockImplementation(async (date, patch) => {
+    if (holding && patch.markdown !== undefined) await new Promise<void>((resolve) => held.push(resolve))
+    return original(date, patch)
+  })
+
+  await user.click(box)
+  await user.keyboard(' satu')
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // the first autosave is now waiting
+  await user.keyboard(' dua')
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // a second autosave was requested
+  holding = false
+  for (const release of held) release()
+
+  await waitFor(async () => expect((await diary.get('2026-09-20'))!.markdown).toContain('dua'), { timeout: 3000 })
+  const stored = (await diary.get('2026-09-20'))!.markdown
+  expect(stored).toContain('satu')
+  expect(stored).not.toContain('---')
+})
+
+test('one undo after a merge does not remove the other device text', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(box)
+  await user.keyboard(' laptop')
+  await diary.save('2026-09-20', { markdown: 'awal\n\nparagraf hp' })
+  await waitFor(() => expect(box).toHaveTextContent('paragraf hp'))
+  await waitFor(async () => expect((await diary.get('2026-09-20'))!.markdown).toContain('laptop'), { timeout: 3000 })
+  await user.keyboard('{Control>}z{/Control}')
+  await new Promise((resolve) => setTimeout(resolve, 1200))
+  expect(box).toHaveTextContent('paragraf hp')
+  expect((await diary.get('2026-09-20'))!.markdown).toContain('paragraf hp')
+})
+
+test('one undo after an external text was simply shown keeps the external text', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(box)
+  await diary.save('2026-09-20', { markdown: 'dari hp' })
+  await waitFor(() => expect(box).toHaveTextContent('dari hp'))
+  await user.keyboard('{Control>}z{/Control}')
+  await new Promise((resolve) => setTimeout(resolve, 1200))
+  expect((await diary.get('2026-09-20'))!.markdown).toBe('dari hp')
+})
+
+test('a restored draft is merged with a stored text that changed meanwhile', async () => {
+  rememberUnsavedDraft('2026-09-20', 'awal kalimat laptop', 'awal')
+  const { diary } = await open('2026-09-20', { markdown: 'awal\n\nparagraf hp' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  expect(box).toHaveTextContent('paragraf hp')
+  expect(box).toHaveTextContent('kalimat laptop')
+  await waitFor(
+    async () => {
+      const stored = (await diary.get('2026-09-20'))!.markdown
+      expect(stored).toContain('kalimat laptop')
+      expect(stored).toContain('paragraf hp')
+    },
+    { timeout: 3000 },
+  )
 })
 
 test('past day shows back-to-today link', async () => {

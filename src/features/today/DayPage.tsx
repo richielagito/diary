@@ -7,7 +7,7 @@ import { mergeText } from '../../domain/mergeText'
 import { StaleTextError } from '../../storage/DiaryRepository'
 import type { DateKey, Mood } from '../../domain/types'
 import { DiaryEditor, type DiaryEditorHandle } from '../../editor/DiaryEditor'
-import { takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
+import { rememberUnsavedDraft, takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
 import { useExport } from '../../backup/useExport'
 import { BackupBanner } from './BackupBanner'
 import { MoodPicker } from './MoodPicker'
@@ -32,23 +32,45 @@ export function DayPage({ date }: { date: DateKey }) {
   const alive = useRef(true)
   const absorbRef = useRef<(incoming: string) => void>(() => {})
 
-  const save = useCallback(
+  const write = useCallback(
     async (d: DateKey, markdown: string) => {
       sending.current = markdown
       try {
         const entry = await diary.save(d, { markdown, baseMarkdown: base.current })
         base.current = entry?.markdown ?? ''
       } catch (err) {
-        if (!(err instanceof StaleTextError)) throw err        // Yang tersimpan berubah dari luar (sync atau tab lain) sejak editor ini memuatnya: gabung, jangan timpa.
-        if (alive.current) absorbRef.current(err.stored)
-        else await diary.save(d, { markdown: mergeText(markdown, err.stored, base.current) })
+        if (!(err instanceof StaleTextError)) throw err
+        // Yang tersimpan berubah dari luar (sync atau tab lain) sejak editor ini memuatnya: gabung, jangan timpa.
+        if (alive.current) {
+          absorbRef.current(err.stored)
+        } else {
+          const merged = mergeText(markdown, err.stored, base.current)
+          try {
+            const entry = await diary.save(d, { markdown: merged, baseMarkdown: err.stored })
+            base.current = entry?.markdown ?? ''
+          } catch (retryErr) {
+            // Gagal tersimpan setelah halaman ditutup: yang diingat sebagai draft adalah teks gabungan.
+            rememberUnsavedDraft(d, merged, retryErr instanceof StaleTextError ? retryErr.stored : err.stored)
+            throw retryErr
+          }
+        }
       } finally {
         sending.current = null
       }
     },
     [diary],
   )
-  const autosave = useAutosave({ date, save })
+  /** Tulisan halaman ini dijalankan berurutan, supaya dasar gabung dibaca saat tulisan dimulai, bukan saat diminta. */
+  const queue = useRef<Promise<unknown>>(Promise.resolve())
+  const save = useCallback(
+    (d: DateKey, markdown: string) => {
+      const run = queue.current.then(() => write(d, markdown))
+      queue.current = run.catch(() => {})
+      return run
+    },
+    [write],
+  )
+  const autosave = useAutosave({ date, save, draftBase: () => base.current })
   const { schedule } = autosave
   const tagSuggest = useTagSuggestions(() => editorRef.current?.getMarkdown() ?? '')
 
@@ -85,10 +107,12 @@ export function DayPage({ date }: { date: DateKey }) {
       if (cancelled) return
       // Teks yang gagal tersimpan waktu halaman ini ditutup menang atas isi lama, lalu disimpan ulang.
       const draft = takeUnsavedDraft(date)
-      base.current = entry?.markdown ?? ''
-      const markdown = draft ?? entry?.markdown ?? ''
+      const stored = entry?.markdown ?? ''
+      base.current = stored
+      // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
+      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : stored
       setLoaded({ markdown })
-      if (draft !== undefined) schedule(draft)
+      if (draft) schedule(markdown)
       setMood(entry?.mood ?? null)
     })
     return () => {

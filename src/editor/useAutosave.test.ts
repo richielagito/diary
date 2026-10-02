@@ -93,7 +93,7 @@ test('failed save on unmount keeps the text as an unsaved draft', async () => {
   unmount()
   await vi.advanceTimersByTimeAsync(0)
   expect(error).toHaveBeenCalled()
-  expect(takeUnsavedDraft('2026-09-27')).toBe('jangan hilang')
+  expect(takeUnsavedDraft('2026-09-27')).toEqual({ markdown: 'jangan hilang', base: undefined })
   expect(takeUnsavedDraft('2026-09-27')).toBeUndefined()
 })
 
