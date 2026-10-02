@@ -12,6 +12,13 @@ export type EntryMerge = 'remote' | 'local' | { merged: DayEntry }
 /** Garis pemisah Markdown di antara dua versi teks yang sama-sama berubah. */
 export const MERGE_SEPARATOR = '\n\n---\n\n'
 
+/** Sama di kedua perangkat: waktu ubah dulu, lalu isi, supaya dua gabungan bersamaan menghasilkan teks yang persis sama. */
+function isNewer(a: DayEntry, b: DayEntry): boolean {
+  if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt
+  if (a.markdown !== b.markdown) return a.markdown > b.markdown
+  return (a.mood ?? 0) > (b.mood ?? 0)
+}
+
 function pickMood(local: DayEntry, remote: DayEntry, base: EntryBase, newer: DayEntry): Mood | null {
   if (local.mood === base.mood) return remote.mood
   if (remote.mood === base.mood) return local.mood
@@ -26,7 +33,8 @@ function pickMarkdown(local: DayEntry, remote: DayEntry, base: EntryBase, newer:
   if (remote.markdown === base.markdown) return local.markdown
   if (local.markdown.trim() === '') return remote.markdown
   if (remote.markdown.trim() === '') return local.markdown
-  return `${newer.markdown.trimEnd()}${MERGE_SEPARATOR}${older.markdown.trimStart()}`
+  // Hanya buang baris kosong di sekitar pemisah, jangan indentasi.
+  return `${newer.markdown.replace(/[\r\n]+$/, '')}${MERGE_SEPARATOR}${older.markdown.replace(/^[\r\n]+/, '')}`
 }
 
 /**
@@ -36,7 +44,7 @@ function pickMarkdown(local: DayEntry, remote: DayEntry, base: EntryBase, newer:
 export function mergeEntry(local: DayEntry | null, remote: DayEntry | null, base: EntryBase | null, now: number): EntryMerge {
   if (!local || !remote) return local ? 'local' : 'remote'
   const agreed = base ?? { markdown: '', mood: null }
-  const newer = local.updatedAt > remote.updatedAt ? local : remote
+  const newer = isNewer(local, remote) ? local : remote
   const older = newer === local ? remote : local
   const mood = pickMood(local, remote, agreed, newer)
   const markdown = pickMarkdown(local, remote, agreed, newer, older)

@@ -60,6 +60,32 @@ describe('mergeEntry', () => {
     expect(mergeEntry(null, null, base('awal', 3), NOW)).toBe('remote')
   })
 
+  it('gives the same result on both devices when the timestamps are equal', () => {
+    const one = entry('versi a', 2, 50)
+    const two = entry('versi b', 4, 50)
+    const fromOne = mergeEntry(one, two, base('awal', 3), NOW)
+    const fromTwo = mergeEntry(two, one, base('awal', 3), NOW)
+    expect(fromOne).toEqual({ merged: entry(`versi b${MERGE_SEPARATOR}versi a`, 4, NOW) })
+    expect(fromTwo).toEqual(fromOne)
+  })
+
+  it('breaks a full tie on the mood', () => {
+    const one = entry('sama', 2, 50)
+    const two = entry('sama', 4, 50)
+    expect(mergeEntry(one, two, base('sama', 3), NOW)).toBe('remote')
+    expect(mergeEntry(two, one, base('sama', 3), NOW)).toBe('local')
+  })
+
+  it('does not stack again when two devices already produced the same merge', () => {
+    const merged = `versi b${MERGE_SEPARATOR}versi a`
+    expect(mergeEntry(entry(merged, 4, 70), entry(merged, 4, 80), base('versi a', 2), NOW)).toBe('remote')
+  })
+
+  it('keeps the indentation of the older text', () => {
+    const result = mergeEntry(entry('baru\n\n', 3, 30), entry('\n    kode menjorok', 3, 20), base('awal', 3), NOW)
+    expect(result).toEqual({ merged: entry(`baru${MERGE_SEPARATOR}    kode menjorok`, 3, NOW) })
+  })
+
   it('keeps the earliest creation time and recomputes tags and word count', () => {
     const result = mergeEntry(entry('pagi #kerja', null, 30, 500), entry('malam #rumah', null, 20, 200), null, NOW)
     const merged = (result as { merged: DayEntry }).merged
