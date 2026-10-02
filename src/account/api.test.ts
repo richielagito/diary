@@ -25,9 +25,9 @@ describe('timeouts', () => {
     const seen: RequestInit[] = []
     const api = createApi('https://api.test', async (_input, init) => {
       seen.push(init!)
-      return new Response('{}', { status: 200 })
+      return new Response(null, { status: 204 })
     })
-    await api.account('tok')
+    await api.logout('tok')
     expect(seen[0]!.signal).toBeInstanceOf(AbortSignal)
   })
 
@@ -86,6 +86,97 @@ describe('requests', () => {
 
     server.offline = true
     await expect(api.account(token)).rejects.toBeInstanceOf(NetworkError)
+  })
+})
+
+describe('answers of the wrong shape', () => {
+  const answering = (body: unknown, status = 200) =>
+    createApi('https://api.test', async () => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status }))
+  const bad = { status: 502, code: 'bad_response' }
+  const key = { keyId: 'k', salt: 's', wrapped: 'w', iterations: 600_000 }
+  const account = { email: EMAIL, plan: 'premium', key, usage: { bytes: 1, limit: 2 } }
+  const pull = { keyId: 'k', records: [{ id: 'a', blob: 'AAAA', rev: 1 }], rev: 1, more: false }
+  const push = { applied: [{ id: 'a', rev: 1 }], conflicts: ['b'] }
+
+  it('accepts well-formed answers', async () => {
+    expect(await answering({ token: 't' }).emailVerify(EMAIL, '123456')).toBe('t')
+    expect(await answering({ token: 't' }).exchange('code', 'verifier')).toBe('t')
+    expect(await answering(account).account('t')).toEqual(account)
+    expect(await answering({ ...account, key: null }).account('t')).toMatchObject({ key: null })
+    expect(await answering(pull).pull('t', 0)).toEqual(pull)
+    expect(await answering({ ...pull, keyId: null, records: [], rev: 0 }).pull('t', 0)).toMatchObject({ keyId: null, rev: 0 })
+    expect(await answering(push).push('t', 'k', [])).toEqual(push)
+  })
+
+  it('refuses a sign-in answer without a usable token', async () => {
+    for (const body of [{}, { token: '' }, { token: 5 }, null, []]) {
+      await expect(answering(body).emailVerify(EMAIL, '123456')).rejects.toMatchObject(bad)
+      await expect(answering(body).exchange('code', 'verifier')).rejects.toMatchObject(bad)
+    }
+  })
+
+  it('refuses a malformed account answer', async () => {
+    const wrong = [
+      {},
+      { ...account, email: undefined },
+      { ...account, plan: 1 },
+      { ...account, key: undefined },
+      { ...account, key: 'k' },
+      { ...account, key: { ...key, keyId: 1 } },
+      { ...account, key: { ...key, salt: undefined } },
+      { ...account, key: { ...key, wrapped: null } },
+      { ...account, key: { ...key, iterations: '600000' } },
+      { ...account, usage: undefined },
+      { ...account, usage: { bytes: '1', limit: 2 } },
+      { ...account, usage: { bytes: 1 } },
+    ]
+    for (const body of wrong) await expect(answering(body).account('t')).rejects.toMatchObject(bad)
+  })
+
+  it('refuses a malformed pull answer', async () => {
+    const wrong = [
+      {},
+      { ...pull, keyId: undefined },
+      { ...pull, keyId: 7 },
+      { ...pull, records: undefined },
+      { ...pull, records: {} },
+      { ...pull, records: [{ id: 'a', rev: 1 }] },
+      { ...pull, records: [{ id: 1, blob: 'AAAA', rev: 1 }] },
+      { ...pull, records: [{ id: 'a', blob: 'AAAA', rev: '1' }] },
+      { ...pull, records: [null] },
+      { ...pull, rev: undefined },
+      { ...pull, rev: -1 },
+      { ...pull, rev: 1.5 },
+      { ...pull, more: undefined },
+      { ...pull, more: 'no' },
+    ]
+    for (const body of wrong) await expect(answering(body).pull('t', 0)).rejects.toMatchObject(bad)
+  })
+
+  it('refuses a malformed push answer', async () => {
+    const wrong = [
+      {},
+      { ...push, applied: undefined },
+      { ...push, applied: [{ id: 'a' }] },
+      { ...push, applied: [{ id: 1, rev: 1 }] },
+      { ...push, applied: ['a'] },
+      { ...push, conflicts: undefined },
+      { ...push, conflicts: [1] },
+      { ...push, conflicts: 'a' },
+    ]
+    for (const body of wrong) await expect(answering(body).push('t', 'k', [])).rejects.toMatchObject(bad)
+  })
+
+  it('refuses a success whose body is not JSON, or that has no body where one is needed', async () => {
+    await expect(answering('<html>ok</html>').pull('t', 0)).rejects.toMatchObject(bad)
+    await expect(answering('').account('t')).rejects.toMatchObject(bad)
+    const empty = createApi('https://api.test', async () => new Response(null, { status: 204 }))
+    await expect(empty.pull('t', 0)).rejects.toMatchObject(bad)
+  })
+
+  it('does not look at the body of a call that returns nothing', async () => {
+    await expect(answering('ok').logout('t')).resolves.toBeUndefined()
+    await expect(answering({ anything: 1 }).putKey('t', key, false)).resolves.toBeUndefined()
   })
 })
 
