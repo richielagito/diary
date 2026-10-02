@@ -218,7 +218,7 @@ export const en: typeof id = {
       retrying: 'Cannot reach the server. It will be tried again automatically.',
       quota: 'Sync storage is full, or a note is too large. Some changes have not been uploaded.',
       plan: 'Sync is not active for this account.',
-      outdated: 'Another device uses a newer version of the app. Update this app to keep syncing.',
+      outdated: 'Another device or the server uses a newer version. Update this app to keep syncing.',
     },
     error: {
       invalid_code: 'The code is wrong or has expired.',

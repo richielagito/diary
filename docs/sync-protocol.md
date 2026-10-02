@@ -84,14 +84,14 @@ Sync may be limited to accounts with an active plan; the server answers `plan_re
 | 400 `invalid_code` | Reports a wrong or expired sign-in code |
 | 429 `rate_limited` | Reports "too often" on sign-in; during sync it retries later with growing delays |
 
-Network failures, server errors (5xx) and any other unexpected answer are retried later with growing delays.
+Network failures, server errors (5xx) and any other unexpected answer are retried later with growing delays. A successful answer that does not have the shape listed under "Requests" (or is not JSON) counts as a server error; the client never acts on it. Any other 4xx answer during sync means this client and the server disagree about the protocol: the client does not retry and asks to be updated.
 
 ## Syncing
 
 The server gives every write a revision number that only grows within an account.
 
-- **Pull.** The client asks for everything after its cursor and stores the returned `rev` as the new cursor. It compares `keyId` with its own key id before decrypting anything: a different id means another device reset sync, and the client asks for the passphrase again. A `rev` lower than the `since` it sent means the server's history went backwards; the client forgets its cursor and revisions and starts from 0. A pulled record is only accepted under the id its collection and key hash to; anything else is dropped.
-- **Push.** For each record the client sends `prevRev`, the revision it last saw for that record (0 for a new one). The server writes the record only if that is still its revision; otherwise the id comes back in `conflicts`, and the client pulls, merges and pushes again. A sync round repeats pull and push at most three times and leaves any remaining conflicts for the next sync.
+- **Pull.** The client asks for everything after its cursor and stores the returned `rev` as the new cursor. It compares `keyId` with its own key id before decrypting anything: a different id means another device reset sync, and the client asks for the passphrase again. A `rev` lower than the `since` it sent means the server's history went backwards; the client forgets its cursor and revisions and starts from 0. A pulled record is only accepted under the id its collection and key hash to; anything else is dropped. A record that is dropped (it does not decrypt, sits under the wrong id, or cannot be stored by this version) still has its revision remembered, so that the client's own record under that id can replace it and does not conflict forever. A pull that has not ended after 1,000 pages is abandoned and retried like a server error.
+- **Push.** For each record the client sends `prevRev`, the revision it last saw for that record (0 for a new one). The server writes the record only if that is still its revision; otherwise the id comes back in `conflicts`, and the client pulls, merges and pushes again. A sync round repeats pull and push at most three times; if conflicts remain, the client starts another round by itself after a delay that grows each time.
 - **Finding changes.** The client keeps, per record, what the server is known to hold. A local record that differs from that is uploaded; a record that is gone locally is uploaded as a deletion. A deletion is never applied to a setting, in either direction.
 
 ## When two devices changed the same thing

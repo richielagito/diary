@@ -651,3 +651,151 @@ describe('fix round 2', () => {
     expect(d.controller.status().lastSyncAt).toBe(1)
   })
 })
+
+/** A started, signed-in device with the passphrase, whose first sync is done. */
+async function prepared(server: FakeServer, extra: DeviceOptions) {
+  const d = device(server, undefined, extra)
+  await d.controller.start()
+  await signIn(d.controller, server)
+  await d.controller.createPassphrase(PASS)
+  await synced(d.controller)
+  return d
+}
+
+const hide = () => vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+
+describe('when the page is hidden or closed', () => {
+  it('starts a pending round at once when the document becomes hidden', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { debounceMs: 10_000 })
+    await d.diary.save(DAY, { markdown: 'ditulis lalu layar dikunci' })
+    await quiet(50)
+    expect(server.user(EMAIL).records.size).toBe(0)
+    hide()
+    document.dispatchEvent(new Event('visibilitychange'))
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+  })
+
+  it('starts a pending round at once on pagehide', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { debounceMs: 10_000 })
+    await d.diary.save(DAY, { markdown: 'ditulis lalu tab ditutup' })
+    await quiet(50)
+    window.dispatchEvent(new Event('pagehide'))
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+  })
+
+  it('makes no request when the page is hidden with nothing pending', async () => {
+    const server = new FakeServer()
+    await prepared(server, { debounceMs: 10_000 })
+    const before = server.requests.length
+    hide()
+    document.dispatchEvent(new Event('visibilitychange'))
+    window.dispatchEvent(new Event('pagehide'))
+    await quiet()
+    expect(server.requests.length).toBe(before)
+  })
+
+  it('does not wait for the pause when something is saved while the page is already hidden', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { debounceMs: 10_000 })
+    hide()
+    document.dispatchEvent(new Event('visibilitychange'))
+    // The editor saves its last keystrokes on the same event, so the change lands after the page was hidden.
+    await d.diary.save(DAY, { markdown: 'tersimpan setelah layar dikunci' })
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+  })
+
+  it('does not cut a retry wait short, and listens to nothing after stop', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { debounceMs: 10_000, retryDelaysMs: [10_000] })
+    server.offline = true
+    await d.diary.save(DAY, { markdown: 'saat offline' })
+    await d.controller.syncNow()
+    expect(d.controller.status().problem).toBe('retrying')
+    server.offline = false
+    const before = server.requests.length
+    window.dispatchEvent(new Event('pagehide'))
+    await quiet()
+    expect(server.requests.length).toBe(before)
+
+    await d.controller.syncNow()
+    await d.diary.save('2026-10-02', { markdown: 'menunggu jeda' })
+    await quiet(50)
+    d.controller.stop()
+    const stopped = server.requests.length
+    window.dispatchEvent(new Event('pagehide'))
+    hide()
+    document.dispatchEvent(new Event('visibilitychange'))
+    await quiet()
+    expect(server.requests.length).toBe(stopped)
+  })
+})
+
+describe('answers the client cannot use', () => {
+  it('runs another round by itself when a round ends with conflicts', async () => {
+    const server = new FakeServer()
+    let refusals = 3
+    let posts = 0
+    const fetchImpl: typeof fetch = async (input, init) => {
+      if (init?.method === 'POST' && String(input).endsWith('/sync')) {
+        posts++
+        if (refusals > 0) {
+          refusals--
+          const ids = (JSON.parse(init.body as string) as { records: { id: string }[] }).records.map((r) => r.id)
+          return new Response(JSON.stringify({ applied: [], conflicts: ids }), { status: 200 })
+        }
+      }
+      return server.fetch(input, init)
+    }
+    const d = await prepared(server, { fetchImpl, debounceMs: 10_000, retryDelaysMs: [20] })
+    await d.diary.save(DAY, { markdown: 'bentrok tiga kali' })
+    await d.controller.syncNow()
+    // One round: three attempts, all refused. It is not a problem to show, and not a finished job either.
+    expect(posts).toBe(3)
+    expect(server.user(EMAIL).records.size).toBe(0)
+    expect(d.controller.status().problem).toBeNull()
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+    expect(d.controller.status().problem).toBeNull()
+    await quiet(150)
+    expect(posts).toBe(4)
+  })
+
+  it('keeps the keys and retries when the sync answer has the wrong shape', async () => {
+    const server = new FakeServer()
+    let broken = false
+    const fetchImpl: typeof fetch = async (input, init) => {
+      if (broken && (init?.method ?? 'GET') === 'GET' && String(input).includes('/sync?')) return new Response('{}', { status: 200 })
+      return server.fetch(input, init)
+    }
+    const d = await prepared(server, { fetchImpl, retryDelaysMs: [10_000] })
+    broken = true
+    await d.controller.syncNow()
+    expect(d.controller.status()).toMatchObject({ phase: 'ready', problem: 'retrying' })
+    expect(await getState(d.db, 'keys')).toBeDefined()
+    expect(await getState(d.db, 'keyId')).toBe(server.user(EMAIL).key!.keyId)
+  })
+
+  it('asks for an update, and does not retry, when the server refuses the request itself', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { retryDelaysMs: [20] })
+    server.failNext(400, 'bad_request')
+    await d.controller.syncNow()
+    expect(d.controller.status()).toMatchObject({ phase: 'ready', problem: 'outdated' })
+    const before = server.requests.length
+    await quiet(150)
+    expect(server.requests.length).toBe(before)
+    // The next round is a normal one.
+    await d.controller.syncNow()
+    expect(d.controller.status().problem).toBeNull()
+  })
+
+  it('still retries when the server asks to slow down', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { retryDelaysMs: [20] })
+    server.failNext(429, 'rate_limited')
+    await d.controller.syncNow()
+    expect(d.controller.status().problem).toBe('retrying')
+    await vi.waitFor(() => expect(d.controller.status().problem).toBeNull())
+  })
+})

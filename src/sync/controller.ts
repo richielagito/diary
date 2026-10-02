@@ -116,6 +116,12 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     timer = null
   }
 
+  /** Putaran berikutnya menyusul sendiri, dengan jeda yang makin panjang selama belum ada putaran yang tuntas. */
+  const scheduleRetry = () => {
+    schedule(retryDelays[Math.min(failures, retryDelays.length - 1)]!)
+    failures++
+  }
+
   const needToken = (): string => {
     if (!token) throw new Error('not signed in')
     return token
@@ -274,11 +280,12 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     if (e instanceof ApiError && e.code === 'plan_required') return set({ problem: 'plan' })
     if (e instanceof ApiError && e.code === 'quota_exceeded') return set({ problem: 'quota' })
     if (e instanceof OutdatedError) return set({ problem: 'outdated' })
-    // Jaringan, 5xx, 429 atau hal tak terduga: coba lagi nanti dengan jeda yang makin panjang.
+    // 4xx lain: aplikasi ini dan server tidak sepakat soal protokol. Mengulang tidak akan pernah berhasil; aplikasinya yang perlu diperbarui.
+    if (e instanceof ApiError && e.status >= 400 && e.status < 500 && e.status !== 429) return set({ problem: 'outdated' })
+    // Jaringan, 5xx, 429, jawaban yang salah bentuk atau hal tak terduga: coba lagi nanti dengan jeda yang makin panjang.
     if (!(e instanceof ApiError) && !(e instanceof NetworkError)) console.error('sync failed:', e instanceof Error ? e.name : 'unknown error')
     set({ problem: 'retrying' })
-    schedule(retryDelays[Math.min(failures, retryDelays.length - 1)]!)
-    failures++
+    scheduleRetry()
   }
 
   async function runOnce(): Promise<void> {
@@ -292,10 +299,12 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
       const outcome = await syncOnce({ db, api, token, keys, keyId, now })
       // Token atau kunci berubah selagi putaran berjalan: hasilnya bukan untuk keadaan yang sekarang.
       if (epoch !== mine) return
-      failures = 0
       const at = now()
       await setState(db, 'lastSyncAt', at)
       set({ lastSyncAt: at, problem: outcome.skippedTooLarge > 0 ? 'quota' : null })
+      // Masih ada bentrok yang belum selesai: bukan masalah untuk ditampilkan, tapi putaran ini belum tuntas.
+      if (outcome.unresolved > 0) scheduleRetry()
+      else failures = 0
     } catch (e) {
       if (epoch === mine) await onSyncError(e, usedKeyId)
     }
@@ -356,14 +365,25 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     }
   }
 
+  const hidden = () => globalThis.document?.visibilityState === 'hidden'
+  /** Selagi retrying, percobaan ulang yang sudah dijadwalkan yang mengunggah perubahan; tidak ada yang boleh memotong jedanya. */
+  const waitingToRetry = () => current.problem === 'retrying' && timer !== null
+
   const onMutated = (parts: Record<string, unknown>) => {
     const prefix = `idb://${db.name}/`
     const touched = Object.keys(parts).some((key) => key.startsWith(prefix) && !OWN_TABLES.has(key.slice(prefix.length).split('/')[0]!))
-    // Selagi retrying, percobaan ulang yang sudah dijadwalkan yang mengunggah perubahan; debounce tidak boleh memotong jedanya.
-    if (touched && current.phase === 'ready' && token && !(current.problem === 'retrying' && timer !== null)) schedule(debounceMs)
+    // Halaman yang tersembunyi bisa dibekukan kapan saja, jadi di sana perubahan tidak menunggu jeda.
+    if (touched && current.phase === 'ready' && token && !waitingToRetry()) schedule(hidden() ? 0 : debounceMs)
+  }
+  /** Halaman disembunyikan atau ditutup: putaran yang masih menunggu jeda dijalankan sekarang, sebelum browser membekukan halaman. */
+  const onLeave = () => {
+    if (timer === null || waitingToRetry()) return
+    cancelTimer()
+    void syncNow()
   }
   const onOnline = () => void syncNow()
   const onVisible = () => {
+    if (hidden()) return onLeave()
     if (globalThis.document?.visibilityState !== 'visible') return
     // Tampilkan apa yang dilakukan tab lain, walau tidak ada yang perlu di-sync.
     void (rekeying === 0 ? load() : Promise.resolve()).catch(() => {}).then(() => syncNow())
@@ -391,6 +411,7 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
       Dexie.on('storagemutated', onMutated)
       globalThis.addEventListener?.('online', onOnline)
       globalThis.document?.addEventListener('visibilitychange', onVisible)
+      globalThis.addEventListener?.('pagehide', onLeave)
       void syncNow()
     },
 
@@ -400,6 +421,7 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
       Dexie.on('storagemutated').unsubscribe(onMutated)
       globalThis.removeEventListener?.('online', onOnline)
       globalThis.document?.removeEventListener('visibilitychange', onVisible)
+      globalThis.removeEventListener?.('pagehide', onLeave)
     },
 
     requestEmailCode: (email, lang) => api.emailStart(email.trim().toLowerCase(), lang),

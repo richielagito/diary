@@ -216,7 +216,7 @@ export const id = {
       retrying: 'Tidak bisa menghubungi server. Akan dicoba lagi otomatis.',
       quota: 'Ruang sync penuh, atau ada catatan yang terlalu besar. Sebagian perubahan belum terunggah.',
       plan: 'Sync tidak aktif untuk akun ini.',
-      outdated: 'Perangkat lain memakai versi aplikasi yang lebih baru. Perbarui aplikasi ini untuk melanjutkan sync.',
+      outdated: 'Perangkat lain atau server memakai versi yang lebih baru. Perbarui aplikasi ini untuk melanjutkan sync.',
     },
     error: {
       invalid_code: 'Kode salah atau kedaluwarsa.',
