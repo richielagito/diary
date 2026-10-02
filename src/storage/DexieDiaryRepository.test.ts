@@ -1,5 +1,6 @@
 import { DiaryDB } from './db'
 import { DexieDiaryRepository } from './DexieDiaryRepository'
+import { StaleTextError } from './DiaryRepository'
 
 let clock = 1000
 let db: DiaryDB
@@ -147,5 +148,39 @@ describe('appendToEntry', () => {
     const e = await repo.appendToEntry('2026-09-28', 'siang #kerja lembur', null)
     expect(e.tags).toContain('kerja')
     expect(e.wordCount).toBe(4)
+  })
+})
+
+describe('save with a base', () => {
+  it('writes when the stored text is still the base', async () => {
+    await repo.save('2026-10-01', { markdown: 'awal' })
+    const entry = await repo.save('2026-10-01', { markdown: 'awal lalu lanjut', baseMarkdown: 'awal' })
+    expect(entry!.markdown).toBe('awal lalu lanjut')
+  })
+
+  it('writes a first entry when the base is empty', async () => {
+    const entry = await repo.save('2026-10-01', { markdown: 'baru', baseMarkdown: '' })
+    expect(entry!.markdown).toBe('baru')
+  })
+
+  it('refuses to overwrite text that changed since the base, and reports what is stored', async () => {
+    await repo.save('2026-10-01', { markdown: 'awal\n\nparagraf hp', mood: 4 })
+    const attempt = repo.save('2026-10-01', { markdown: 'awal\n\nkalimat laptop', baseMarkdown: 'awal' })
+    await expect(attempt).rejects.toBeInstanceOf(StaleTextError)
+    await expect(attempt).rejects.toMatchObject({ stored: 'awal\n\nparagraf hp' })
+    expect(await repo.get('2026-10-01')).toMatchObject({ markdown: 'awal\n\nparagraf hp', mood: 4 })
+  })
+
+  it('refuses when the entry was deleted since the base', async () => {
+    const attempt = repo.save('2026-10-01', { markdown: 'awal lalu lanjut', baseMarkdown: 'awal' })
+    await expect(attempt).rejects.toMatchObject({ stored: '' })
+    expect(await repo.get('2026-10-01')).toBeUndefined()
+  })
+
+  it('does not check the base for a mood-only save or when no base is given', async () => {
+    await repo.save('2026-10-01', { markdown: 'awal' })
+    await repo.save('2026-10-01', { mood: 5, baseMarkdown: 'bukan ini' })
+    await repo.save('2026-10-01', { markdown: 'ditimpa' })
+    expect(await repo.get('2026-10-01')).toMatchObject({ markdown: 'ditimpa', mood: 5 })
   })
 })

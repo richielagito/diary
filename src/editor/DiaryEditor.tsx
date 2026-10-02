@@ -62,7 +62,16 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
     ref,
     () => ({
       getMarkdown: () => editor?.getMarkdown() ?? '',
-      setMarkdown: (md) => editor?.commands.setContent(md, { contentType: 'markdown', emitUpdate: false }),
+      setMarkdown: (md) => {
+        if (!editor) return
+        const { from, to } = editor.state.selection
+        const wasFocused = editor.isFocused
+        editor.commands.setContent(md, { contentType: 'markdown', emitUpdate: false })
+        // Tanpa fokus tidak ada caret yang perlu dijaga (dan menggeser seleksi memicu saran tag).
+        if (!wasFocused) return
+        const max = editor.state.doc.content.size
+        editor.commands.setTextSelection({ from: Math.min(from, max), to: Math.min(to, max) })
+      },
       focus: () => editor?.commands.focus('end'),
     }),
     [editor],

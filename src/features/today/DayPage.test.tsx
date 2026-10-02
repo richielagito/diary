@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import type { Mood } from '../../domain/types'
 import { rememberUnsavedDraft } from '../../editor/useAutosave'
+import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
 import { renderApp } from '../../test/renderApp'
 import { stubLayout } from '../../test/stubLayout'
 
@@ -46,6 +47,81 @@ test('external change (other tab) refreshes editor when not dirty', async () => 
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
   await diary.save('2026-09-20', { markdown: 'dari tab lain' })
   await waitFor(() => expect(box).toHaveTextContent('dari tab lain'))
+})
+
+test('a change from another device that arrives while typing is merged, not overwritten', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(box)
+  await user.keyboard(' kalimat laptop')
+  // Sync (atau tab lain) menulis versi lain sebelum autosave sempat jalan.
+  await diary.save('2026-09-20', { markdown: 'awal\n\nparagraf hp' })
+
+  await waitFor(() => expect(box).toHaveTextContent('paragraf hp'))
+  expect(box).toHaveTextContent('kalimat laptop')
+  await waitFor(
+    async () => {
+      const stored = (await diary.get('2026-09-20'))!.markdown
+      expect(stored).toContain('kalimat laptop')
+      expect(stored).toContain('paragraf hp')
+    },
+    { timeout: 3000 },
+  )
+})
+
+test('an autosave that started from an older text does not overwrite a newer one', async () => {
+  stubLayout()
+  // The page never hears about the change (spied on the prototype, before the page subscribes): only the repository can stop the overwrite.
+  const watch = vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  const { diary, user, db } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(box)
+  await user.keyboard(' kalimat laptop')
+  await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+
+  await waitFor(
+    async () => {
+      const stored = (await diary.get('2026-09-20'))!.markdown
+      expect(stored).toContain('kalimat laptop')
+      expect(stored).toContain('paragraf hp')
+    },
+    { timeout: 3000 },
+  )
+  expect(box).toHaveTextContent('paragraf hp')
+  watch.mockRestore()
+})
+
+test('its own autosaves are not mistaken for changes from elsewhere', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(box)
+  await user.keyboard(' satu')
+  await waitFor(async () => expect((await diary.get('2026-09-20'))!.markdown).toContain('satu'), { timeout: 3000 })
+  await user.keyboard(' dua')
+  await waitFor(async () => expect((await diary.get('2026-09-20'))!.markdown).toContain('dua'), { timeout: 3000 })
+  const stored = (await diary.get('2026-09-20'))!.markdown
+  expect(stored).not.toContain('---')
+  expect(stored.match(/awal/g)).toHaveLength(1)
+})
+
+test('text typed just before leaving the page is merged with a newer stored text', async () => {
+  stubLayout()
+  // Same as above: the page must not hear the change through its subscription.
+  const watch = vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  const view = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await view.user.click(box)
+  await view.user.keyboard(' kalimat laptop')
+  await view.db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+  view.unmount()
+  await waitFor(async () => {
+    const stored = (await view.diary.get('2026-09-20'))!.markdown
+    expect(stored).toContain('kalimat laptop')
+    expect(stored).toContain('paragraf hp')
+  })
+  watch.mockRestore()
 })
 
 test('past day shows back-to-today link', async () => {

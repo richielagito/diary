@@ -57,7 +57,7 @@ export async function renderApp(path = '/', seed: Seed = {}, options: RenderOpti
   for (const s of seed.summaries ?? []) await summaries.put(s)
   for (const l of seed.letters ?? []) await letters.put(l)
   const user = userEvent.setup()
-  render(
+  const view = render(
     <RepoProvider
       diary={diary}
       settingsStore={settingsStore}
@@ -73,7 +73,7 @@ export async function renderApp(path = '/', seed: Seed = {}, options: RenderOpti
       </MemoryRouter>
     </RepoProvider>,
   )
-  return { db, diary, settingsStore, chats, memories, summaries, letters, user }
+  return { db, diary, settingsStore, chats, memories, summaries, letters, user, unmount: view.unmount }
 }
 
 /** Render satu komponen di dalam RepoProvider dengan DB baru yang terisolasi. */
@@ -94,7 +94,7 @@ export async function renderWithRepos(ui: ReactElement, seed: Seed = {}, options
   for (const s of seed.summaries ?? []) await summaries.put(s)
   for (const l of seed.letters ?? []) await letters.put(l)
   const user = userEvent.setup()
-  render(
+  const view = render(
     <RepoProvider
       diary={diary}
       settingsStore={settingsStore}
@@ -108,5 +108,5 @@ export async function renderWithRepos(ui: ReactElement, seed: Seed = {}, options
       {ui}
     </RepoProvider>,
   )
-  return { db, diary, settingsStore, chats, memories, summaries, letters, user }
+  return { db, diary, settingsStore, chats, memories, summaries, letters, user, unmount: view.unmount }
 }

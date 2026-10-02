@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
 import { dateKey, parseDateKey } from '../../domain/date'
+import { mergeText } from '../../domain/mergeText'
+import { StaleTextError } from '../../storage/DiaryRepository'
 import type { DateKey, Mood } from '../../domain/types'
 import { DiaryEditor, type DiaryEditorHandle } from '../../editor/DiaryEditor'
 import { takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
@@ -23,10 +25,59 @@ export function DayPage({ date }: { date: DateKey }) {
   /** True sejak mood diklik sampai tersimpan; selama itu watch tidak menimpa mood di layar. */
   const moodPending = useRef(false)
 
-  const save = useCallback((d: DateKey, markdown: string) => diary.save(d, { markdown }), [diary])
+  /** Teks tersimpan yang terakhir sudah tercakup di editor ini: dasar gabung kalau yang tersimpan berubah dari luar. */
+  const base = useRef('')
+  /** Teks yang sedang ditulis, supaya kabar tentang tulisan sendiri tidak dikira perubahan dari luar. */
+  const sending = useRef<string | null>(null)
+  const alive = useRef(true)
+  const absorbRef = useRef<(incoming: string) => void>(() => {})
+
+  const save = useCallback(
+    async (d: DateKey, markdown: string) => {
+      sending.current = markdown
+      try {
+        const entry = await diary.save(d, { markdown, baseMarkdown: base.current })
+        base.current = entry?.markdown ?? ''
+      } catch (err) {
+        if (!(err instanceof StaleTextError)) throw err        // Yang tersimpan berubah dari luar (sync atau tab lain) sejak editor ini memuatnya: gabung, jangan timpa.
+        if (alive.current) absorbRef.current(err.stored)
+        else await diary.save(d, { markdown: mergeText(markdown, err.stored, base.current) })
+      } finally {
+        sending.current = null
+      }
+    },
+    [diary],
+  )
   const autosave = useAutosave({ date, save })
   const { schedule } = autosave
   const tagSuggest = useTagSuggestions(() => editorRef.current?.getMarkdown() ?? '')
+
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+    }
+  }, [])
+
+  /** Versi tersimpan yang baru terlihat. Tanpa ketikan tertunda: tampilkan. Dengan ketikan tertunda: gabung di editor lalu simpan. */
+  absorbRef.current = (incoming: string) => {
+    const editor = editorRef.current
+    if (!editor) return
+    if (incoming === base.current || incoming === sending.current) {
+      base.current = incoming
+      return
+    }
+    if (!autosave.isDirty()) {
+      base.current = incoming
+      if (incoming !== editor.getMarkdown()) editor.setMarkdown(incoming)
+      return
+    }
+    const current = editor.getMarkdown()
+    const merged = mergeText(current, incoming, base.current)
+    base.current = incoming
+    if (merged !== current) editor.setMarkdown(merged)
+    schedule(merged)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -34,6 +85,7 @@ export function DayPage({ date }: { date: DateKey }) {
       if (cancelled) return
       // Teks yang gagal tersimpan waktu halaman ini ditutup menang atas isi lama, lalu disimpan ulang.
       const draft = takeUnsavedDraft(date)
+      base.current = entry?.markdown ?? ''
       const markdown = draft ?? entry?.markdown ?? ''
       setLoaded({ markdown })
       if (draft !== undefined) schedule(draft)
@@ -44,18 +96,14 @@ export function DayPage({ date }: { date: DateKey }) {
     }
   }, [diary, date, schedule])
 
-  // Perubahan dari tab lain: terapkan hanya kalau editor ini tidak punya perubahan tertunda.
+  // Perubahan dari luar (sync atau tab lain) untuk tanggal ini.
   useEffect(() => {
     if (!loaded) return
     return diary.watch(date, (entry) => {
       if (!moodPending.current) setMood(entry?.mood ?? null)
-      const editor = editorRef.current
-      if (!editor || autosave.isDirty()) return
-      const incoming = entry?.markdown ?? ''
-      if (incoming === editor.getMarkdown()) return
-      editor.setMarkdown(incoming)
+      absorbRef.current(entry?.markdown ?? '')
     })
-  }, [diary, date, loaded, autosave.isDirty])
+  }, [diary, date, loaded])
 
   const onMood = (m: Mood | null) => {
     moodPending.current = true

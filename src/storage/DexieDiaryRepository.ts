@@ -3,7 +3,7 @@ import { extractTags } from '../domain/tags'
 import type { DateKey, DayEntry, EntryInput, Mood } from '../domain/types'
 import { wordCount } from '../domain/wordCount'
 import type { DiaryDB } from './db'
-import type { DiaryRepository, ImportResult, Unsubscribe } from './DiaryRepository'
+import { StaleTextError, type DiaryRepository, type ImportResult, type Unsubscribe } from './DiaryRepository'
 
 export function withDerived(input: EntryInput): DayEntry {
   return { ...input, tags: extractTags(input.markdown), wordCount: wordCount(input.markdown) }
@@ -19,9 +19,12 @@ export class DexieDiaryRepository implements DiaryRepository {
     return this.db.entries.get(date)
   }
 
-  save(date: DateKey, patch: { markdown?: string; mood?: Mood | null }): Promise<DayEntry | null> {
+  save(date: DateKey, patch: { markdown?: string; mood?: Mood | null; baseMarkdown?: string }): Promise<DayEntry | null> {
     return this.db.transaction('rw', this.db.entries, async () => {
       const existing = await this.db.entries.get(date)
+      if (patch.markdown !== undefined && patch.baseMarkdown !== undefined && (existing?.markdown ?? '') !== patch.baseMarkdown) {
+        throw new StaleTextError(existing?.markdown ?? '')
+      }
       const markdown = patch.markdown ?? existing?.markdown ?? ''
       const mood = patch.mood !== undefined ? patch.mood : (existing?.mood ?? null)
       if (markdown.trim() === '' && mood === null) {
