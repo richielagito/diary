@@ -171,6 +171,15 @@ describe('save with a base', () => {
     expect(await repo.get('2026-10-01')).toMatchObject({ markdown: 'awal\n\nparagraf hp', mood: 4 })
   })
 
+  it('keeps the stored text out of anything that logs or serialises the refusal', async () => {
+    await repo.save('2026-10-01', { markdown: 'rahasia di hp' })
+    const err: unknown = await repo.save('2026-10-01', { markdown: 'laptop', baseMarkdown: 'awal' }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(StaleTextError)
+    expect((err as StaleTextError).stored).toBe('rahasia di hp')
+    expect(Object.keys(err as object)).not.toContain('stored')
+    expect(JSON.stringify(err)).not.toContain('rahasia')
+  })
+
   it('refuses when the entry was deleted since the base', async () => {
     const attempt = repo.save('2026-10-01', { markdown: 'awal lalu lanjut', baseMarkdown: 'awal' })
     await expect(attempt).rejects.toMatchObject({ stored: '' })

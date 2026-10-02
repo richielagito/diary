@@ -14,13 +14,13 @@ import { MoodPicker } from './MoodPicker'
 import { SaveStatusText } from './SaveStatus'
 import { useTagSuggestions } from './useTagSuggestions'
 
-/** Menempelkan draft (teks dan dasarnya) pada error, supaya useAutosave mengingat yang benar kalau halaman sudah ditutup. */
+/**
+ * Menempelkan draft (teks dan dasarnya) pada error, supaya useAutosave mengingat yang benar kalau halaman sudah ditutup.
+ * Tidak enumerable: error ini dicatat ke konsol, dan teks diary tidak boleh ikut tercetak.
+ */
 function withDraft(err: unknown, draft: { markdown: string; base: string }) {
-  if (typeof err === 'object' && err !== null) {
-    ;(err as { draft?: unknown }).draft = draft
-    return err
-  }
-  return Object.assign(new Error(String(err)), { draft })
+  const target = typeof err === 'object' && err !== null ? err : new Error(String(err))
+  return Object.defineProperty(target, 'draft', { value: draft, configurable: true })
 }
 
 export function DayPage({ date }: { date: DateKey }) {
@@ -56,7 +56,8 @@ export function DayPage({ date }: { date: DateKey }) {
       } catch (err) {
         if (!(err instanceof StaleTextError)) throw withDraft(err, { markdown, base: used })
         // Yang tersimpan berubah dari luar (sync atau tab lain) sejak editor ini memuatnya: gabung, jangan timpa.
-        if (alive.current) {
+        // Saat halaman ditutup React melepas editor sebelum `alive` menjadi false; tanpa editor, absorb tidak bisa menggabung.
+        if (alive.current && editorRef.current) {
           absorbRef.current(err.stored)
         } else {
           const merged = mergeText(markdown, err.stored, used)

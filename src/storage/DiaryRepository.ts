@@ -10,8 +10,12 @@ export interface ImportResult {
 
 /** Teks yang tersimpan sudah bukan teks yang menjadi dasar editor. Tidak ada yang ditulis; `stored` adalah teks yang tersimpan sekarang. */
 export class StaleTextError extends Error {
-  constructor(readonly stored: string) {
+  declare readonly stored: string
+
+  constructor(stored: string) {
     super('stored text changed since it was loaded')
+    // Tidak enumerable: error yang dicatat ke konsol hanya menampilkan nama, pesan dan stack, bukan teks diary.
+    Object.defineProperty(this, 'stored', { value: stored })
   }
 }
 

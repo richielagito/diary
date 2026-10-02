@@ -5,6 +5,7 @@ import { RepoProvider } from '../../app/RepoContext'
 import type { Mood } from '../../domain/types'
 import { rememberUnsavedDraft } from '../../editor/useAutosave'
 import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
+import { StaleTextError } from '../../storage/DiaryRepository'
 import { renderApp } from '../../test/renderApp'
 import { stubLayout } from '../../test/stubLayout'
 
@@ -402,4 +403,73 @@ test('with two failing writes after the page closed, the newest text is the draf
 
   reopen(view, '2026-09-20')
   expect(await screen.findByRole('textbox', { name: 'Tulis diary' })).toHaveTextContent('satu dua')
+}, 15000)
+
+test('the error of a failed save carries the draft without exposing the text to the console', async () => {
+  stubLayout()
+  const { diary, user } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+  vi.spyOn(diary, 'save').mockImplementation(async (_date, patch) => {
+    if (patch.markdown !== undefined) throw new Error('QuotaExceededError')
+    return null
+  })
+  await user.click(box)
+  await user.keyboard(' rahasia')
+  await waitFor(() => expect(logged).toHaveBeenCalled(), { timeout: 3000 })
+  const err = logged.mock.calls[0]![0] as Error & { draft?: { markdown: string } }
+  expect(err.draft?.markdown).toContain('rahasia')
+  expect(Object.keys(err)).not.toContain('draft')
+  expect(JSON.stringify(err)).not.toContain('rahasia')
+})
+
+test('a refused write that comes back after the editor is gone, but before the page cleanup, is merged and not dropped', async () => {
+  stubLayout()
+  vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  const { diary, user, db } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  const original = diary.save.bind(diary)
+  const calls: Promise<unknown>[] = []
+  let refuse: (() => void) | null = null
+  let textSaves = 0
+  vi.spyOn(diary, 'save').mockImplementation((date, patch) => {
+    // The first text write is answered by the test: refused because the stored text changed.
+    const run =
+      patch.markdown !== undefined && ++textSaves === 1
+        ? new Promise<never>((_, reject) => (refuse = () => reject(new StaleTextError('awal\n\nparagraf hp'))))
+        : original(date, patch)
+    calls.push(run)
+    return run
+  })
+  await user.click(box)
+  await user.keyboard(' kalimat laptop')
+  await waitFor(() => expect(refuse).not.toBeNull(), { timeout: 3000 })
+  await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+
+  // Leaving the page: React detaches the editor while it removes the page from the document, and runs the page's own
+  // cleanup (a passive effect) in a later task when the removal used up its time slice. The refusal lands in between.
+  const article = box.closest('article')!
+  const removeChild = Node.prototype.removeChild
+  vi.spyOn(Node.prototype, 'removeChild').mockImplementation(function (this: Node, child: Node) {
+    if (child === article) {
+      const until = performance.now() + 20
+      while (performance.now() < until) {
+        // use up the time slice
+      }
+      refuse!()
+    }
+    return removeChild.call(this, child)
+  } as typeof Node.prototype.removeChild)
+  const env = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  env.IS_REACT_ACT_ENVIRONMENT = false // the navigation below must run on React's real scheduler, not inside act()
+  try {
+    screen.getByRole('link', { name: 'Arsip' }).click()
+    await waitFor(() => expect(article).not.toBeInTheDocument())
+    await settle(calls)
+  } finally {
+    env.IS_REACT_ACT_ENVIRONMENT = true
+  }
+  const stored = (await diary.get('2026-09-20'))!.markdown
+  expect(stored).toContain('kalimat laptop')
+  expect(stored).toContain('paragraf hp')
 }, 15000)
