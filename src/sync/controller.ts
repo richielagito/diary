@@ -59,6 +59,8 @@ export interface SyncControllerOptions {
   iterations?: number
   origin?: string
   storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+  /** Default navigator.locks; null = tanpa kunci (satu tab saja). */
+  locks?: Pick<LockManager, 'request'> | null
 }
 
 const VERIFIER_KEY = 'diary.googleVerifier'
@@ -84,6 +86,10 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
   let inFlight: Promise<void> | null = null
   let again = false
   let started = false
+  /** Naik setiap kali token atau kunci berubah; hasil putaran dari epoch lama diabaikan. */
+  let epoch = 0
+  /** > 0 selama kunci sedang diganti: putaran dan load() tidak boleh menghidupkan kunci lama. */
+  let rekeying = 0
   const listeners = new Set<() => void>()
 
   const set = (patch: Partial<SyncStatus>) => {
@@ -114,18 +120,32 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     keys = (await getState<SyncKeys>(db, 'keys')) ?? null
     keyId = (await getState<string>(db, 'keyId')) ?? null
     const email = (await getState<string>(db, 'email')) ?? null
+    const accountHasKey = (await getState<boolean>(db, 'accountHasKey')) ?? false
+    const lastSyncAt = (await getState<number>(db, 'lastSyncAt')) ?? null
+    if (!email) return set({ ...SIGNED_OUT, syncing: current.syncing })
     set({
       email,
-      accountHasKey: (await getState<boolean>(db, 'accountHasKey')) ?? false,
-      lastSyncAt: (await getState<number>(db, 'lastSyncAt')) ?? null,
-      phase: !email ? 'signed-out' : keys ? 'ready' : 'needs-passphrase',
-      // Email tersimpan tapi token tidak: sesi berakhir sebelum aplikasi ditutup.
-      problem: email && !token ? 'needs-login' : null,
+      accountHasKey,
+      lastSyncAt,
+      phase: keys ? 'ready' : 'needs-passphrase',
+      // Email tersimpan tapi token tidak: sesi berakhir. Token ada lagi: needs-login tidak berlaku.
+      problem: !token ? 'needs-login' : current.problem === 'needs-login' ? null : current.problem,
     })
+  }
+
+  /** Berhenti memakai kunci yang sekarang dan menunggu putaran yang masih berjalan. Dipanggil sebelum kunci diganti. */
+  async function quiesce(): Promise<{ keys: SyncKeys | null; keyId: string | null }> {
+    const previous = { keys, keyId }
+    epoch++
+    keys = null
+    keyId = null
+    await inFlight?.catch(() => {})
+    return previous
   }
 
   /** Kunci tidak berlaku lagi: buang kunci, indeks dan kursor. Sesi dan diary tetap. */
   async function forgetKeys(): Promise<void> {
+    epoch++
     keys = null
     keyId = null
     await db.transaction('rw', db.syncState, db.syncIndex, async () => {
@@ -143,14 +163,15 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
       await setState(db, 'keyId', id)
       await setState(db, 'accountHasKey', true)
     })
+    epoch++
     keys = next
     keyId = id
     failures = 0
-    set({ phase: 'ready', accountHasKey: true, problem: null })
-    void syncNow()
+    set({ phase: 'ready', accountHasKey: true, problem: token ? null : 'needs-login' })
   }
 
   async function expireSession(): Promise<void> {
+    epoch++
     token = null
     await db.syncState.delete('token')
     set({ problem: 'needs-login' })
@@ -168,11 +189,11 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
 
   async function afterLogin(newToken: string): Promise<void> {
     const info = await api.account(newToken)
+    epoch++
     if (current.email && current.email !== info.email) {
       // Akun lain di perangkat yang sama: keadaan sync akun lama tidak berlaku. Diary lokal tetap.
+      await quiesce()
       await clearSyncData(db)
-      keys = null
-      keyId = null
       set({ lastSyncAt: null })
     }
     token = newToken
@@ -181,7 +202,13 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     await setState(db, 'accountHasKey', info.key !== null)
     if (keys && info.key?.keyId !== keyId) await forgetKeys()
     failures = 0
-    set({ email: info.email, accountHasKey: info.key !== null, usage: info.usage, phase: keys ? 'ready' : 'needs-passphrase', problem: null })
+    set({
+      email: info.email,
+      accountHasKey: info.key !== null,
+      usage: info.usage,
+      phase: keys ? 'ready' : 'needs-passphrase',
+      problem: info.plan !== 'premium' ? 'plan' : null,
+    })
     if (keys) void syncNow()
   }
 
@@ -189,17 +216,28 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     if (passphrase.length < MIN_PASSPHRASE_LENGTH) throw new PassphraseTooShortError()
     const t = needToken()
     const made = await createKey(passphrase, iterations)
+    rekeying++
     try {
-      await guarded(() => api.putKey(t, made.wrappedKey, reset))
-    } catch (e) {
-      if (e instanceof ApiError && e.code === 'key_exists') {
-        await setState(db, 'accountHasKey', true)
-        set({ accountHasKey: true })
-        throw new KeyExistsError()
+      const previous = await quiesce()
+      try {
+        await guarded(() => api.putKey(t, made.wrappedKey, reset))
+      } catch (e) {
+        // Kunci lama masih kunci server.
+        keys = previous.keys
+        keyId = previous.keyId
+        if (e instanceof ApiError && e.code === 'key_exists') {
+          await setState(db, 'accountHasKey', true)
+          set({ accountHasKey: true })
+          throw new KeyExistsError()
+        }
+        if (e instanceof ApiError && e.code === 'plan_required') set({ problem: 'plan' })
+        throw e
       }
-      throw e
+      await adoptKeys(made.keys, made.wrappedKey.keyId)
+    } finally {
+      rekeying--
     }
-    await adoptKeys(made.keys, made.wrappedKey.keyId)
+    void syncNow()
   }
 
   async function onSyncError(e: unknown): Promise<void> {
@@ -220,29 +258,29 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
   }
 
   async function runOnce(): Promise<void> {
-    if (!token || !keys || !keyId) return
-    const session = token
+    // Database adalah sumber kebenaran bersama antar tab.
+    if (rekeying === 0) await load()
+    if (rekeying > 0 || !token || !keys || !keyId) return
+    const mine = epoch
     cancelTimer()
     try {
       const outcome = await syncOnce({ db, api, token, keys, keyId, now })
-      // Keluar atau ganti akun selagi putaran berjalan: hasilnya bukan untuk sesi yang sekarang.
-      if (token !== session) return
+      // Token atau kunci berubah selagi putaran berjalan: hasilnya bukan untuk keadaan yang sekarang.
+      if (epoch !== mine) return
       failures = 0
       const at = now()
       await setState(db, 'lastSyncAt', at)
       set({ lastSyncAt: at, problem: outcome.skippedTooLarge > 0 ? 'quota' : null })
     } catch (e) {
-      if (token === session) await onSyncError(e)
+      if (epoch === mine) await onSyncError(e)
     }
   }
 
-  /** Hanya satu tab yang sync pada satu waktu; tab lain melewatkan putaran ini. */
+  /** Hanya satu tab yang sync pada satu waktu; tab lain mengantre dan jalan sesudahnya. */
   function withLock(work: () => Promise<void>): Promise<void> {
-    const locks = globalThis.navigator?.locks
+    const locks = options.locks === undefined ? globalThis.navigator?.locks : options.locks
     if (!locks) return work()
-    return locks.request('diary-sync', { ifAvailable: true }, async (lock) => {
-      if (lock) await work()
-    })
+    return locks.request('diary-sync', work) as Promise<void>
   }
 
   /** Selesai setelah semua perubahan yang ada saat dipanggil sudah dicoba disinkronkan. */
@@ -260,6 +298,9 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
           again = false
           await withLock(runOnce)
         } while (again && token && keys)
+      } catch (e) {
+        // Putaran tidak boleh menolak: pemanggil memakai void syncNow().
+        console.error('sync failed:', e instanceof Error ? e.name : 'unknown error')
       } finally {
         inFlight = null
         set({ syncing: false })
@@ -270,6 +311,7 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
 
   async function signOutLocally(): Promise<void> {
     cancelTimer()
+    epoch++
     token = null
     keys = null
     keyId = null
@@ -283,11 +325,14 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
   const onMutated = (parts: Record<string, unknown>) => {
     const prefix = `idb://${db.name}/`
     const touched = Object.keys(parts).some((key) => key.startsWith(prefix) && !OWN_TABLES.has(key.slice(prefix.length).split('/')[0]!))
-    if (touched && current.phase === 'ready' && token) schedule(debounceMs)
+    // Selagi retrying, percobaan ulang yang sudah dijadwalkan yang mengunggah perubahan; debounce tidak boleh memotong jedanya.
+    if (touched && current.phase === 'ready' && token && current.problem !== 'retrying') schedule(debounceMs)
   }
   const onOnline = () => void syncNow()
   const onVisible = () => {
-    if (globalThis.document?.visibilityState === 'visible') void syncNow()
+    if (globalThis.document?.visibilityState !== 'visible') return
+    // Tampilkan apa yang dilakukan tab lain, walau tidak ada yang perlu di-sync.
+    void (rekeying === 0 ? load() : Promise.resolve()).catch(() => {}).then(() => syncNow())
   }
 
   return {
@@ -302,7 +347,13 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
     async start() {
       if (started) return
       started = true
-      await load()
+      try {
+        await load()
+      } catch (e) {
+        started = false
+        throw e
+      }
+      if (!started) return
       Dexie.on('storagemutated', onMutated)
       globalThis.addEventListener?.('online', onOnline)
       globalThis.document?.addEventListener('visibilitychange', onVisible)
@@ -347,7 +398,15 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
         set({ accountHasKey: false })
         throw new Error('account has no key yet')
       }
-      await adoptKeys(await openKey(passphrase, info.key), info.key.keyId)
+      const opened = await openKey(passphrase, info.key)
+      rekeying++
+      try {
+        await quiesce()
+        await adoptKeys(opened, info.key.keyId)
+      } finally {
+        rekeying--
+      }
+      void syncNow()
     },
 
     async refreshAccount() {
@@ -355,7 +414,11 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
       try {
         const info = await api.account(token)
         await setState(db, 'accountHasKey', info.key !== null)
-        set({ usage: info.usage, accountHasKey: info.key !== null })
+        set({
+          usage: info.usage,
+          accountHasKey: info.key !== null,
+          problem: info.plan !== 'premium' ? 'plan' : current.problem === 'plan' ? null : current.problem,
+        })
       } catch (e) {
         if (e instanceof ApiError && e.status === 401) await expireSession()
       }

@@ -19,6 +19,26 @@ async function withKey() {
   return { ...s, wrappedKey, keyId: wrappedKey.keyId }
 }
 
+describe('timeouts', () => {
+  it('passes an abort signal to fetch', async () => {
+    if (typeof AbortSignal.timeout !== 'function') return
+    const seen: RequestInit[] = []
+    const api = createApi('https://api.test', async (_input, init) => {
+      seen.push(init!)
+      return new Response('{}', { status: 200 })
+    })
+    await api.account('tok')
+    expect(seen[0]!.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('turns a timed out request into a NetworkError', async () => {
+    const api = createApi('https://api.test', async () => {
+      throw new DOMException('timed out', 'TimeoutError')
+    })
+    await expect(api.account('tok')).rejects.toBeInstanceOf(NetworkError)
+  })
+})
+
 describe('requests', () => {
   it('sends JSON with a content type, and the token as a bearer header', async () => {
     const seen: { url: string; init: RequestInit }[] = []

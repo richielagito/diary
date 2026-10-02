@@ -3,6 +3,8 @@ import type { WrappedKey } from '../sync/crypto'
 /** Jumlah digit kode masuk yang dikirim server lewat email. */
 export const EMAIL_CODE_LENGTH = 6
 
+const REQUEST_TIMEOUT_MS = 120_000
+
 /** Server menjawab dengan error. `code` adalah isi `{ "error": ... }`, atau 'unknown'. */
 export class ApiError extends Error {
   constructor(
@@ -78,6 +80,8 @@ export function createApi(baseUrl: string, fetchImpl: typeof fetch = (input, ini
         headers,
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         cache: 'no-store',
+        // Koneksi yang macet tidak boleh menahan sync atau keluar akun selamanya.
+        signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(REQUEST_TIMEOUT_MS) : undefined,
       })
     } catch {
       throw new NetworkError()

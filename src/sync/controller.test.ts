@@ -25,19 +25,54 @@ function memoryStorage() {
   }
 }
 
-function device(server: FakeServer, db = new DiaryDB(`test-${crypto.randomUUID()}`)) {
+interface DeviceOptions {
+  fetchImpl?: typeof fetch
+  locks?: Pick<LockManager, 'request'> | null
+  retryDelaysMs?: readonly number[]
+  debounceMs?: number
+}
+
+function device(server: FakeServer, db = new DiaryDB(`test-${crypto.randomUUID()}`), extra: DeviceOptions = {}) {
   const storage = memoryStorage()
   const controller = createSyncController({
     db,
-    api: createApi(server.origin, server.fetch),
-    debounceMs: 10,
-    retryDelaysMs: [20],
+    api: createApi(server.origin, extra.fetchImpl ?? server.fetch),
+    debounceMs: extra.debounceMs ?? 10,
+    retryDelaysMs: extra.retryDelaysMs ?? [20],
     iterations: 100_000,
     origin: 'https://app.test',
     storage,
+    ...(extra.locks !== undefined ? { locks: extra.locks } : {}),
   })
   live.push(controller)
   return { db, controller, storage, diary: new DexieDiaryRepository(db) }
+}
+
+/** A lock manager for one "browser": requests run one after another, like navigator.locks without options. */
+function fakeLocks() {
+  let tail: Promise<unknown> = Promise.resolve()
+  const request = (_name: string, callback: () => Promise<unknown>) => {
+    const run = tail.then(() => callback())
+    tail = run.catch(() => {})
+    return run
+  }
+  return { request } as unknown as Pick<LockManager, 'request'>
+}
+
+/** Wraps the fake server's fetch: once armed, the next GET /sync waits until release() before it is sent. Counts every call. */
+function gated(server: FakeServer) {
+  let armed = false
+  let release = () => {}
+  let calls = 0
+  const fetchImpl: typeof fetch = async (input, init) => {
+    calls++
+    if (armed && (init?.method ?? 'GET') === 'GET' && String(input).includes('/sync?')) {
+      armed = false
+      await new Promise<void>((resolve) => (release = resolve))
+    }
+    return server.fetch(input, init)
+  }
+  return { fetchImpl, arm: () => (armed = true), release: () => release(), calls: () => calls }
 }
 
 async function signIn(c: SyncController, server: FakeServer, email = EMAIL) {
@@ -328,5 +363,144 @@ describe('session and key changes', () => {
     await controller.refreshAccount()
     expect(controller.status().usage!.bytes).toBeGreaterThan(0)
     expect(controller.status().usage!.limit).toBe(20 * 1024 * 1024)
+  })
+})
+
+describe('fix round 1', () => {
+  it('keeps the new key when sync is reset while a round is running', async () => {
+    const server = new FakeServer()
+    const gate = gated(server)
+    const d = device(server, undefined, { fetchImpl: gate.fetchImpl })
+    await d.controller.start()
+    await signIn(d.controller, server)
+    await d.controller.createPassphrase(PASS)
+    await synced(d.controller)
+    await d.diary.save(DAY, { markdown: 'satu entri' })
+    await d.controller.syncNow()
+
+    gate.arm()
+    const before = gate.calls()
+    const round = d.controller.syncNow()
+    await vi.waitFor(() => expect(gate.calls()).toBeGreaterThan(before))
+    await quiet(20)
+    const reset = d.controller.resetSync('frasa sandi baru')
+    // Cukup lama agar tanpa quiesce reset sudah selesai (PBKDF2 ~60 ms) sebelum putaran lama dilepas.
+    await quiet(250)
+    gate.release()
+    await Promise.all([round, reset])
+    await synced(d.controller)
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+    expect(d.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(await getState(d.db, 'keys')).toBeDefined()
+    expect(server.user(EMAIL).key!.keyId).toBe(await getState(d.db, 'keyId'))
+  })
+
+  it('a second tab stops syncing after sign-out in the first', async () => {
+    const server = new FakeServer()
+    const locks = fakeLocks()
+    const a = device(server, undefined, { locks })
+    await a.controller.start()
+    await signIn(a.controller, server)
+    await a.controller.createPassphrase(PASS)
+    await synced(a.controller)
+    const b = device(server, a.db, { locks })
+    await b.controller.start()
+    await a.controller.logout()
+
+    const mark = server.requests.length
+    await b.diary.save(DAY, { markdown: 'dari tab b' })
+    await b.controller.syncNow()
+    await quiet()
+    expect(b.controller.status().phase).toBe('signed-out')
+    expect(server.requests.slice(mark).some((r) => r.method === 'POST' && r.path === '/sync')).toBe(false)
+    expect(await a.db.syncState.count()).toBe(0)
+  })
+
+  it('a second tab picks up a new key instead of deleting it', async () => {
+    const server = new FakeServer()
+    const one = await ready(server, true)
+    const locks = fakeLocks()
+    const a = device(server, undefined, { locks })
+    await a.controller.start()
+    await signIn(a.controller, server)
+    await a.controller.enterPassphrase(PASS)
+    await synced(a.controller)
+    const b = device(server, a.db, { locks })
+    await b.controller.start()
+
+    await one.controller.resetSync('frasa sandi baru')
+    await synced(one.controller)
+    await a.controller.syncNow()
+    expect(a.controller.status().phase).toBe('needs-passphrase')
+    await a.controller.enterPassphrase('frasa sandi baru')
+    await synced(a.controller)
+    await b.controller.syncNow()
+    expect(a.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(b.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(await getState(a.db, 'keys')).toBeDefined()
+    expect(await getState(a.db, 'keyId')).toBe(server.user(EMAIL).key!.keyId)
+  })
+
+  it('typing while the server is unreachable does not shorten the wait before the next retry', async () => {
+    const server = new FakeServer()
+    const gate = gated(server)
+    const d = device(server, undefined, { fetchImpl: gate.fetchImpl, retryDelaysMs: [10_000], debounceMs: 10 })
+    await d.controller.start()
+    await signIn(d.controller, server)
+    await d.controller.createPassphrase(PASS)
+    await synced(d.controller)
+    server.offline = true
+    await d.diary.save(DAY, { markdown: 'offline' })
+    await vi.waitFor(() => expect(d.controller.status().problem).toBe('retrying'))
+    const calls = gate.calls()
+    for (const day of ['2026-10-02', '2026-10-03', '2026-10-04']) {
+      await quiet(50)
+      await d.diary.save(day, { markdown: 'ketik' })
+    }
+    await quiet(150)
+    expect(gate.calls()).toBe(calls)
+  })
+
+  it('reports an inactive plan before asking for a passphrase', async () => {
+    const server = new FakeServer()
+    const first = device(server)
+    await first.controller.start()
+    await signIn(first.controller, server)
+    server.user(EMAIL).plan = 'free'
+    const second = device(server)
+    await second.controller.start()
+    await signIn(second.controller, server)
+    expect(second.controller.status()).toMatchObject({ phase: 'needs-passphrase', problem: 'plan' })
+    await expect(second.controller.createPassphrase(PASS)).rejects.toThrow()
+    expect(second.controller.status().problem).toBe('plan')
+    server.user(EMAIL).plan = 'premium'
+    await second.controller.refreshAccount()
+    expect(second.controller.status().problem).toBeNull()
+  })
+
+  it('stop during start leaves no listener behind', async () => {
+    const server = new FakeServer()
+    const first = await ready(server, true)
+    first.controller.stop()
+    const again = device(server, first.db)
+    const starting = again.controller.start()
+    again.controller.stop()
+    await starting
+    const before = server.requests.length
+    await again.diary.save(DAY, { markdown: 'tidak boleh sync' })
+    await quiet(100)
+    expect(server.requests.length).toBe(before)
+  })
+
+  it('survives a reload while signed out by a 401', async () => {
+    const server = new FakeServer()
+    const first = await ready(server, true)
+    server.failNext(401, 'unauthorized')
+    await first.controller.syncNow()
+    expect(first.controller.status().problem).toBe('needs-login')
+    first.controller.stop()
+    const again = device(server, first.db)
+    await again.controller.start()
+    expect(again.controller.status()).toMatchObject({ phase: 'ready', problem: 'needs-login', email: EMAIL })
   })
 })
