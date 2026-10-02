@@ -33,15 +33,15 @@ Diary is a local-first PWA: it works offline, can be installed on a phone, and n
 
 **Sync between devices (optional)**
 - Sign in with an email code or Google, then choose a sync passphrase.
-- Entries, chats, memories, summaries and settings are encrypted on your device before they are uploaded. The server stores ciphertext only.
+- Entries, chats, memories, summaries, Wrapped letters and settings are encrypted on your device before they are uploaded. The server stores ciphertext only.
 - Works offline: changes are merged when the device is back online. A mood set on one device and text written on another are both kept.
 - Text that arrives from another device while you are typing is merged into the editor, not overwritten.
-- Sync needs a server. The public app can be built with or without one; see "Sync server" below.
+- Sync needs a server. The app in this repository works without one; sync appears only when it is built with one. See "Sync server" below.
 
 ## Privacy
 
 - Entries, moods, chats, memories and settings are stored in your browser (IndexedDB). Without sync, nothing leaves your device except what you send to your AI provider.
-- With sync on, the same data is uploaded encrypted with a key derived from your sync passphrase. The server sees your email, how many records you have, their sizes and upload times, and nothing else. The passphrase is never sent and cannot be recovered: if you forget it, reset sync from a device that still has your diary. [docs/sync-protocol.md](docs/sync-protocol.md) describes exactly what is sent.
+- With sync on, the same data is uploaded encrypted with a key derived from your sync passphrase. The server sees your email, plan and storage use, the interface language sent when you sign in by email, your Google identity if you use Google, and, like any server, the IP address and timing of requests. It also sees how many records you have, their sizes, upload times and how often each one changes. It never receives diary text, moods, tags, chats, memories, summaries, letters, settings, your AI API key, the date an entry belongs to, or which kind of data a record holds. The diary, the session token and the sync keys are stored unencrypted in the browser on each device, so anyone with access to your browser profile can read the diary, with or without sync. The passphrase is never sent and cannot be recovered: if you forget it, reset sync from a device that still has your diary. [docs/sync-protocol.md](docs/sync-protocol.md) describes exactly what is sent.
 - AI features are off until you add an API key. The key is stored in your browser and sent only to the provider you configured. With sync on it is also uploaded, encrypted like everything else, so your other devices can use it.
 - When AI is on, the text needed for a feature is sent to that provider: your messages, and, if you allow it, recent diary entries, memories and summaries. Each of these has its own switch in Settings.
 - The Wrapped letter is written from statistics, memories and summaries only, never from diary text.

@@ -8,13 +8,22 @@ Sync is optional. An app built without `VITE_API_URL` has no account screen and 
 
 The server sees:
 
-- the account email;
-- how many records an account has, the size of each one, and when each was uploaded;
+- the account email, its plan and how much storage it uses;
+- the interface language, sent with an email sign-in request (`lang`);
+- the Google account identity, when Google sign-in is used;
+- the IP address and timing of every request, like any server;
+- how many records an account has, the size of each one, when each was uploaded, a stable id per record and how often each id is rewritten (so it can tell, for example, that one hidden record is edited every day, though not which day it is or what it says);
 - the wrapped key, its salt and its iteration count (useless without the passphrase).
 
-The server does not see diary text, moods, tags, chat messages, memories, summaries, settings (the AI API key is one of them: it is part of the synced AI setting, and is encrypted like the rest), the date an entry belongs to, or which kind of data a record holds.
+The server never receives diary text, moods, tags, chats, memories, summaries, letters, settings, the AI API key (it is part of the synced AI setting and is encrypted like the rest), the date an entry belongs to, or which kind of data a record holds.
 
-Not protected: a server that returns old data or drops records; a host that serves modified app code; a weak passphrase against offline guessing if the server database leaks.
+Not protected:
+
+- a server that returns old data or drops records;
+- a host that serves modified app code;
+- a weak passphrase against offline guessing if the server database leaks;
+- the diary, the session token and the sync keys are stored unencrypted in the browser's storage on each device, so anyone with access to the browser profile can read the diary (sync does not change that);
+- metadata: sizes, timing and how often a record changes are visible to the server.
 
 ## Keys
 
@@ -59,17 +68,33 @@ Every request with a body sends `Content-Type: application/json`. Signed-in requ
 | `GET /sync?since=<rev>` | `{ keyId, records: [{ id, blob, rev }], rev, more }` |
 | `POST /sync` `{ keyId, records: [{ id, blob, prevRev }] }` | `{ applied: [{ id, rev }], conflicts: [id] }` |
 
-Limits: 1 MB per record, 20 MB per account, 100 records per request. The server accepts up to 4 MB per request and this client sends at most 1 MB.
+Limits: 1 MB per record, 20 MB per account, 100 records per request. The server accepts up to 4 MB per request and this client sends at most 1 MB. A record larger than 1 MB is not uploaded and is reported to the user.
+
+Sync may be limited to accounts with an active plan; the server answers `plan_required` otherwise.
+
+### Errors the client handles
+
+| Status and code | What this client does |
+|---|---|
+| 401 `unauthorized` | Asks the user to sign in again and keeps the sync keys |
+| 403 `plan_required` | Reports that sync is not active for this account |
+| 409 `key_changed` | Another device reset sync: asks for the passphrase |
+| 409 `key_exists` | Another device created the passphrase first: asks for that passphrase instead |
+| 413 `quota_exceeded` | Stops uploading and reports it; what was already downloaded in that round is kept |
+| 400 `invalid_code` | Reports a wrong or expired sign-in code |
+| 429 `rate_limited` | Reports "too often" on sign-in; during sync it retries later with growing delays |
+
+Network failures and server errors (5xx) are retried later with growing delays.
 
 ## Syncing
 
 The server gives every write a revision number that only grows within an account.
 
 - **Pull.** The client asks for everything after its cursor and stores the returned `rev` as the new cursor. It compares `keyId` with its own key id before decrypting anything: a different id means another device reset sync, and the client asks for the passphrase again. A `rev` lower than the `since` it sent means the server's history went backwards; the client forgets its cursor and revisions and starts from 0. A pulled record is only accepted under the id its collection and key hash to; anything else is dropped.
-- **Push.** For each record the client sends `prevRev`, the revision it last saw for that record (0 for a new one). The server writes the record only if that is still its revision; otherwise the id comes back in `conflicts`, and the client pulls, merges and pushes again.
+- **Push.** For each record the client sends `prevRev`, the revision it last saw for that record (0 for a new one). The server writes the record only if that is still its revision; otherwise the id comes back in `conflicts`, and the client pulls, merges and pushes again. A sync round repeats pull and push at most three times and leaves any remaining conflicts for the next sync.
 - **Finding changes.** The client keeps, per record, what the server is known to hold. A local record that differs from that is uploaded; a record that is gone locally is uploaded as a deletion. A deletion is never applied to a setting, in either direction.
 
 ## When two devices changed the same thing
 
-- **Diary entries** are merged. Mood and text are handled separately, so a mood set on one device and text written on another are both kept. If the text changed on both devices, both versions are kept, the newer one first, separated by a horizontal rule; when one version already contains the other, the fuller one is kept and nothing is stacked. An edit wins over a deletion.
+- **Diary entries** are merged. Mood and text are handled separately, so a mood set on one device and text written on another are both kept. If the text changed on both devices, both versions are kept, the newer one first, separated by a horizontal rule; when the whole of one version appears inside the other, the longer one is kept and nothing is stacked. An edit wins over a deletion.
 - **Everything else** keeps the version that changed last. A setting or a deletion counts as changed at the moment it is synced.

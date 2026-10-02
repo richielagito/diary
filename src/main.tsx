@@ -41,8 +41,14 @@ async function start() {
 
   // Tanpa VITE_API_URL tidak ada akun dan tidak ada sync: aplikasi berjalan sepenuhnya lokal.
   const apiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
-  const sync = apiUrl ? createSyncController({ db, api: createApi(apiUrl) }) : null
-  await sync?.start()
+  let sync = apiUrl ? createSyncController({ db, api: createApi(apiUrl) }) : null
+  try {
+    await sync?.start()
+  } catch {
+    // Sync tidak bisa dimulai: diary tetap dibuka, tanpa bagian akun.
+    console.error('sync could not start; continuing without it')
+    sync = null
+  }
 
   root.render(
     <StrictMode>

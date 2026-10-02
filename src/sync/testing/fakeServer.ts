@@ -18,7 +18,7 @@ const MB = 1024 * 1024
 const fail = (status: number, code: string): FakeResponse => ({ status, body: { error: code } })
 
 /**
- * In-memory stand-in for diary-server, for unit tests and Playwright. It follows docs/sync-protocol.md:
+ * In-memory stand-in for the sync server, for unit tests and Playwright. It follows docs/sync-protocol.md:
  * the same routes, status codes and conditional-write rules, without rate limits or persistence.
  */
 export class FakeServer {

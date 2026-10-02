@@ -3,7 +3,7 @@ import { FakeServer } from '../src/sync/testing/fakeServer'
 
 const CORS = {
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': '*',
+  'access-control-allow-headers': 'authorization, content-type',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }
 const EMAIL = 'e2e@example.com'
@@ -52,9 +52,20 @@ async function anotherDevice(page: Page, server: FakeServer) {
   await expect(page.getByText(/^Terakhir sync:/)).toBeVisible()
 }
 
-async function syncNow(page: Page) {
+/** How many requests of this kind the server has seen so far. */
+const requestCount = (server: FakeServer, method: string, path: string) =>
+  server.requests.filter((r) => r.method === method && r.path === path).length
+const pushes = (server: FakeServer) => requestCount(server, 'POST', '/sync')
+const pulls = (server: FakeServer) => requestCount(server, 'GET', '/sync')
+
+/** Presses "Sync sekarang" and waits until the server has seen a new pull from this click. */
+async function syncNow(page: Page, server: FakeServer) {
   await page.goto('/settings')
+  await expect(page.getByRole('button', { name: 'Sync sekarang' })).toBeEnabled()
+  const before = pulls(server)
   await page.getByRole('button', { name: 'Sync sekarang' }).click()
+  await expect.poll(() => pulls(server), { timeout: 15_000 }).toBeGreaterThan(before)
+  await expect(page.getByRole('button', { name: 'Sync sekarang' })).toBeEnabled()
   await expect(page.getByText(/^Terakhir sync:/)).toBeVisible()
 }
 
@@ -65,11 +76,15 @@ test('a diary written on one device appears on another, and the server never see
   const laptop = await newDevice(browser, server)
   await firstDevice(laptop.page, server)
 
+  const pushesBefore = pushes(server)
+  const recordsBefore = server.user(EMAIL).records.size
   await laptop.page.goto('/')
   await editor(laptop.page).click()
   await laptop.page.keyboard.type('RAHASIA-e2e ditulis di laptop ')
   await expect(laptop.page.getByRole('status')).toHaveText('Tersimpan')
-  await expect.poll(() => server.user(EMAIL).records.size, { timeout: 15_000 }).toBeGreaterThan(0)
+  await expect.poll(() => pushes(server), { timeout: 15_000 }).toBeGreaterThan(pushesBefore)
+  // The entry's blob is new, so the check below ran against it and not only against earlier records.
+  expect(server.user(EMAIL).records.size).toBeGreaterThan(recordsBefore)
   for (const record of server.user(EMAIL).records.values()) {
     expect(Buffer.from(record.blob, 'base64').toString('latin1')).not.toContain('RAHASIA')
   }
@@ -96,18 +111,24 @@ test('a mood tapped on the phone and text written offline on the laptop both sur
   await laptop.page.keyboard.type('ditulis di kereta ')
   await expect(laptop.page.getByRole('status')).toHaveText('Tersimpan')
 
+  // 1. The phone taps the mood and its push reaches the server.
+  const phonePushFrom = pushes(server)
   await phone.page.goto('/')
   await phone.page.getByRole('button', { name: 'Senang' }).click()
   await expect(phone.page.getByRole('button', { name: 'Senang' })).toHaveAttribute('aria-pressed', 'true')
-  await expect.poll(() => server.user(EMAIL).records.size, { timeout: 15_000 }).toBeGreaterThan(0)
+  await expect.poll(() => pushes(server), { timeout: 15_000 }).toBeGreaterThan(phonePushFrom)
 
+  // 2. The laptop is back online: it pulls, then pushes the merged entry.
   offline.delete(laptop.context)
-  await syncNow(laptop.page)
+  const laptopPushFrom = pushes(server)
+  await syncNow(laptop.page, server)
+  await expect.poll(() => pushes(server), { timeout: 15_000 }).toBeGreaterThan(laptopPushFrom)
   await laptop.page.goto('/')
   await expect(editor(laptop.page)).toContainText('ditulis di kereta')
   await expect(laptop.page.getByRole('button', { name: 'Senang' })).toHaveAttribute('aria-pressed', 'true')
 
-  await syncNow(phone.page)
+  // 3. The phone pulls the merged entry.
+  await syncNow(phone.page, server)
   await phone.page.goto('/')
   await expect(editor(phone.page)).toContainText('ditulis di kereta')
   await expect(phone.page.getByRole('button', { name: 'Senang' })).toHaveAttribute('aria-pressed', 'true')
