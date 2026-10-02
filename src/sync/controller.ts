@@ -369,14 +369,22 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
   /** Selagi retrying, percobaan ulang yang sudah dijadwalkan yang mengunggah perubahan; tidak ada yang boleh memotong jedanya. */
   const waitingToRetry = () => current.problem === 'retrying' && timer !== null
 
+  /** True sejak halaman disembunyikan sampai perubahan pertama sesudahnya. */
+  let justHidden = false
+
   const onMutated = (parts: Record<string, unknown>) => {
     const prefix = `idb://${db.name}/`
     const touched = Object.keys(parts).some((key) => key.startsWith(prefix) && !OWN_TABLES.has(key.slice(prefix.length).split('/')[0]!))
-    // Halaman yang tersembunyi bisa dibekukan kapan saja, jadi di sana perubahan tidak menunggu jeda.
-    if (touched && current.phase === 'ready' && token && !waitingToRetry()) schedule(hidden() ? 0 : debounceMs)
+    if (!touched) return
+    // Simpanan terakhir editor mendarat tepat setelah halaman disembunyikan dan halaman bisa dibekukan kapan saja, jadi yang itu tidak menunggu jeda.
+    // Perubahan berikutnya (tab lain yang sedang diketik, pekerjaan latar) menunggu seperti biasa.
+    const flush = justHidden
+    justHidden = false
+    if (current.phase === 'ready' && token && !waitingToRetry()) schedule(flush ? 0 : debounceMs)
   }
   /** Halaman disembunyikan atau ditutup: putaran yang masih menunggu jeda dijalankan sekarang, sebelum browser membekukan halaman. */
   const onLeave = () => {
+    justHidden = true
     if (timer === null || waitingToRetry()) return
     cancelTimer()
     void syncNow()
@@ -384,6 +392,7 @@ export function createSyncController(options: SyncControllerOptions): SyncContro
   const onOnline = () => void syncNow()
   const onVisible = () => {
     if (hidden()) return onLeave()
+    justHidden = false
     if (globalThis.document?.visibilityState !== 'visible') return
     // Tampilkan apa yang dilakukan tab lain, walau tidak ada yang perlu di-sync.
     void (rekeying === 0 ? load() : Promise.resolve()).catch(() => {}).then(() => syncNow())

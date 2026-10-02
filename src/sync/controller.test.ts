@@ -706,6 +706,21 @@ describe('when the page is hidden or closed', () => {
     await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
   })
 
+  it('skips the pause only for the first change after the page was hidden', async () => {
+    const server = new FakeServer()
+    const d = await prepared(server, { debounceMs: 10_000 })
+    hide()
+    document.dispatchEvent(new Event('visibilitychange'))
+    await d.diary.save(DAY, { markdown: 'simpanan terakhir editor' })
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+    await d.controller.syncNow()
+    // Later changes on a hidden page (another tab typing, background jobs) wait for the pause like any other.
+    const before = server.requests.length
+    await d.diary.save('2026-10-02', { markdown: 'perubahan dari tab lain' })
+    await quiet()
+    expect(server.requests.length).toBe(before)
+  })
+
   it('does not cut a retry wait short, and listens to nothing after stop', async () => {
     const server = new FakeServer()
     const d = await prepared(server, { debounceMs: 10_000, retryDelaysMs: [10_000] })
