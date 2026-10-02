@@ -19,12 +19,6 @@ it('stores and reads values, including non-extractable keys', async () => {
   expect(await open(stored!, id, await seal(keys, id, envelope))).toEqual(envelope)
 })
 
-it('finds an index row by collection and key', async () => {
-  const db = newDb()
-  await db.syncIndex.put({ id: 'abc', c: 'entries', k: '2026-10-01', t: 1, rev: 3, deleted: false, base: { markdown: 'a', mood: null } })
-  expect((await db.syncIndex.where('[c+k]').equals(['entries', '2026-10-01']).first())?.id).toBe('abc')
-})
-
 it('clears sync data without touching the diary', async () => {
   const db = newDb()
   await db.entries.put({ date: '2026-10-01', markdown: 'tetap', mood: null, tags: [], wordCount: 1, createdAt: 1, updatedAt: 1 })

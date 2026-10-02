@@ -57,7 +57,7 @@ export class DiaryDB extends Dexie {
       letters: 'periodId',
     })
     this.version(5).stores({
-      syncIndex: 'id, [c+k]',
+      syncIndex: 'id',
       syncState: 'key',
     })
   }
