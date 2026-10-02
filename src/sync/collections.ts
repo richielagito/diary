@@ -76,7 +76,11 @@ export async function getLocal(db: DiaryDB, c: string, k: string): Promise<Local
   return s && row ? toRecord(s, row) : null
 }
 
-/** True kalau versi aplikasi ini bisa menyimpan record itu. Yang tidak dikenal diabaikan, bukan dihapus. */
+/**
+ * True kalau versi aplikasi ini bisa menyimpan record itu. Yang tidak dikenal diabaikan, bukan dihapus.
+ * Perubahan bentuk pada koleksi yang sudah ada, yang ditolak di sini oleh versi lama, harus menaikkan `v` envelope:
+ * versi lama mengingat revisi record yang ditolaknya dan bisa menimpanya dengan versinya sendiri.
+ */
 export function accepts(c: string, k: string, d: unknown): boolean {
   // Pengaturan tidak pernah dihapus aplikasi, jadi penanda hapus untuknya hanya gangguan.
   if (c === 'settings') return isSyncedSetting(k) && d !== null && typeof d === 'object' && 'value' in (d as object)

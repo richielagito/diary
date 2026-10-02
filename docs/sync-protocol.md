@@ -49,7 +49,7 @@ Every synced item is one record. Its plaintext is an envelope:
 
 The record id on the server is the first 16 bytes of `HMAC-SHA256(idKey, c + "\n" + k)`, base64url. The blob is a 12-byte random IV followed by the AES-256-GCM ciphertext of the envelope, base64, with the id as additional authenticated data, so a blob moved to another id does not decrypt.
 
-A client that meets an envelope with `v` greater than it knows stops syncing and asks to be updated. Records in a collection it does not know are ignored.
+A client that meets an envelope with `v` greater than it knows stops syncing and asks to be updated. Records in a collection it does not know are ignored. A change to the shape of a record in an existing collection that older clients cannot store must therefore raise `v`: an older client that only skipped such a record could later overwrite it with its own version.
 
 ## Requests
 
