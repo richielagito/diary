@@ -18,6 +18,9 @@ const contains = (a: string, b: string): boolean => a.startsWith(b) || `\n${a}\n
  * Perbandingan memakai bentuk `norm`; yang dikembalikan selalu teks aslinya.
  */
 export function mergeText(newer: string, older: string, base: string): string {
+  // Persis sama dulu: sisi yang tidak menyentuh teks tidak boleh mengalahkan suntingan yang hanya mengubah escape atau spasi.
+  if (newer === older || older === base) return newer
+  if (newer === base) return older
   const n = norm(newer)
   const o = norm(older)
   const b = norm(base)

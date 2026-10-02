@@ -39,6 +39,12 @@ describe('mergeText', () => {
     expect(mergeText('a #x_y lalu tambah', 'a #x\\_y', 'a #x_y')).toBe('a #x_y lalu tambah')
   })
 
+  it('keeps an edit that only changes the escaping when the other side left the text alone', () => {
+    expect(mergeText('\\*penting\\*', '*penting*', '\\*penting\\*')).toBe('*penting*')
+    expect(mergeText('*penting*', '\\*penting\\*', '\\*penting\\*')).toBe('*penting*')
+    expect(mergeText('awal', 'awal\n', 'awal')).toBe('awal\n')
+  })
+
   it('stacks a short note that only appears inside a word of the other text', () => {
     expect(mergeText('ok', 'tadi ke toko buku', '')).toBe(`ok${MERGE_SEPARATOR}tadi ke toko buku`)
     expect(mergeText('tadi ke toko buku', 'ok', '')).toBe(`tadi ke toko buku${MERGE_SEPARATOR}ok`)
