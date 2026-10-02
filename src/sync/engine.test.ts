@@ -502,6 +502,64 @@ describe('trouble', () => {
     expect((await a.settings.getAll()).theme).toBe('dark')
   })
 
+  it('uploads its own entry over a record it cannot decrypt, without conflicting forever', async () => {
+    const { server, session, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'punyaku' })
+    const id = await recordId(session.keys, 'entries', DAY)
+    await a.deps.api.push(session.token, session.keyId, [{ id, blob: btoa('bukan ciphertext yang sah'), prevRev: 0 }])
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(await a.sync()).toMatchObject({ pushed: 1, unresolved: 0 })
+    expect(await a.sync()).toMatchObject({ pushed: 0, unresolved: 0 })
+    warn.mockRestore()
+    expect((await serverEnvelopes(server, session.keys)).map((e) => (e.d as { markdown: string }).markdown)).toEqual(['punyaku'])
+    expect((await a.diary.get(DAY))!.markdown).toBe('punyaku')
+  })
+
+  it('remembers the revision of an unreadable record that replaced one it had synced, so a later edit is uploaded', async () => {
+    const { server, session, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    await a.sync()
+    const id = await recordId(session.keys, 'entries', DAY)
+    server.user(EMAIL).records.set(id, { blob: btoa('bukan ciphertext yang sah'), rev: server.user(EMAIL).nextRev++ })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await a.sync()
+    a.clock.now = 2000
+    await a.diary.save(DAY, { markdown: 'satu dua' })
+    expect(await a.sync()).toMatchObject({ pushed: 1, unresolved: 0 })
+    warn.mockRestore()
+    expect((await serverEnvelopes(server, session.keys)).map((e) => (e.d as { markdown: string }).markdown)).toEqual(['satu dua'])
+  })
+
+  it('uploads its own setting over a deletion marker, without conflicting forever', async () => {
+    const { server, session, a } = await twoDevices()
+    await a.settings.set('theme', 'dark')
+    const id = await recordId(session.keys, 'settings', 'theme')
+    const blob = await seal(session.keys, id, { v: 1, c: 'settings', k: 'theme', t: 9_999_999, d: null })
+    await a.deps.api.push(session.token, session.keyId, [{ id, blob, prevRev: 0 }])
+    expect(await a.sync()).toMatchObject({ pushed: 1, unresolved: 0 })
+    expect(await a.sync()).toMatchObject({ pushed: 0, unresolved: 0 })
+    expect((await a.settings.getAll()).theme).toBe('dark')
+    expect(await open(session.keys, id, server.user(EMAIL).records.get(id)!.blob)).toMatchObject({ c: 'settings', k: 'theme', d: { value: 'dark' } })
+  })
+
+  it('reports the conflicts that are left when a round gives up', async () => {
+    const { server, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    const real = a.deps.api
+    const stubborn: Api = { ...real, push: async (_token, _keyId, records) => ({ applied: [], conflicts: records.map((r) => r.id) }) }
+    expect(await syncOnce({ ...a.deps, api: stubborn })).toMatchObject({ pushed: 0, unresolved: 1 })
+    expect(server.user(EMAIL).records.size).toBe(0)
+    expect(await a.sync()).toMatchObject({ pushed: 1, unresolved: 0 })
+  })
+
+  it('gives up on a pull that never ends', async () => {
+    const { session, a } = await twoDevices()
+    let pulls = 0
+    const endless: Api = { ...a.deps.api, pull: async () => ({ keyId: session.keyId, records: [], rev: ++pulls, more: true }) }
+    await expect(syncOnce({ ...a.deps, api: endless })).rejects.toMatchObject({ status: 502, code: 'bad_response' })
+    expect(pulls).toBe(1000)
+  })
+
   it('skips a record it cannot decrypt and keeps going', async () => {
     const { session, a, b } = await twoDevices()
     await a.diary.save(DAY, { markdown: 'satu' })

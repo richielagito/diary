@@ -1,4 +1,4 @@
-import type { Api, PushRecord } from '../account/api'
+import { ApiError, type Api, type PushRecord } from '../account/api'
 import type { DayEntry } from '../domain/types'
 import type { DiaryDB, SyncIndexRow } from '../storage/db'
 import { accepts, getLocal, readLocal, syncedTables, writeLocal, type LocalRecord } from './collections'
@@ -11,6 +11,8 @@ const MAX_PUSH_RECORDS = 100
 const MAX_PUSH_BYTES = 1024 * 1024
 /** Tarik lalu kirim diulang kalau server melaporkan bentrok; sisanya menunggu sync berikutnya. */
 const MAX_ROUNDS = 3
+/** Server yang tidak pernah selesai menjawab tarikan tidak boleh menahan putaran selamanya. */
+const MAX_PULL_PAGES = 1000
 
 /** Kunci akun di server bukan lagi kunci perangkat ini (perangkat lain melakukan reset). */
 export class KeyChangedError extends Error {
@@ -34,6 +36,8 @@ export interface SyncOutcome {
   pushed: number
   /** Record lokal di atas 1 MB, tidak dikirim. */
   skippedTooLarge: number
+  /** Bentrok yang masih dilaporkan kiriman terakhir putaran ini; menunggu sync berikutnya. */
+  unresolved: number
 }
 
 const entryBase = (d: unknown): EntryBase => ({ markdown: (d as DayEntry).markdown, mood: (d as DayEntry).mood })
@@ -58,11 +62,21 @@ function differs(local: LocalRecord | null, idx: SyncIndexRow): boolean {
   return local.t !== idx.t
 }
 
+/**
+ * Record yang dilewati (tidak bisa dibuka, id-nya salah, atau tidak diterima versi ini) tetap dicatat revisinya.
+ * Tanpa itu versi perangkat ini untuk id yang sama dikirim dengan prevRev basi dan bentrok di setiap putaran, selamanya.
+ * Baris yang sudah ada hanya berganti revisi; kalau belum ada, dibuat baris penanda yang hanya dikenali lewat id-nya.
+ */
+async function rememberRev(db: DiaryDB, id: string, rev: number): Promise<void> {
+  const row = await db.syncIndex.get(id)
+  await db.syncIndex.put(row ? { ...row, rev } : { id, c: '', k: id, t: 0, rev, deleted: true })
+}
+
 /** Menerapkan satu record dari server. Dipanggil di dalam transaksi; tidak boleh menunggu apa pun selain Dexie. */
 async function applyRemote(db: DiaryDB, id: string, rev: number, env: Envelope, now: number): Promise<void> {
   const idx = await db.syncIndex.get(id)
   if (idx?.rev === rev) return
-  if (!accepts(env.c, env.k, env.d)) return
+  if (!accepts(env.c, env.k, env.d)) return rememberRev(db, id, rev)
   if (idx?.sent && idx.sent.t === env.t && idx.sent.json === JSON.stringify(env.d)) {
     // Tulisan perangkat ini sendiri yang jawabannya hilang. Server sudah memegangnya: cukup catat revisinya.
     // Kalau isi lokal sudah berubah lagi sejak itu, pushAll mengirimnya sebagai edit biasa, tanpa gabung.
@@ -90,7 +104,8 @@ async function applyRemote(db: DiaryDB, id: string, rev: number, env: Envelope, 
 async function pullAll({ db, api, token, keys, keyId, now }: SyncDeps): Promise<number> {
   let cursor = (await getState<number>(db, 'cursor')) ?? 0
   let count = 0
-  for (;;) {
+  for (let pages = 0; ; pages++) {
+    if (pages === MAX_PULL_PAGES) throw new ApiError(502, 'bad_response')
     const page = await api.pull(token, cursor)
     if (page.keyId !== keyId) throw new KeyChangedError()
     if (page.rev < cursor) {
@@ -106,6 +121,7 @@ async function pullAll({ db, api, token, keys, keyId, now }: SyncDeps): Promise<
     // ponytail: tulisan perangkat ini sendiri ikut terunduh lagi (dilewati sebelum dekripsi). Kalau boros, majukan kursor setelah kirim.
     const known = await db.syncIndex.bulkGet(page.records.map((r) => r.id))
     const opened: { id: string; rev: number; env: Envelope }[] = []
+    const unreadable: { id: string; rev: number }[] = []
     for (const [i, record] of page.records.entries()) {
       if (known[i]?.rev === record.rev) continue
       try {
@@ -116,11 +132,13 @@ async function pullAll({ db, api, token, keys, keyId, now }: SyncDeps): Promise<
       } catch (e) {
         if (e instanceof OutdatedError) throw e
         console.warn('sync: skipped a record that could not be decrypted')
+        unreadable.push({ id: record.id, rev: record.rev })
       }
     }
 
     // Dekripsi di luar, penerapan di dalam satu transaksi: halaman diterapkan utuh bersama kursornya, atau tidak sama sekali.
     await db.transaction('rw', [...syncedTables(db), db.syncIndex, db.syncState], async () => {
+      for (const r of unreadable) await rememberRev(db, r.id, r.rev)
       for (const r of opened) await applyRemote(db, r.id, r.rev, r.env, now())
       await setState(db, 'cursor', page.rev)
     })
@@ -202,6 +220,8 @@ async function pushAll(deps: SyncDeps): Promise<{ pushed: number; conflicts: num
 
   for (const item of await pending(deps)) {
     const id = item.id ?? (await recordId(keys, item.c, item.k))
+    // Tanpa baris menurut koleksi dan kunci masih mungkin ada baris menurut id: record di server yang dilewati saat ditarik.
+    const prevRev = item.id ? item.prevRev : ((await db.syncIndex.get(id))?.rev ?? 0)
     const blob = await seal(keys, id, { v: 1, c: item.c, k: item.k, t: item.t, d: item.d })
     const size = blobBytes(blob)
     if (size > MAX_BLOB_BYTES) {
@@ -209,7 +229,7 @@ async function pushAll(deps: SyncDeps): Promise<{ pushed: number; conflicts: num
       continue
     }
     if (batch.length === MAX_PUSH_RECORDS || bytes + size > MAX_PUSH_BYTES) await flush()
-    batch.push({ record: { id, blob, prevRev: item.prevRev }, item })
+    batch.push({ record: { id, blob, prevRev }, item })
     bytes += size
   }
   await flush()
@@ -218,12 +238,13 @@ async function pushAll(deps: SyncDeps): Promise<{ pushed: number; conflicts: num
 
 /** Satu putaran sync: tarik, gabung, kirim. Aman dipanggil berulang dan aman kalau terputus di tengah. */
 export async function syncOnce(deps: SyncDeps): Promise<SyncOutcome> {
-  const outcome: SyncOutcome = { pulled: 0, pushed: 0, skippedTooLarge: 0 }
+  const outcome: SyncOutcome = { pulled: 0, pushed: 0, skippedTooLarge: 0, unresolved: 0 }
   for (let round = 0; round < MAX_ROUNDS; round++) {
     outcome.pulled += await pullAll(deps)
     const result = await pushAll(deps)
     outcome.pushed += result.pushed
     outcome.skippedTooLarge = result.skipped
+    outcome.unresolved = result.conflicts
     if (result.conflicts === 0) break
   }
   return outcome
