@@ -85,7 +85,7 @@ The server implementation used by the hosted app is not part of this repository.
 | `npm run preview` | Serve the production build |
 | `npm test` | Run unit and component tests (Vitest) |
 | `npm run typecheck` | Type-check only |
-| `npm run e2e` | Run end-to-end tests (Playwright, builds first) |
+| `npm run e2e` | Run end-to-end tests (Playwright; builds into `dist-e2e/` and `dist-e2e-nosync/`, never into `dist/`) |
 
 Tests never call a real AI provider.
 
