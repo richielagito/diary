@@ -8,7 +8,7 @@ import { getState, setState } from './state'
 
 export const MAX_BLOB_BYTES = 1024 * 1024
 const MAX_PUSH_RECORDS = 100
-const MAX_PUSH_BYTES = 4 * 1024 * 1024
+const MAX_PUSH_BYTES = 1024 * 1024
 /** Tarik lalu kirim diulang kalau server melaporkan bentrok; sisanya menunggu sync berikutnya. */
 const MAX_ROUNDS = 3
 

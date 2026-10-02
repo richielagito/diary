@@ -2,7 +2,7 @@ import { createApi } from '../account/api'
 import { DiaryDB } from '../storage/db'
 import { DexieDiaryRepository } from '../storage/DexieDiaryRepository'
 import { KeyExistsError, PassphraseTooShortError, createSyncController, type SyncController } from './controller'
-import { WrongPassphraseError, recordId, seal, sha256Base64Url, type SyncKeys } from './crypto'
+import { WrongPassphraseError, open, recordId, seal, sha256Base64Url, type SyncKeys } from './crypto'
 import { getState } from './state'
 import { FakeServer } from './testing/fakeServer'
 
@@ -30,6 +30,7 @@ interface DeviceOptions {
   locks?: Pick<LockManager, 'request'> | null
   retryDelaysMs?: readonly number[]
   debounceMs?: number
+  now?: () => number
 }
 
 function device(server: FakeServer, db = new DiaryDB(`test-${crypto.randomUUID()}`), extra: DeviceOptions = {}) {
@@ -43,6 +44,7 @@ function device(server: FakeServer, db = new DiaryDB(`test-${crypto.randomUUID()
     origin: 'https://app.test',
     storage,
     ...(extra.locks !== undefined ? { locks: extra.locks } : {}),
+    ...(extra.now ? { now: extra.now } : {}),
   })
   live.push(controller)
   return { db, controller, storage, diary: new DexieDiaryRepository(db) }
@@ -502,5 +504,150 @@ describe('fix round 1', () => {
     const again = device(server, first.db)
     await again.controller.start()
     expect(again.controller.status()).toMatchObject({ phase: 'ready', problem: 'needs-login', email: EMAIL })
+  })
+})
+
+/** Pauses the next read of the stored keys (after the rows are read, before the caller sees them). */
+function tornRead(db: DiaryDB) {
+  let armed = false
+  let paused = false
+  let release: () => void = () => {}
+  const table = db.syncState
+  const get = table.get.bind(table) as (...args: unknown[]) => Promise<unknown>
+  const bulkGet = table.bulkGet.bind(table) as (...args: unknown[]) => Promise<unknown>
+  const pause = async (result: unknown) => {
+    if (armed) {
+      armed = false
+      paused = true
+      await new Promise<void>((resolve) => (release = resolve))
+    }
+    return result
+  }
+  vi.spyOn(table, 'get').mockImplementation(((...args: unknown[]) => get(...args).then((r) => (args[0] === 'keys' ? pause(r) : r))) as never)
+  vi.spyOn(table, 'bulkGet').mockImplementation(((...args: unknown[]) => bulkGet(...args).then(pause)) as never)
+  return { arm: () => (armed = true), paused: () => paused, release: () => release() }
+}
+
+describe('fix round 2', () => {
+  it('runs a round after a failed rekey so a pending retry is never lost', async () => {
+    const server = new FakeServer()
+    let holdPut: Promise<void> = Promise.resolve()
+    const fetchImpl: typeof fetch = async (input, init) => {
+      if (init?.method === 'PUT') await holdPut
+      return server.fetch(input, init)
+    }
+    const d = device(server, undefined, { fetchImpl, retryDelaysMs: [150] })
+    await d.controller.start()
+    await signIn(d.controller, server)
+    await d.controller.createPassphrase(PASS)
+    await synced(d.controller)
+    server.offline = true
+    await d.diary.save(DAY, { markdown: 'saat offline' })
+    await vi.waitFor(() => expect(d.controller.status().problem).toBe('retrying'))
+
+    let releasePut = () => {}
+    holdPut = new Promise<void>((resolve) => (releasePut = resolve))
+    const rejected = expect(d.controller.resetSync('frasa sandi baru')).rejects.toThrow()
+    await quiet(400) // the retry timer fires while the key is being replaced
+    releasePut()
+    await rejected
+    server.offline = false
+    await d.diary.save('2026-10-02', { markdown: 'sesudah' })
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(2))
+    await vi.waitFor(() => expect(d.controller.status().problem).toBeNull())
+  })
+
+  it('never seals with the old key when another tab changes the key during a round', async () => {
+    const server = new FakeServer()
+    const one = await ready(server, true)
+    const locks = fakeLocks()
+    const a = device(server, undefined, { locks })
+    await a.controller.start()
+    await signIn(a.controller, server)
+    await a.controller.enterPassphrase(PASS)
+    await synced(a.controller)
+    const b = device(server, a.db, { locks })
+    await b.controller.start()
+    await a.diary.save(DAY, { markdown: 'sebelum reset' })
+    await vi.waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+    await quiet(100)
+    await one.controller.resetSync('frasa sandi baru')
+    await synced(one.controller)
+
+    const torn = tornRead(a.db)
+    torn.arm()
+    const round = b.controller.syncNow()
+    await vi.waitFor(() => expect(torn.paused()).toBe(true))
+    const entering = a.controller.enterPassphrase('frasa sandi baru')
+    // Without a lock the key change finishes now; with one it waits for this round (the race only bounds the wait).
+    await Promise.race([entering, quiet(500)])
+    torn.release()
+    await Promise.all([round, entering])
+    await a.controller.syncNow()
+    await b.controller.syncNow()
+
+    const fresh = (await getState<SyncKeys>(a.db, 'keys'))!
+    for (const [id, record] of server.user(EMAIL).records) await open(fresh, id, record.blob)
+    expect(a.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(b.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(await getState(a.db, 'keyId')).toBe(server.user(EMAIL).key!.keyId)
+  })
+
+  it('keeps a key stored by one tab when another tab fails late with a key change', async () => {
+    const server = new FakeServer()
+    const one = await ready(server, true)
+    const locks = fakeLocks()
+    const a = device(server, undefined, { locks })
+    await a.controller.start()
+    await signIn(a.controller, server)
+    await a.controller.enterPassphrase(PASS)
+    await synced(a.controller)
+    const gate = gated(server)
+    const b = device(server, a.db, { locks, fetchImpl: gate.fetchImpl })
+    await b.controller.start()
+    await one.controller.resetSync('frasa sandi baru')
+    await synced(one.controller)
+
+    gate.arm()
+    const before = gate.calls()
+    const round = b.controller.syncNow()
+    await vi.waitFor(() => expect(gate.calls()).toBeGreaterThan(before))
+    const entering = a.controller.enterPassphrase('frasa sandi baru')
+    await Promise.race([entering, quiet(400)])
+    gate.release()
+    await Promise.all([round, entering])
+    await a.controller.syncNow()
+    await b.controller.syncNow()
+
+    expect(await getState(a.db, 'keys')).toBeDefined()
+    expect(await getState(a.db, 'keyId')).toBe(server.user(EMAIL).key!.keyId)
+    expect(a.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+    expect(b.controller.status()).toMatchObject({ phase: 'ready', problem: null })
+  })
+
+  it('does not publish a new status when a reload finds nothing changed', async () => {
+    const server = new FakeServer()
+    const out = device(server)
+    await out.controller.start()
+    const before = out.controller.status()
+    let calls = 0
+    out.controller.subscribe(() => calls++)
+    document.dispatchEvent(new Event('visibilitychange'))
+    await quiet(50)
+    expect(out.controller.status()).toBe(before)
+    expect(calls).toBe(0)
+
+    const d = device(server, undefined, { now: () => 1 })
+    await d.controller.start()
+    await signIn(d.controller, server)
+    await d.controller.createPassphrase(PASS)
+    await synced(d.controller)
+    await quiet()
+    let notified = 0
+    d.controller.subscribe(() => notified++)
+    await d.controller.syncNow()
+    // Only syncing going true and false: the reload at the start of the round changes nothing.
+    expect(notified).toBe(2)
+    expect(d.controller.status().lastSyncAt).toBe(1)
   })
 })
