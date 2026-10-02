@@ -2,7 +2,7 @@
 
 A simple, minimalist diary that lives in your browser. Your writing stays on your device. An optional AI companion ("teman curhat") can talk with you about your day, using your own API key.
 
-Diary is a local-first PWA: it works offline, can be installed on a phone, and needs no account.
+Diary is a local-first PWA: it works offline, can be installed on a phone, and needs no account. Syncing between devices is optional and end-to-end encrypted.
 
 > Aplikasi diary sederhana yang menyimpan semua tulisan di perangkatmu sendiri, dengan teman curhat AI opsional. Antarmuka tersedia dalam Bahasa Indonesia dan English.
 
@@ -31,10 +31,18 @@ Diary is a local-first PWA: it works offline, can be installed on a phone, and n
 - Wrapped: a yearly or monthly story in slides, with an optional short letter from your companion.
 - A summary image you can save or share. It never contains diary text.
 
+**Sync between devices (optional)**
+- Sign in with an email code or Google, then choose a sync passphrase.
+- Entries, chats, memories, summaries and settings are encrypted on your device before they are uploaded. The server stores ciphertext only.
+- Works offline: changes are merged when the device is back online. A mood set on one device and text written on another are both kept.
+- Text that arrives from another device while you are typing is merged into the editor, not overwritten.
+- Sync needs a server. The public app can be built with or without one; see "Sync server" below.
+
 ## Privacy
 
-- Entries, moods, chats, memories and settings are stored in your browser (IndexedDB). There is no server.
-- AI features are off until you add an API key. The key is stored in your browser and sent only to the provider you configured.
+- Entries, moods, chats, memories and settings are stored in your browser (IndexedDB). Without sync, nothing leaves your device except what you send to your AI provider.
+- With sync on, the same data is uploaded encrypted with a key derived from your sync passphrase. The server sees your email, how many records you have, their sizes and upload times, and nothing else. The passphrase is never sent and cannot be recovered: if you forget it, reset sync from a device that still has your diary. [docs/sync-protocol.md](docs/sync-protocol.md) describes exactly what is sent.
+- AI features are off until you add an API key. The key is stored in your browser and sent only to the provider you configured. With sync on it is also uploaded, encrypted like everything else, so your other devices can use it.
 - When AI is on, the text needed for a feature is sent to that provider: your messages, and, if you allow it, recent diary entries, memories and summaries. Each of these has its own switch in Settings.
 - The Wrapped letter is written from statistics, memories and summaries only, never from diary text.
 - Because everything is local, clearing site data deletes your diary. Export a backup regularly.
@@ -55,6 +63,18 @@ npm run dev
 Then open the address Vite prints (by default http://localhost:5173).
 
 To use the AI companion, open **Pengaturan** (Settings), choose a provider, paste your API key, and press **Simpan**.
+
+## Sync server
+
+Sync is off unless the app is built with the address of a sync server:
+
+```bash
+cp .env.example .env.local
+# set VITE_API_URL in .env.local, then
+npm run dev
+```
+
+The server implementation used by the hosted app is not part of this repository. The protocol is documented in [docs/sync-protocol.md](docs/sync-protocol.md), and `src/sync/testing/fakeServer.ts` is a small in-memory implementation of it that the tests run against.
 
 ## Scripts
 
@@ -83,7 +103,7 @@ The AI companion is not a therapist and can be wrong. If you are in danger or th
 
 ## Roadmap
 
-- An optional paid tier with hosted AI and end-to-end-encrypted sync between devices. The diary and bring-your-own-key AI stay free.
+- Hosted AI, so the companion works without your own API key. The diary, bring-your-own-key AI and the app itself stay free and open source.
 
 ## License
 
