@@ -107,7 +107,7 @@ export const en: typeof id = {
     clear: 'Remove AI settings',
     required: 'Required: {{fields}}',
     privacy:
-      'Your API key is stored in this browser without encryption. Messages and diary context go directly from your browser to the provider you choose and fall under that provider’s privacy policy. Nothing passes through this app’s server.',
+      'Your API key is stored in this browser without encryption. Messages to the AI and diary context go straight from this browser to the provider you choose and fall under that provider’s privacy policy. With sync on, your AI settings and chats are also uploaded to the sync server, encrypted with your sync passphrase.',
     ollamaHint: 'Start Ollama with OLLAMA_ORIGINS allowing this app’s address.',
     persona: 'Persona',
     style: 'Speaking style',
@@ -279,7 +279,7 @@ export const en: typeof id = {
   memory: {
     title: 'What the AI knows about you',
     intro:
-      'The AI remembers short facts about you from your talks, so later conversations feel more connected. Everything stays on this device and you can change or delete it.',
+      'The AI remembers short facts about you from your talks, so later conversations feel more connected. They are stored on this device and you can change or delete them. With sync on, they are also uploaded encrypted.',
     privacy:
       'Memories and summaries are made by sending your conversations and diary to your AI provider in the background. Turn this off if you prefer.',
     enable: 'Let the AI remember',

@@ -105,7 +105,7 @@ export const id = {
     clear: 'Hapus pengaturan AI',
     required: 'Wajib diisi: {{fields}}',
     privacy:
-      'API key disimpan di browser ini tanpa enkripsi. Pesan dan konteks diary dikirim langsung dari browser ke provider yang kamu pilih dan tunduk pada kebijakan privasi provider itu. Tidak ada yang lewat server aplikasi ini.',
+      'API key disimpan di browser ini tanpa enkripsi. Pesan ke AI dan konteks diary dikirim langsung dari browser ini ke provider yang kamu pilih dan tunduk pada kebijakan privasi provider itu. Kalau sync aktif, pengaturan AI dan obrolanmu juga diunggah ke server sync, terenkripsi dengan frasa sandi sync-mu.',
     ollamaHint: 'Jalankan Ollama dengan OLLAMA_ORIGINS yang mengizinkan alamat aplikasi ini.',
     persona: 'Persona',
     style: 'Gaya bicara',
@@ -277,7 +277,7 @@ export const id = {
   memory: {
     title: 'Yang AI tahu tentang kamu',
     intro:
-      'AI mengingat fakta pendek tentang kamu dari curhat, supaya obrolan berikutnya lebih nyambung. Semuanya tersimpan di perangkat ini dan bisa kamu ubah atau hapus.',
+      'AI mengingat fakta pendek tentang kamu dari curhat, supaya obrolan berikutnya lebih nyambung. Memori tersimpan di perangkat ini dan bisa kamu ubah atau hapus. Kalau sync aktif, memori juga diunggah dalam keadaan terenkripsi.',
     privacy:
       'Memori dan ringkasan dibuat dengan mengirim percakapan dan diary ke provider AI-mu di latar belakang. Matikan kalau tidak mau.',
     enable: 'Izinkan AI mengingat',

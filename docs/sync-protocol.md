@@ -12,18 +12,18 @@ The server sees:
 - the interface language, sent with an email sign-in request (`lang`);
 - the Google account identity, when Google sign-in is used;
 - the IP address and timing of every request, like any server;
-- how many records an account has, the size of each one, when each was uploaded, a stable id per record and how often each id is rewritten (so it can tell, for example, that one hidden record is edited every day, though not which day it is or what it says);
+- how many records an account has, the size of each one, when each was uploaded, a stable id per record and how often each id is rewritten (so it can tell, for example, that one hidden record is edited every day, though not what it says). It is not told which day a record belongs to or which kind of data it holds, but it can often infer both: a record's first upload time is almost always the entry's day, and the first sync uploads records collection by collection, entries in date order;
 - the wrapped key, its salt and its iteration count (useless without the passphrase).
 
-The server never receives diary text, moods, tags, chats, memories, summaries, letters, settings, the AI API key (it is part of the synced AI setting and is encrypted like the rest), the date an entry belongs to, or which kind of data a record holds.
+The server never receives diary text, moods, tags, chats, memories, summaries, letters, settings or the AI API key (it is part of the synced AI setting and is encrypted like the rest). It is not told the date an entry belongs to or which kind of data a record holds; as said above, it can often infer them from when and in what order records are uploaded.
 
 Not protected:
 
-- a server that returns old data or drops records;
+- a server that replays old blobs or drops records: besides withholding data, it can roll an entry back to an earlier version or delete it again on a device;
 - a host that serves modified app code;
 - a weak passphrase against offline guessing if the server database leaks;
 - the diary, the session token and the sync keys are stored unencrypted in the browser's storage on each device, so anyone with access to the browser profile can read the diary (sync does not change that);
-- metadata: sizes, timing and how often a record changes are visible to the server.
+- metadata: sizes, timing, upload order and how often a record changes are visible to the server, and usually reveal which day an entry belongs to.
 
 ## Keys
 
@@ -80,11 +80,11 @@ Sync may be limited to accounts with an active plan; the server answers `plan_re
 | 403 `plan_required` | Reports that sync is not active for this account |
 | 409 `key_changed` | Another device reset sync: asks for the passphrase |
 | 409 `key_exists` | Another device created the passphrase first: asks for that passphrase instead |
-| 413 `quota_exceeded` | Stops uploading and reports it; what was already downloaded in that round is kept |
+| 413 `quota_exceeded` | This round stops uploading and reports it; what was already downloaded in that round is kept. The next sync tries again (a later edit, coming back online or returning to the app starts one) |
 | 400 `invalid_code` | Reports a wrong or expired sign-in code |
 | 429 `rate_limited` | Reports "too often" on sign-in; during sync it retries later with growing delays |
 
-Network failures and server errors (5xx) are retried later with growing delays.
+Network failures, server errors (5xx) and any other unexpected answer are retried later with growing delays.
 
 ## Syncing
 
