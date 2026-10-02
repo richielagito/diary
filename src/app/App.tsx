@@ -10,11 +10,13 @@ import { DayPage } from '../features/today/DayPage'
 import { TodayRoute } from '../features/today/TodayRoute'
 import { WrappedPage } from '../features/wrapped/WrappedPage'
 import { parsePeriodId, periodRange } from '../stats/range'
+import { needsAttention, useSyncStatus } from './SyncContext'
 import { useApplyPreferences } from './useApplyPreferences'
 
 function Layout() {
   const { t } = useTranslation()
   useApplyPreferences()
+  const attention = needsAttention(useSyncStatus())
 
   return (
     <div className="shell">
@@ -25,7 +27,15 @@ function Layout() {
         <NavLink to="/chat">{t('nav.chat')}</NavLink>
         <NavLink to="/archive">{t('nav.archive')}</NavLink>
         <NavLink to="/stats">{t('nav.stats')}</NavLink>
-        <NavLink to="/settings">{t('nav.settings')}</NavLink>
+        <NavLink to="/settings">
+          {t('nav.settings')}
+          {attention && (
+            <>
+              {' '}
+              <span className="nav-dot" role="img" aria-label={t('account.attention')} />
+            </>
+          )}
+        </NavLink>
       </nav>
       <main className="page">
         <Outlet />

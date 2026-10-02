@@ -5,6 +5,7 @@ import { readImportFiles, type ParsedImport } from '../../backup/importFiles'
 import { useExport } from '../../backup/useExport'
 import type { DateKey } from '../../domain/types'
 import type { Language, Theme } from '../../storage/SettingsStore'
+import { AccountSection } from './AccountSection'
 import { AiSettingsSection } from './AiSettingsSection'
 import { Field } from './Field'
 import { ImportDialog } from './ImportDialog'
@@ -69,6 +70,8 @@ export function SettingsPage() {
       </section>
 
       <AiSettingsSection />
+
+      <AccountSection />
 
       <section>
         <h2>{t('settings.backup')}</h2>

@@ -6,6 +6,7 @@ import type { CreateProvider } from '../ai/provider/createProvider'
 import type { ListModels } from '../ai/provider/listModels'
 import { AppRoutes } from '../app/App'
 import { RepoProvider } from '../app/RepoContext'
+import { SyncProvider } from '../app/SyncContext'
 import type { DateKey, Mood } from '../domain/types'
 import type { NewChatMessage } from '../storage/ChatRepository'
 import { DexieChatRepository } from '../storage/DexieChatRepository'
@@ -18,6 +19,7 @@ import { DexieSummaryRepository } from '../storage/DexieSummaryRepository'
 import type { LetterRecord } from '../storage/LetterRepository'
 import { defaultSettings, type Settings } from '../storage/SettingsStore'
 import type { Summary } from '../storage/SummaryRepository'
+import type { SyncController } from '../sync/controller'
 
 const noProvider: CreateProvider = () => {
   throw new Error('no provider in test')
@@ -28,6 +30,8 @@ const noListModels: ListModels = () => Promise.reject(new Error('no model list i
 export interface RenderOptions {
   createProvider?: CreateProvider
   listModels?: ListModels
+  /** Membuat controller sync untuk DB test ini. Tanpa ini aplikasi dirender tanpa akun, seperti build tanpa server. */
+  sync?: (db: DiaryDB) => SyncController
 }
 
 export interface Seed {
@@ -56,24 +60,39 @@ export async function renderApp(path = '/', seed: Seed = {}, options: RenderOpti
   for (const [i, m] of (seed.memories ?? []).entries()) await memories.add(m.text, m.source, 1 + i)
   for (const s of seed.summaries ?? []) await summaries.put(s)
   for (const l of seed.letters ?? []) await letters.put(l)
+  const sync = options.sync?.(db) ?? null
+  await sync?.start()
   const user = userEvent.setup()
   const view = render(
-    <RepoProvider
-      diary={diary}
-      settingsStore={settingsStore}
-      chats={chats}
-      memories={memories}
-      summaries={summaries}
-      letters={letters}
-      createProvider={options.createProvider ?? noProvider}
-      listModels={options.listModels ?? noListModels}
-    >
-      <MemoryRouter initialEntries={[path]}>
-        <AppRoutes />
-      </MemoryRouter>
-    </RepoProvider>,
+    <SyncProvider controller={sync}>
+      <RepoProvider
+        diary={diary}
+        settingsStore={settingsStore}
+        chats={chats}
+        memories={memories}
+        summaries={summaries}
+        letters={letters}
+        createProvider={options.createProvider ?? noProvider}
+        listModels={options.listModels ?? noListModels}
+      >
+        <MemoryRouter initialEntries={[path]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </RepoProvider>
+    </SyncProvider>,
   )
-  return { db, diary, settingsStore, chats, memories, summaries, letters, user, unmount: view.unmount }
+  return {
+    db,
+    diary,
+    settingsStore,
+    chats,
+    memories,
+    summaries,
+    letters,
+    user,
+    sync,
+    unmount: view.unmount,
+  }
 }
 
 /** Render satu komponen di dalam RepoProvider dengan DB baru yang terisolasi. */
@@ -93,20 +112,35 @@ export async function renderWithRepos(ui: ReactElement, seed: Seed = {}, options
   for (const [i, m] of (seed.memories ?? []).entries()) await memories.add(m.text, m.source, 1 + i)
   for (const s of seed.summaries ?? []) await summaries.put(s)
   for (const l of seed.letters ?? []) await letters.put(l)
+  const sync = options.sync?.(db) ?? null
+  await sync?.start()
   const user = userEvent.setup()
   const view = render(
-    <RepoProvider
-      diary={diary}
-      settingsStore={settingsStore}
-      chats={chats}
-      memories={memories}
-      summaries={summaries}
-      letters={letters}
-      createProvider={options.createProvider ?? noProvider}
-      listModels={options.listModels ?? noListModels}
-    >
-      {ui}
-    </RepoProvider>,
+    <SyncProvider controller={sync}>
+      <RepoProvider
+        diary={diary}
+        settingsStore={settingsStore}
+        chats={chats}
+        memories={memories}
+        summaries={summaries}
+        letters={letters}
+        createProvider={options.createProvider ?? noProvider}
+        listModels={options.listModels ?? noListModels}
+      >
+        {ui}
+      </RepoProvider>
+    </SyncProvider>,
   )
-  return { db, diary, settingsStore, chats, memories, summaries, letters, user, unmount: view.unmount }
+  return {
+    db,
+    diary,
+    settingsStore,
+    chats,
+    memories,
+    summaries,
+    letters,
+    user,
+    sync,
+    unmount: view.unmount,
+  }
 }

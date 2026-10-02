@@ -59,6 +59,7 @@ button, input, select { font: inherit; color: inherit; }
 .nav a { color: var(--muted); text-decoration: none; white-space: nowrap; }
 @media (max-width: 360px) { .nav { font-size: 0.9rem; } }
 .nav a.active { color: var(--text); font-weight: 600; }
+.nav-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); vertical-align: middle; }
 .page { min-height: 60vh; }
 .unavailable { max-width: 520px; margin: 15vh auto; padding: 16px; }
 
