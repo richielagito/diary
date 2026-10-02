@@ -2,7 +2,7 @@ import { DEFAULT_PERSONA } from '../ai/prompt/persona'
 import { NetworkError, createApi, type Api } from '../account/api'
 import { DexieChatRepository } from '../storage/DexieChatRepository'
 import { DiaryDB } from '../storage/db'
-import { DexieDiaryRepository } from '../storage/DexieDiaryRepository'
+import { DexieDiaryRepository, withDerived } from '../storage/DexieDiaryRepository'
 import { DexieLetterRepository } from '../storage/DexieLetterRepository'
 import { DexieMemoryRepository } from '../storage/DexieMemoryRepository'
 import { DexieSettingsStore } from '../storage/DexieSettingsStore'
@@ -366,8 +366,8 @@ describe('trouble', () => {
       { v: 1, c: 'memories', k: 'm1', t: 1, d: 'bukan objek' },
     ]
     const records = []
-    for (const [i, envelope] of odd.entries()) {
-      const id = await recordId(session.keys, `odd-${i}`, envelope.k)
+    for (const envelope of odd) {
+      const id = await recordId(session.keys, envelope.c, envelope.k)
       records.push({ id, blob: await seal(session.keys, id, envelope), prevRev: 0 })
     }
     await a.deps.api.push(session.token, session.keyId, records)
@@ -377,6 +377,103 @@ describe('trouble', () => {
     expect((await a.diary.get(DAY))!.markdown).toBe('tetap')
     expect((await a.settings.getAll()).persistGranted).toBeNull()
     expect(await a.memories.list()).toEqual([])
+  })
+
+  it('does not stack text when a push response is lost and the user keeps writing', async () => {
+    const { server, a, b } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    await a.sync()
+    a.clock.now = 2000
+    await a.diary.save(DAY, { markdown: 'satu dua' })
+    const real = a.deps.api
+    const lossy: Api = { ...real, push: async (token, keyId, records) => { await real.push(token, keyId, records); throw new NetworkError() } }
+    await expect(syncOnce({ ...a.deps, api: lossy })).rejects.toBeInstanceOf(NetworkError)
+    a.clock.now = 3000
+    await a.diary.save(DAY, { markdown: 'satu dua tiga' })
+    expect(await a.sync()).toMatchObject({ pushed: 1 })
+    expect((await a.diary.get(DAY))!.markdown).toBe('satu dua tiga')
+    await b.sync()
+    expect((await b.diary.get(DAY))!.markdown).toBe('satu dua tiga')
+    expect(server.user(EMAIL).records.size).toBe(1)
+  })
+
+  it('does not stack text when the very first push response is lost', async () => {
+    const { a, b } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    await a.settings.set('theme', 'dark')
+    const real = a.deps.api
+    const lossy: Api = { ...real, push: async (token, keyId, records) => { await real.push(token, keyId, records); throw new NetworkError() } }
+    await expect(syncOnce({ ...a.deps, api: lossy })).rejects.toBeInstanceOf(NetworkError)
+    a.clock.now = 2000
+    await a.diary.save(DAY, { markdown: 'satu dua' })
+    await a.settings.set('theme', 'light')
+    await a.sync()
+    await b.sync()
+    for (const d of [a, b]) {
+      expect((await d.diary.get(DAY))!.markdown).toBe('satu dua')
+      expect((await d.settings.getAll()).theme).toBe('light')
+    }
+  })
+
+  it('still uploads after a push that never reached the server', async () => {
+    const { server, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    server.offline = true
+    await expect(a.sync()).rejects.toBeInstanceOf(NetworkError)
+    server.offline = false
+    expect(await a.sync()).toMatchObject({ pushed: 1 })
+    expect(server.user(EMAIL).records.size).toBe(1)
+  })
+
+  it('still uploads after a push that failed before reaching the server', async () => {
+    const { server, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'satu' })
+    const broken: Api = { ...a.deps.api, push: async () => { throw new NetworkError() } }
+    await expect(syncOnce({ ...a.deps, api: broken })).rejects.toBeInstanceOf(NetworkError)
+    expect(await a.sync()).toMatchObject({ pushed: 1 })
+    expect(server.user(EMAIL).records.size).toBe(1)
+    expect((await a.diary.get(DAY))!.markdown).toBe('satu')
+  })
+
+  it('takes the fuller text when a device that lost its sync state only held an older version', async () => {
+    const { server, a, b } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'awal' })
+    await a.sync()
+    await b.sync()
+    a.clock.now = 2000
+    await a.diary.save(DAY, { markdown: 'awal\n\nparagraf baru' })
+    await a.sync()
+    // b lost its index and cursor (re-login or key change) while still holding the old version.
+    await b.db.syncIndex.clear()
+    await b.db.syncState.delete('cursor')
+    await b.sync()
+    expect((await b.diary.get(DAY))!.markdown).toBe('awal\n\nparagraf baru')
+    expect((await a.sync()).pushed).toBe(0)
+    expect(server.user(EMAIL).records.size).toBe(1)
+  })
+
+  it('ignores a record whose envelope does not belong under its id', async () => {
+    const { session, a } = await twoDevices()
+    await a.diary.save(DAY, { markdown: 'tetap' })
+    const evil = withDerived({ date: DAY, markdown: 'jahat', mood: null, createdAt: 1, updatedAt: 9_999_999 })
+    const id = await recordId(session.keys, 'entries', '2030-01-01')
+    const blob = await seal(session.keys, id, { v: 1, c: 'entries', k: DAY, t: 9_999_999, d: evil })
+    await a.deps.api.push(session.token, session.keyId, [{ id, blob, prevRev: 0 }])
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    await a.sync()
+    expect(warn).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
+    expect((await a.diary.get(DAY))!.markdown).toBe('tetap')
+  })
+
+  it('never deletes a setting because of a deletion marker', async () => {
+    const { session, a } = await twoDevices()
+    await a.settings.set('theme', 'dark')
+    const id = await recordId(session.keys, 'settings', 'theme')
+    const blob = await seal(session.keys, id, { v: 1, c: 'settings', k: 'theme', t: 9_999_999, d: null })
+    await a.deps.api.push(session.token, session.keyId, [{ id, blob, prevRev: 0 }])
+    await a.sync()
+    expect((await a.settings.getAll()).theme).toBe('dark')
   })
 
   it('skips a record it cannot decrypt and keeps going', async () => {

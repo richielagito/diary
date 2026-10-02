@@ -1,4 +1,5 @@
 import type { DayEntry, Mood } from '../domain/types'
+import { mergeText } from '../domain/mergeText'
 import { withDerived } from '../storage/DexieDiaryRepository'
 
 /** Teks dan mood yang terakhir sama-sama dikenal perangkat ini dan server. */
@@ -9,8 +10,7 @@ export interface EntryBase {
 
 export type EntryMerge = 'remote' | 'local' | { merged: DayEntry }
 
-/** Garis pemisah Markdown di antara dua versi teks yang sama-sama berubah. */
-export const MERGE_SEPARATOR = '\n\n---\n\n'
+export { MERGE_SEPARATOR } from '../domain/mergeText'
 
 /** Sama di kedua perangkat: waktu ubah dulu, lalu isi, supaya dua gabungan bersamaan menghasilkan teks yang persis sama. */
 function isNewer(a: DayEntry, b: DayEntry): boolean {
@@ -27,16 +27,6 @@ function pickMood(local: DayEntry, remote: DayEntry, base: EntryBase, newer: Day
   return newer.mood
 }
 
-function pickMarkdown(local: DayEntry, remote: DayEntry, base: EntryBase, newer: DayEntry, older: DayEntry): string {
-  if (local.markdown === remote.markdown) return local.markdown
-  if (local.markdown === base.markdown) return remote.markdown
-  if (remote.markdown === base.markdown) return local.markdown
-  if (local.markdown.trim() === '') return remote.markdown
-  if (remote.markdown.trim() === '') return local.markdown
-  // Hanya buang baris kosong di sekitar pemisah, jangan indentasi.
-  return `${newer.markdown.replace(/[\r\n]+$/, '')}${MERGE_SEPARATOR}${older.markdown.replace(/^[\r\n]+/, '')}`
-}
-
 /**
  * Gabung tiga arah untuk satu hari. `null` berarti entri dihapus di sisi itu.
  * Edit menang atas hapus; mood dan teks digabung terpisah; teks yang sama-sama berubah ditumpuk, yang terbaru di atas.
@@ -47,7 +37,7 @@ export function mergeEntry(local: DayEntry | null, remote: DayEntry | null, base
   const newer = isNewer(local, remote) ? local : remote
   const older = newer === local ? remote : local
   const mood = pickMood(local, remote, agreed, newer)
-  const markdown = pickMarkdown(local, remote, agreed, newer, older)
+  const markdown = mergeText(newer.markdown, older.markdown, agreed.markdown)
   if (markdown === remote.markdown && mood === remote.mood) return 'remote'
   if (markdown === local.markdown && mood === local.mood) return 'local'
   return {

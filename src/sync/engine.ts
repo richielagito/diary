@@ -63,6 +63,12 @@ async function applyRemote(db: DiaryDB, id: string, rev: number, env: Envelope, 
   const idx = await db.syncIndex.get(id)
   if (idx?.rev === rev) return
   if (!accepts(env.c, env.k, env.d)) return
+  if (idx?.sent && idx.sent.t === env.t && idx.sent.json === JSON.stringify(env.d)) {
+    // Tulisan perangkat ini sendiri yang jawabannya hilang. Server sudah memegangnya: cukup catat revisinya.
+    // Kalau isi lokal sudah berubah lagi sejak itu, pushAll mengirimnya sebagai edit biasa, tanpa gabung.
+    await db.syncIndex.put({ id, c: env.c, k: env.k, t: env.t, rev, deleted: env.d === null, base: baseOf(env.c, env.d) })
+    return
+  }
   const local = await getLocal(db, env.c, env.k)
   const localChanged = idx ? differs(local, idx) : local !== null
 
@@ -103,7 +109,10 @@ async function pullAll({ db, api, token, keys, keyId, now }: SyncDeps): Promise<
     for (const [i, record] of page.records.entries()) {
       if (known[i]?.rev === record.rev) continue
       try {
-        opened.push({ id: record.id, rev: record.rev, env: await open(keys, record.id, record.blob) })
+        const env = await open(keys, record.id, record.blob)
+        // Percayai id, bukan isi amplop: amplop yang bukan milik id-nya bisa menimpa record lain.
+        if ((await recordId(keys, env.c, env.k)) !== record.id) throw new Error('id mismatch')
+        opened.push({ id: record.id, rev: record.rev, env })
       } catch (e) {
         if (e instanceof OutdatedError) throw e
         console.warn('sync: skipped a record that could not be decrypted')
@@ -145,7 +154,8 @@ async function pending({ db, now }: SyncDeps): Promise<Pending[]> {
   }
   for (const [key, idx] of index) {
     // Ada di server, sudah tidak ada di sini: kirim penanda hapus.
-    if (!seen.has(key) && !idx.deleted) out.push({ id: idx.id, c: idx.c, k: idx.k, t: now(), d: null, prevRev: idx.rev })
+    // Pengaturan tidak pernah dihapus, jadi tidak ada penanda hapus untuknya.
+    if (!seen.has(key) && !idx.deleted && idx.c !== 'settings') out.push({ id: idx.id, c: idx.c, k: idx.k, t: now(), d: null, prevRev: idx.rev })
   }
   return out
 }
@@ -163,6 +173,14 @@ async function pushAll(deps: SyncDeps): Promise<{ pushed: number; conflicts: num
     const sent = batch
     batch = []
     bytes = 0
+    // Catat dulu apa yang dikirim; kalau jawabannya hilang, tulisan ini dikenali lagi saat ditarik.
+    // Record tanpa baris indeks mendapat penanda "server belum punya apa-apa" (rev 0, deleted).
+    await db.transaction('rw', db.syncIndex, async () => {
+      for (const { record, item } of sent) {
+        const row = (await db.syncIndex.get(record.id)) ?? { id: record.id, c: item.c, k: item.k, t: 0, rev: 0, deleted: true }
+        await db.syncIndex.put({ ...row, sent: { t: item.t, json: JSON.stringify(item.d) } })
+      }
+    })
     const res = await api.push(token, keyId, sent.map((s) => s.record))
     const revs = new Map(res.applied.map((a) => [a.id, a.rev]))
     await db.syncIndex.bulkPut(

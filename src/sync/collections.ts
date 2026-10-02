@@ -78,7 +78,8 @@ export async function getLocal(db: DiaryDB, c: string, k: string): Promise<Local
 
 /** True kalau versi aplikasi ini bisa menyimpan record itu. Yang tidak dikenal diabaikan, bukan dihapus. */
 export function accepts(c: string, k: string, d: unknown): boolean {
-  if (c === 'settings') return isSyncedSetting(k) && (d === null || (typeof d === 'object' && 'value' in (d as object)))
+  // Pengaturan tidak pernah dihapus aplikasi, jadi penanda hapus untuknya hanya gangguan.
+  if (c === 'settings') return isSyncedSetting(k) && d !== null && typeof d === 'object' && 'value' in (d as object)
   const s = TABLES.find((x) => x.c === c)
   if (!s) return false
   if (d === null) return true

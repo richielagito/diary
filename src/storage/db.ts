@@ -21,6 +21,8 @@ export interface SyncIndexRow {
   deleted: boolean
   /** entries: teks dan mood di server, untuk gabung tiga arah. settings: JSON nilai di server. */
   base?: { markdown: string; mood: Mood | null } | string
+  /** Yang sedang dikirim dan belum dikonfirmasi server. Kalau jawaban hilang, record ini dikenali saat ditarik lagi. */
+  sent?: { t: number; json: string }
 }
 
 export interface SyncStateRow {
