@@ -7,12 +7,21 @@ import { mergeText } from '../../domain/mergeText'
 import { StaleTextError } from '../../storage/DiaryRepository'
 import type { DateKey, Mood } from '../../domain/types'
 import { DiaryEditor, type DiaryEditorHandle } from '../../editor/DiaryEditor'
-import { rememberUnsavedDraft, takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
+import { takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
 import { useExport } from '../../backup/useExport'
 import { BackupBanner } from './BackupBanner'
 import { MoodPicker } from './MoodPicker'
 import { SaveStatusText } from './SaveStatus'
 import { useTagSuggestions } from './useTagSuggestions'
+
+/** Menempelkan draft (teks dan dasarnya) pada error, supaya useAutosave mengingat yang benar kalau halaman sudah ditutup. */
+function withDraft(err: unknown, draft: { markdown: string; base: string }) {
+  if (typeof err === 'object' && err !== null) {
+    ;(err as { draft?: unknown }).draft = draft
+    return err
+  }
+  return Object.assign(new Error(String(err)), { draft })
+}
 
 export function DayPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
@@ -32,26 +41,32 @@ export function DayPage({ date }: { date: DateKey }) {
   const alive = useRef(true)
   const absorbRef = useRef<(incoming: string) => void>(() => {})
 
+  /** Dinaikkan tiap kali `base` diisi teks yang bukan tulisan editor ini sendiri (gabungan dari luar). */
+  const foreign = useRef(0)
+
+  /** Teks dan dasarnya berjalan bersama: tulisan yang antre membawa dasar saat diminta kalau sejak itu ada teks asing masuk. */
   const write = useCallback(
-    async (d: DateKey, markdown: string) => {
+    async (d: DateKey, markdown: string, req: { base: string; foreign: number }) => {
+      // Dasar bergeser karena tulisan sendiri (teks ini sudah memuatnya): pakai yang terbaru. Karena teks asing: pakai dasar lama, repositori akan menolak.
+      const used = foreign.current === req.foreign ? base.current : req.base
       sending.current = markdown
       try {
-        const entry = await diary.save(d, { markdown, baseMarkdown: base.current })
+        const entry = await diary.save(d, { markdown, baseMarkdown: used })
         base.current = entry?.markdown ?? ''
       } catch (err) {
-        if (!(err instanceof StaleTextError)) throw err
+        if (!(err instanceof StaleTextError)) throw withDraft(err, { markdown, base: used })
         // Yang tersimpan berubah dari luar (sync atau tab lain) sejak editor ini memuatnya: gabung, jangan timpa.
         if (alive.current) {
           absorbRef.current(err.stored)
         } else {
-          const merged = mergeText(markdown, err.stored, base.current)
+          const merged = mergeText(markdown, err.stored, used)
           try {
             const entry = await diary.save(d, { markdown: merged, baseMarkdown: err.stored })
             base.current = entry?.markdown ?? ''
+            foreign.current++
           } catch (retryErr) {
-            // Gagal tersimpan setelah halaman ditutup: yang diingat sebagai draft adalah teks gabungan.
-            rememberUnsavedDraft(d, merged, retryErr instanceof StaleTextError ? retryErr.stored : err.stored)
-            throw retryErr
+            // Gagal setelah halaman ditutup: draft adalah teks gabungan beserta teks tersimpan yang sudah dimuatnya. Tidak dicoba lagi.
+            throw withDraft(retryErr, { markdown: merged, base: err.stored })
           }
         }
       } finally {
@@ -60,11 +75,12 @@ export function DayPage({ date }: { date: DateKey }) {
     },
     [diary],
   )
-  /** Tulisan halaman ini dijalankan berurutan, supaya dasar gabung dibaca saat tulisan dimulai, bukan saat diminta. */
+  /** Tulisan halaman ini dijalankan berurutan. */
   const queue = useRef<Promise<unknown>>(Promise.resolve())
   const save = useCallback(
     (d: DateKey, markdown: string) => {
-      const run = queue.current.then(() => write(d, markdown))
+      const req = { base: base.current, foreign: foreign.current }
+      const run = queue.current.then(() => write(d, markdown, req))
       queue.current = run.catch(() => {})
       return run
     },
@@ -89,6 +105,7 @@ export function DayPage({ date }: { date: DateKey }) {
       base.current = incoming
       return
     }
+    foreign.current++
     if (!autosave.isDirty()) {
       base.current = incoming
       if (incoming !== editor.getMarkdown()) editor.setMarkdown(incoming)

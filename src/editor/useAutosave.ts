@@ -64,8 +64,12 @@ export function useAutosave({ date, save, delay = 800, draftBase }: Options) {
       // Teks tetap di pending dan di editor; dicoba lagi pada schedule berikutnya.
       // Kalau editor sudah ditutup, teks disimpan sebagai draft supaya muncul lagi saat tanggal ini dibuka.
       if (mounted.current) setStatus('error')
-      // Draft yang sudah dicatat pemanggil (teks gabungan) tidak ditimpa teks mentah.
-      else if (!unsavedDrafts.has(job.date)) rememberUnsavedDraft(job.date, job.markdown, draftBaseRef.current?.())
+      // Pemanggil boleh menyebut draft mana yang disimpan (`err.draft`: teks gabungan dan dasarnya). Kegagalan terbaru menang.
+      else {
+        const draft = (err as { draft?: UnsavedDraft } | null)?.draft
+        if (draft) rememberUnsavedDraft(job.date, draft.markdown, draft.base)
+        else rememberUnsavedDraft(job.date, job.markdown, draftBaseRef.current?.())
+      }
     }
   }, [])
 

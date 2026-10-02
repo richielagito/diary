@@ -1,4 +1,7 @@
-import { screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
+import { AppRoutes } from '../../app/App'
+import { RepoProvider } from '../../app/RepoContext'
 import type { Mood } from '../../domain/types'
 import { rememberUnsavedDraft } from '../../editor/useAutosave'
 import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
@@ -152,7 +155,7 @@ test('two saves that overlap do not lose the newer keystrokes', async () => {
   const stored = (await diary.get('2026-09-20'))!.markdown
   expect(stored).toContain('satu')
   expect(stored).not.toContain('---')
-})
+}, 15000)
 
 test('one undo after a merge does not remove the other device text', async () => {
   stubLayout()
@@ -224,3 +227,179 @@ test('unsaved draft from a failed save replaces the stored text and is saved aga
     timeout: 3000,
   })
 })
+
+type View = Awaited<ReturnType<typeof open>>
+
+/** Buka lagi hari itu di atas repositori yang sama (renderApp selalu membuat DB baru). */
+function reopen(v: View, date: string) {
+  render(
+    <RepoProvider
+      diary={v.diary}
+      settingsStore={v.settingsStore}
+      chats={v.chats}
+      memories={v.memories}
+      summaries={v.summaries}
+      letters={v.letters}
+      createProvider={() => {
+        throw new Error('no provider in test')
+      }}
+      listModels={() => Promise.reject(new Error('no model list in test'))}
+    >
+      <MemoryRouter initialEntries={[`/day/${date}`]}>
+        <AppRoutes />
+      </MemoryRouter>
+    </RepoProvider>,
+  )
+}
+
+const tick = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+/** Tunggu sampai semua pemanggilan save yang tercatat selesai, termasuk yang baru muncul karenanya. */
+async function settle(calls: Promise<unknown>[]) {
+  let n: number
+  do {
+    n = calls.length
+    await Promise.allSettled([...calls])
+    await tick()
+  } while (calls.length !== n)
+}
+
+test('a queued write does not overwrite a foreign text that was merged while it waited (page closed)', async () => {
+  stubLayout()
+  vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  const { diary, user, db, unmount } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  const original = diary.save.bind(diary)
+  let holding = true
+  const held: (() => void)[] = []
+  const calls: Promise<unknown>[] = []
+  vi.spyOn(diary, 'save').mockImplementation((date, patch) => {
+    const run = (async () => {
+      if (holding && patch.markdown !== undefined) await new Promise<void>((resolve) => held.push(resolve))
+      return original(date, patch)
+    })()
+    calls.push(run)
+    return run
+  })
+  await user.click(box)
+  await user.keyboard(' kalimat laptop')
+  await waitFor(() => expect(held).toHaveLength(1), { timeout: 3000 })
+  await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+  unmount() // queues a second write with the same text
+  holding = false
+  for (const release of held) release()
+  await settle(calls)
+  const stored = (await diary.get('2026-09-20'))!.markdown
+  expect(stored).toContain('kalimat laptop')
+  expect(stored).toContain('paragraf hp')
+}, 15000)
+
+test('a queued write does not overwrite a foreign text that was absorbed while it waited (page open)', async () => {
+  stubLayout()
+  const { diary, user, db } = await open('2026-09-20', { markdown: 'awal' })
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  const original = diary.save.bind(diary)
+  let holding = true
+  const held: (() => void)[] = []
+  vi.spyOn(diary, 'save').mockImplementation(async (date, patch) => {
+    if (holding && patch.markdown !== undefined) await new Promise<void>((resolve) => held.push(resolve))
+    return original(date, patch)
+  })
+  await user.click(box)
+  await user.keyboard(' satu')
+  await waitFor(() => expect(held).toHaveLength(1), { timeout: 3000 })
+  await user.keyboard(' dua')
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // a second autosave was requested and is queued
+  await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+  await waitFor(() => expect(box).toHaveTextContent('paragraf hp')) // absorbed and merged in the editor
+  holding = false
+  const seen: string[] = []
+  for (const release of held) release()
+  const until = Date.now() + 5000
+  for (;;) {
+    const stored = (await diary.get('2026-09-20'))!.markdown
+    seen.push(stored)
+    if (['satu', 'dua', 'paragraf hp'].every((w) => stored.includes(w)) || Date.now() > until) break
+    await tick()
+  }
+  for (const stored of seen) expect(stored).toContain('paragraf hp')
+  const final = (await diary.get('2026-09-20'))!.markdown
+  for (const w of ['satu', 'dua', 'paragraf hp']) expect(final).toContain(w)
+}, 15000)
+
+test('the draft of a twice-refused closed-page write is based on the first stored text it merged with', async () => {
+  stubLayout()
+  vi.spyOn(DexieDiaryRepository.prototype, 'watch').mockReturnValue(() => {})
+  const view = await open('2026-09-20', { markdown: 'awal' })
+  const { diary, user, db } = view
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  const original = diary.save.bind(diary)
+  const calls: Promise<unknown>[] = []
+  let textSaves = 0
+  const spy = vi.spyOn(diary, 'save').mockImplementation((date, patch) => {
+    const run = (async () => {
+      if (patch.markdown !== undefined && ++textSaves === 2) {
+        // Versi ketiga masuk tepat sebelum penulisan gabungan berjalan.
+        await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp\n\ntiga versi', updatedAt: Date.now() })
+      }
+      return original(date, patch)
+    })()
+    calls.push(run)
+    return run
+  })
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+  await user.click(box)
+  await user.keyboard(' kalimat laptop')
+  await db.entries.update('2026-09-20', { markdown: 'awal\n\nparagraf hp', updatedAt: Date.now() })
+  view.unmount()
+  await settle(calls)
+  expect(textSaves).toBe(2) // refused, then the merged write refused again; nothing retried
+  spy.mockRestore()
+  vi.restoreAllMocks()
+
+  reopen(view, '2026-09-20')
+  const box2 = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  for (const w of ['kalimat laptop', 'paragraf hp', 'tiga versi']) expect(box2).toHaveTextContent(w)
+  await waitFor(
+    async () => {
+      const stored = (await diary.get('2026-09-20'))!.markdown
+      for (const w of ['kalimat laptop', 'paragraf hp', 'tiga versi']) expect(stored).toContain(w)
+    },
+    { timeout: 3000 },
+  )
+}, 15000)
+
+test('with two failing writes after the page closed, the newest text is the draft', async () => {
+  stubLayout()
+  const view = await open('2026-09-20', { markdown: 'awal' })
+  const { diary, user } = view
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  let holding = true
+  const held: (() => void)[] = []
+  const calls: Promise<unknown>[] = []
+  vi.spyOn(console, 'error').mockImplementation(() => {})
+  vi.spyOn(diary, 'save').mockImplementation((_date, patch) => {
+    const run = (async () => {
+      if (patch.markdown !== undefined) {
+        if (holding) await new Promise<void>((resolve) => held.push(resolve))
+        throw new Error('QuotaExceededError')
+      }
+      return null
+    })()
+    calls.push(run)
+    return run
+  })
+  await user.click(box)
+  await user.keyboard(' satu')
+  await waitFor(() => expect(held).toHaveLength(1), { timeout: 3000 })
+  await user.keyboard(' dua')
+  view.unmount() // queues a second write with the newer text
+  holding = false
+  for (const release of held) release()
+  await waitFor(() => expect(calls).toHaveLength(2), { timeout: 3000 })
+  await settle(calls)
+  vi.restoreAllMocks()
+
+  reopen(view, '2026-09-20')
+  expect(await screen.findByRole('textbox', { name: 'Tulis diary' })).toHaveTextContent('satu dua')
+}, 15000)
