@@ -96,5 +96,5 @@ The server gives every write a revision number that only grows within an account
 
 ## When two devices changed the same thing
 
-- **Diary entries** are merged. Mood and text are handled separately, so a mood set on one device and text written on another are both kept. If the text changed on both devices, both versions are kept, the newer one first, separated by a horizontal rule; when the whole of one version appears inside the other, the longer one is kept and nothing is stacked. An edit wins over a deletion.
+- **Diary entries** are merged. Mood and text are handled separately, so a mood set on one device and text written on another are both kept. If the text changed on both devices, both versions are kept, the newer one first, separated by a horizontal rule. Texts are compared without Markdown backslash escapes and without leading or trailing whitespace, so `#self\_care` and `#self_care` count as the same text. When one version is the start of the other, or appears in it as whole lines, the fuller one is kept and nothing is stacked. An edit wins over a deletion.
 - **Everything else** keeps the version that changed last. A setting or a deletion counts as changed at the moment it is synced.

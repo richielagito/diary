@@ -162,6 +162,32 @@ describe('entries', () => {
     for (const d of [a, b]) expect((await d.diary.get(DAY))!.markdown).toBe(`capek banget${MERGE_SEPARATOR}rapat pagi`)
   })
 
+  it('does not double a diary that the second device got from a backup, where tags lost their backslash', async () => {
+    const { a, b } = await twoDevices()
+    // Same timestamps, the import newer, the original newer.
+    const days = [
+      { date: '2026-09-29', original: 20, imported: 20 },
+      { date: '2026-09-30', original: 20, imported: 30 },
+      { date: DAY, original: 30, imported: 20 },
+    ]
+    for (const d of days) {
+      await a.db.entries.put(withDerived({ date: d.date, markdown: 'hari tenang #self\\_care', mood: 4, createdAt: 10, updatedAt: d.original }))
+      await b.db.entries.put(withDerived({ date: d.date, markdown: 'hari tenang #self_care', mood: 4, createdAt: 10, updatedAt: d.imported }))
+    }
+    await a.sync()
+    await b.sync()
+    await a.sync()
+    await b.sync()
+    expect((await a.sync()).pushed).toBe(0)
+    expect((await b.sync()).pushed).toBe(0)
+    for (const d of days) {
+      const text = (await a.diary.get(d.date))!.markdown
+      expect(text).not.toContain('---')
+      expect(text.replace('\\', '')).toBe('hari tenang #self_care')
+      expect((await b.diary.get(d.date))!.markdown).toBe(text)
+    }
+  })
+
   it('lets an edit win over a deletion made elsewhere', async () => {
     const { a, b } = await twoDevices()
     await a.diary.save(DAY, { markdown: 'awal' })
