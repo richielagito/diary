@@ -64,8 +64,68 @@ describe('mergeText', () => {
     expect(mergeText('hari #self\\_care\n\ntambahan', 'hari #self_care', '')).toBe('hari #self\\_care\n\ntambahan')
   })
 
-  it('stacks unrelated texts, trimming only newlines at the separator', () => {
-    expect(mergeText('versi hp\n\n', '\n\nversi laptop', 'awal')).toBe(`versi hp${MERGE_SEPARATOR}versi laptop`)
-    expect(mergeText('  hp', 'laptop  ', 'awal')).toBe(`  hp${MERGE_SEPARATOR}laptop  `)
+  it('stacks unrelated texts with no shared base, trimming only newlines at the separator', () => {
+    expect(mergeText('versi hp\n\n', '\n\nversi laptop', '')).toBe(`versi hp${MERGE_SEPARATOR}versi laptop`)
+    expect(mergeText('  hp', 'laptop  ', '')).toBe(`  hp${MERGE_SEPARATOR}laptop  `)
+  })
+
+  describe('with a shared base', () => {
+    const P1 = 'Hari ini aku bangun agak siang.'
+    const P2 = 'Sore harinya aku jalan kaki.'
+    const base = `${P1}\n\n${P2}`
+
+    it('keeps the shared text once and both additions, newer first, with no marker', () => {
+      const hp = `${base}\n\nHari ini seru banget.`
+      const laptop = `${base}\n\nHari ini sangat sedih.`
+      expect(mergeText(hp, laptop, base)).toBe(`${base}\n\nHari ini seru banget.\n\nHari ini sangat sedih.`)
+    })
+
+    it('applies changes made in different places on each side', () => {
+      const hp = `${P1} Kopinya enak.\n\n${P2}`
+      const laptop = `${base}\n\nMalamnya hujan.`
+      expect(mergeText(hp, laptop, base)).toBe(`${P1} Kopinya enak.\n\n${P2}\n\nMalamnya hujan.`)
+    })
+
+    it('honours a deletion on one side when the other side changed something else', () => {
+      const hp = `${P1}\n\n${P2}\n\nTambahan.`
+      const laptop = P1
+      expect(mergeText(hp, laptop, base)).toBe(`${P1}\n\nTambahan.`)
+    })
+
+    it('keeps an edit of a line the other side deleted', () => {
+      const hp = `${P1}\n\n${P2} Lalu pulang.`
+      const laptop = `${P1}\n\nBaris lain.`
+      expect(mergeText(hp, laptop, `${base}\n\nBaris lain lama.`)).toBe(`${P1}\n\n${P2} Lalu pulang.\n\nBaris lain.`)
+    })
+
+    it('adds a paragraph from one side after a line the other side edited', () => {
+      expect(mergeText('awal kalimat laptop', 'awal\n\nparagraf hp', 'awal')).toBe('awal kalimat laptop\n\nparagraf hp')
+      expect(mergeText('awal\n\nparagraf hp', 'awal kalimat laptop', 'awal')).toBe('awal kalimat laptop\n\nparagraf hp')
+      expect(mergeText('pembuka\n\nawal', 'awal diubah', 'awal')).toBe('pembuka\n\nawal diubah')
+    })
+
+    it('keeps both versions of a line changed differently on each side, newer first', () => {
+      expect(mergeText(`${P1}\n\nversi hp`, `${P1}\n\nversi laptop`, base)).toBe(`${P1}\n\nversi hp\n\nversi laptop`)
+    })
+
+    it('takes the fuller version of a line when one side only typed further', () => {
+      expect(mergeText(`${P1}\n\nawal lalu lanjut`, `${P1}\n\nawal lalu`, `${P1}\n\nawal`)).toBe(`${P1}\n\nawal lalu lanjut`)
+    })
+
+    it('keeps the indentation of the older text', () => {
+      expect(mergeText('baru\n\n', '\n    kode menjorok', 'awal')).toBe('baru\n\n    kode menjorok')
+    })
+
+    it('treats lines that differ only in escaping as the same line', () => {
+      const hp = `#self\\_care\n\n${P2}\n\nhp`
+      const laptop = `#self_care\n\n${P2}`
+      expect(mergeText(hp, laptop, `#self_care\n\n${P2}`)).toBe(hp)
+    })
+
+    it('gives the same text when the merged result is merged again', () => {
+      const merged = mergeText(`${base}\n\nhp`, `${base}\n\nlaptop`, base)
+      expect(mergeText(merged, merged, `${base}\n\nlaptop`)).toBe(merged)
+      expect(mergeText(merged, `${base}\n\nlaptop`, `${base}\n\nlaptop`)).toBe(merged)
+    })
   })
 })

@@ -74,9 +74,11 @@ test('a change from another device that arrives while typing is merged, not over
     },
     { timeout: 3000 },
   )
+  // The shared text appears once and nothing marks the merge.
   const stored = (await diary.get('2026-09-20'))!.markdown
   expect(stored.match(/paragraf hp/g)).toHaveLength(1)
-  expect(stored.split('---')).toHaveLength(2)
+  expect(stored.match(/awal/g)).toHaveLength(1)
+  expect(stored).not.toContain('---')
 })
 
 test('an autosave that started from an older text does not overwrite a newer one', async () => {

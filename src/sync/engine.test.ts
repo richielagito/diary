@@ -130,20 +130,21 @@ describe('entries', () => {
     for (const d of [a, b]) expect(await d.diary.get(DAY)).toMatchObject({ markdown: 'tiga ratus kata tentang rapat', mood: 5 })
   })
 
-  it('stacks both texts when two devices edited the same day', async () => {
+  it('merges both edits once, without repeating the shared text, when two devices edited the same day', async () => {
     const { a, b } = await twoDevices()
-    await a.diary.save(DAY, { markdown: 'awal' })
+    const shared = 'pagi bangun siang\n\nsore jalan kaki'
+    await a.diary.save(DAY, { markdown: shared })
     await a.sync()
     await b.sync()
     a.clock.now = 2000
-    await a.diary.save(DAY, { markdown: 'versi laptop' })
+    await a.diary.save(DAY, { markdown: `${shared}\n\nhari ini sangat sedih` })
     b.clock.now = 3000
-    await b.diary.save(DAY, { markdown: 'versi hp' })
+    await b.diary.save(DAY, { markdown: `${shared}\n\nhari ini seru banget` })
     await a.sync()
     b.clock.now = 4000
     await b.sync()
     await a.sync()
-    const expected = `versi hp${MERGE_SEPARATOR}versi laptop`
+    const expected = `${shared}\n\nhari ini seru banget\n\nhari ini sangat sedih`
     expect((await a.diary.get(DAY))!.markdown).toBe(expected)
     expect((await b.diary.get(DAY))!.markdown).toBe(expected)
     expect((await a.sync()).pushed).toBe(0)
@@ -318,7 +319,7 @@ describe('trouble', () => {
     b.clock.now = 4000
     await syncOnce({ ...b.deps, api: racing })
     await a.sync()
-    const expected = `versi hp${MERGE_SEPARATOR}versi laptop`
+    const expected = 'versi hp\n\nversi laptop'
     expect((await a.diary.get(DAY))!.markdown).toBe(expected)
     expect((await b.diary.get(DAY))!.markdown).toBe(expected)
   })

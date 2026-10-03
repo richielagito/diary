@@ -26,11 +26,11 @@ describe('mergeEntry', () => {
     expect(result).toEqual({ merged: entry('awal lalu lanjut', 5, NOW) })
   })
 
-  it('stacks both texts, newest first, when both changed', () => {
+  it('keeps both texts, newest first, when both changed', () => {
     const result = mergeEntry(entry('versi hp', 3, 30), entry('versi laptop', 3, 20), base('awal', 3), NOW)
-    expect(result).toEqual({ merged: entry(`versi hp${MERGE_SEPARATOR}versi laptop`, 3, NOW) })
+    expect(result).toEqual({ merged: entry('versi hp\n\nversi laptop', 3, NOW) })
     const swapped = mergeEntry(entry('versi laptop', 3, 20), entry('versi hp', 3, 30), base('awal', 3), NOW)
-    expect(swapped).toEqual({ merged: entry(`versi hp${MERGE_SEPARATOR}versi laptop`, 3, NOW) })
+    expect(swapped).toEqual({ merged: entry('versi hp\n\nversi laptop', 3, NOW) })
   })
 
   it('stacks both texts on a first sync with no shared base', () => {
@@ -65,7 +65,7 @@ describe('mergeEntry', () => {
     const two = entry('versi b', 4, 50)
     const fromOne = mergeEntry(one, two, base('awal', 3), NOW)
     const fromTwo = mergeEntry(two, one, base('awal', 3), NOW)
-    expect(fromOne).toEqual({ merged: entry(`versi b${MERGE_SEPARATOR}versi a`, 4, NOW) })
+    expect(fromOne).toEqual({ merged: entry('versi b\n\nversi a', 4, NOW) })
     expect(fromTwo).toEqual(fromOne)
   })
 
@@ -83,7 +83,7 @@ describe('mergeEntry', () => {
 
   it('keeps the indentation of the older text', () => {
     const result = mergeEntry(entry('baru\n\n', 3, 30), entry('\n    kode menjorok', 3, 20), base('awal', 3), NOW)
-    expect(result).toEqual({ merged: entry(`baru${MERGE_SEPARATOR}    kode menjorok`, 3, NOW) })
+    expect(result).toEqual({ merged: entry('baru\n\n    kode menjorok', 3, NOW) })
   })
 
   it('keeps the earliest creation time and recomputes tags and word count', () => {
