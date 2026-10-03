@@ -1,7 +1,11 @@
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
-export const KDF_ITERATIONS = 600_000
+/**
+ * Kunci baru dibuat dari kunci pemulihan acak 120 bit (recoveryKey.ts), bukan frasa buatan manusia, jadi peregangan
+ * tidak perlu berat: cukup batas bawah server, supaya membuka kunci di HP tetap cepat. Kunci lama membawa jumlahnya sendiri.
+ */
+export const KDF_ITERATIONS = 100_000
 export const MIN_PASSPHRASE_LENGTH = 10
 const MIN_ITERATIONS = 100_000
 const MAX_ITERATIONS = 10_000_000

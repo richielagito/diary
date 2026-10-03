@@ -5,12 +5,14 @@ import { DiaryDB } from '../../storage/db'
 import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
 import { createSyncController, type SyncController } from '../../sync/controller'
 import { sha256Base64Url } from '../../sync/crypto'
+import { generateRecoveryKey, normalizeRecoveryKey } from '../../sync/recoveryKey'
 import { FakeServer } from '../../sync/testing/fakeServer'
 import { renderApp, renderWithRepos } from '../../test/renderApp'
 import { AccountSection } from './AccountSection'
 
 const EMAIL = 'a@example.com'
-const PASS = 'frasa sandi panjang'
+/** The key another device created for the account in `existingAccount`. */
+const KEY = generateRecoveryKey()
 const DAY = '2026-10-01'
 
 const live: SyncController[] = []
@@ -41,7 +43,7 @@ async function existingAccount(server: FakeServer) {
   await other.start()
   await other.requestEmailCode(EMAIL, 'id')
   await other.verifyEmailCode(EMAIL, server.lastCode(EMAIL))
-  await other.createPassphrase(PASS)
+  await other.createPassphrase(normalizeRecoveryKey(KEY))
   await new DexieDiaryRepository(db).save(DAY, { markdown: 'dari perangkat lain' })
   await other.syncNow()
   return other
@@ -54,10 +56,12 @@ async function signIn(user: UserEvent, server: FakeServer) {
   await user.click(screen.getByRole('button', { name: 'Masuk' }))
 }
 
-async function createPassphrase(user: UserEvent, first = PASS, second = first) {
-  await user.type(await screen.findByLabelText('Frasa sandi sync'), first)
-  await user.type(screen.getByLabelText('Ulangi frasa sandi'), second)
-  await user.click(screen.getByRole('button', { name: 'Buat frasa sandi' }))
+/** Confirms the key the page generated and returns it as shown. */
+async function confirmKey(user: UserEvent, action = 'Lanjut'): Promise<string> {
+  const key = (await screen.findByLabelText('Kunci pemulihan')).textContent!
+  await user.click(screen.getByRole('checkbox', { name: 'Saya sudah menyimpan kunci ini' }))
+  await user.click(screen.getByRole('button', { name: action }))
+  return key
 }
 
 test('is hidden when the app has no sync server', async () => {
@@ -67,30 +71,33 @@ test('is hidden when the app has no sync server', async () => {
   expect(screen.queryByRole('img', { name: 'Perlu perhatian' })).toBeNull()
 })
 
-test('signs in with an email code, creates the passphrase and starts syncing', async () => {
+test('signs in with an email code, shows a generated key and starts syncing once it is saved', async () => {
   const server = new FakeServer()
   const { user, diary } = await renderApp('/settings', { entries: [{ date: DAY, markdown: 'sudah ada' }] }, { sync: withServer(server) })
   expect(await screen.findByRole('heading', { name: 'Akun & sinkronisasi' })).toBeInTheDocument()
   await signIn(user, server)
 
-  expect(await screen.findByRole('heading', { name: 'Buat frasa sandi sync' })).toBeInTheDocument()
-  await createPassphrase(user, PASS, 'tidak sama sekali')
-  expect(await screen.findByText('Kedua frasa sandi tidak sama.')).toBeInTheDocument()
-  await user.clear(screen.getByLabelText('Frasa sandi sync'))
-  await user.clear(screen.getByLabelText('Ulangi frasa sandi'))
-  await createPassphrase(user, 'pendek')
-  expect(await screen.findByText('Frasa sandi minimal 10 karakter.')).toBeInTheDocument()
-  await user.clear(screen.getByLabelText('Frasa sandi sync'))
-  await user.clear(screen.getByLabelText('Ulangi frasa sandi'))
-  await createPassphrase(user)
+  expect(await screen.findByRole('heading', { name: 'Kunci pemulihan sync' })).toBeInTheDocument()
+  const key = screen.getByLabelText('Kunci pemulihan').textContent!
+  expect(key).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){5}$/)
+  const download = screen.getByRole('link', { name: 'Unduh (.txt)' })
+  expect(download).toHaveAttribute('download', 'diary-recovery-key.txt')
+  expect(decodeURIComponent(download.getAttribute('href')!)).toContain(key)
+  await user.click(screen.getByRole('button', { name: 'Salin' }))
+  expect(await screen.findByRole('button', { name: 'Tersalin' })).toBeInTheDocument()
+  expect(await navigator.clipboard.readText()).toBe(key)
+
+  // Nothing reaches the server before the user says the key is saved.
+  expect(screen.getByRole('button', { name: 'Lanjut' })).toBeDisabled()
+  expect(server.user(EMAIL).key).toBeNull()
+  await confirmKey(user)
 
   expect(await screen.findByText(`Masuk sebagai ${EMAIL}`)).toBeInTheDocument()
   expect(await screen.findByText(/^Terakhir sync:/)).toBeInTheDocument()
-  expect(screen.queryByLabelText('Frasa sandi sync')).toBeNull()
+  expect(screen.queryByLabelText('Kunci pemulihan')).toBeNull()
   await waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
   expect((await diary.get(DAY))!.markdown).toBe('sudah ada')
-  // Three typed passphrase rounds plus a key derivation: close to 5 s when the whole suite runs in parallel.
-}, 15_000)
+})
 
 test('says so when the email code is wrong', async () => {
   const server = new FakeServer()
@@ -104,20 +111,20 @@ test('says so when the email code is wrong', async () => {
   expect(screen.getByLabelText('Email')).toBeInTheDocument()
 })
 
-test('asks for the existing passphrase on another device and brings the diary in', async () => {
+test('asks for the existing recovery key on another device and brings the diary in', async () => {
   const server = new FakeServer()
   await existingAccount(server)
   const { user, diary } = await renderApp('/settings', {}, { sync: withServer(server) })
   await signIn(user, server)
 
-  expect(await screen.findByRole('heading', { name: 'Masukkan frasa sandi sync' })).toBeInTheDocument()
-  expect(screen.queryByLabelText('Ulangi frasa sandi')).toBeNull()
-  await user.type(screen.getByLabelText('Frasa sandi sync'), 'frasa sandi salah')
+  expect(await screen.findByRole('heading', { name: 'Masukkan kunci pemulihan' })).toBeInTheDocument()
+  await user.type(screen.getByLabelText('Kunci pemulihan'), 'AAAA-BBBB-CCCC')
   await user.click(screen.getByRole('button', { name: 'Buka' }))
-  expect(await screen.findByText('Frasa sandi salah.')).toBeInTheDocument()
+  expect(await screen.findByText('Kunci pemulihan salah.')).toBeInTheDocument()
 
-  await user.clear(screen.getByLabelText('Frasa sandi sync'))
-  await user.type(screen.getByLabelText('Frasa sandi sync'), PASS)
+  // Pasted in lower case with spaces instead of dashes still opens.
+  await user.clear(screen.getByLabelText('Kunci pemulihan'))
+  await user.type(screen.getByLabelText('Kunci pemulihan'), KEY.toLowerCase().replace(/-/g, ' '))
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByText(/^Terakhir sync:/)).toBeInTheDocument()
   await waitFor(async () => expect((await diary.get(DAY))?.markdown).toBe('dari perangkat lain'))
@@ -130,7 +137,7 @@ test('marks the Settings link while sync needs attention', async () => {
   expect(screen.queryByRole('img', { name: 'Perlu perhatian' })).toBeNull()
   await signIn(user, server)
   expect(await screen.findByRole('img', { name: 'Perlu perhatian' })).toBeInTheDocument()
-  await createPassphrase(user)
+  await confirmKey(user)
   await waitFor(() => expect(screen.queryByRole('img', { name: 'Perlu perhatian' })).toBeNull())
 })
 
@@ -144,7 +151,7 @@ test('suggests a backup before the first sync only when the device has a diary',
   const emptyServer = new FakeServer()
   const second = await renderApp('/settings', {}, { sync: withServer(emptyServer) })
   await signIn(second.user, emptyServer)
-  expect(await screen.findByRole('heading', { name: 'Buat frasa sandi sync' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Kunci pemulihan sync' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Export cadangan' })).toBeNull()
 })
 
@@ -152,7 +159,7 @@ test('signs out and keeps the diary', async () => {
   const server = new FakeServer()
   const { user, diary } = await renderApp('/settings', { entries: [{ date: DAY, markdown: 'tetap di sini' }] }, { sync: withServer(server) })
   await signIn(user, server)
-  await createPassphrase(user)
+  await confirmKey(user)
   await screen.findByText(/^Terakhir sync:/)
   await user.click(screen.getByRole('button', { name: 'Keluar' }))
   expect(await screen.findByLabelText('Email')).toHaveValue('')
@@ -164,7 +171,7 @@ test('deletes the account only after the email is typed', async () => {
   const server = new FakeServer()
   const { user } = await renderApp('/settings', {}, { sync: withServer(server) })
   await signIn(user, server)
-  await createPassphrase(user)
+  await confirmKey(user)
   await screen.findByText(/^Terakhir sync:/)
 
   await user.click(screen.getByRole('button', { name: 'Hapus akun' }))
@@ -181,21 +188,36 @@ test('deletes the account only after the email is typed', async () => {
   expect(await screen.findByLabelText('Email')).toBeInTheDocument()
 })
 
-test('resets sync when the passphrase is forgotten', async () => {
+test('creates a new key when the recovery key is forgotten', async () => {
   const server = new FakeServer()
   await existingAccount(server)
   const oldKeyId = server.user(EMAIL).key!.keyId
   const { user } = await renderApp('/settings', { entries: [{ date: '2026-10-02', markdown: 'isi perangkat ini' }] }, { sync: withServer(server) })
   await signIn(user, server)
-  await user.click(await screen.findByRole('button', { name: 'Lupa frasa sandi' }))
-  expect(await screen.findByRole('heading', { name: 'Reset sync' })).toBeInTheDocument()
+  await user.click(await screen.findByRole('button', { name: 'Lupa kunci pemulihan' }))
+  expect(await screen.findByRole('heading', { name: 'Buat kunci baru' })).toBeInTheDocument()
   expect(screen.getByText(/Data di server akan dihapus/)).toBeInTheDocument()
 
-  await user.type(screen.getByLabelText('Frasa sandi sync'), 'frasa sandi baru')
-  await user.type(screen.getByLabelText('Ulangi frasa sandi'), 'frasa sandi baru')
-  await user.click(screen.getByRole('button', { name: 'Hapus data server dan buat frasa sandi baru' }))
+  await confirmKey(user, 'Pakai kunci baru')
   expect(await screen.findByText(/^Terakhir sync:/)).toBeInTheDocument()
   expect(server.user(EMAIL).key!.keyId).not.toBe(oldKeyId)
+  await waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
+})
+
+test('creates a new key from a device that is signed in, and the old key stops working', async () => {
+  const server = new FakeServer()
+  const { user } = await renderApp('/settings', { entries: [{ date: DAY, markdown: 'tetap ada' }] }, { sync: withServer(server) })
+  await signIn(user, server)
+  const first = await confirmKey(user)
+  await screen.findByText(/^Terakhir sync:/)
+  const firstKeyId = server.user(EMAIL).key!.keyId
+
+  await user.click(screen.getByRole('button', { name: 'Buat kunci baru' }))
+  expect(await screen.findByRole('heading', { name: 'Buat kunci baru' })).toBeInTheDocument()
+  const second = await confirmKey(user, 'Pakai kunci baru')
+  expect(second).not.toBe(first)
+  await waitFor(() => expect(server.user(EMAIL).key!.keyId).not.toBe(firstKeyId))
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Pakai kunci baru' })).toBeNull())
   await waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
 })
 
@@ -203,7 +225,7 @@ test('asks to sign in again when the session ended', async () => {
   const server = new FakeServer()
   const { user } = await renderApp('/settings', {}, { sync: withServer(server) })
   await signIn(user, server)
-  await createPassphrase(user)
+  await confirmKey(user)
   await screen.findByText(/^Terakhir sync:/)
   server.failNext(401, 'unauthorized')
   await user.click(screen.getByRole('button', { name: 'Sync sekarang' }))
@@ -252,6 +274,6 @@ test('says sync is not active and offers only sign-out when the plan is not acti
   const { user } = await renderApp('/settings', {}, { sync: withServer(server) })
   await signIn(user, server)
   expect(await screen.findByText('Sync tidak aktif untuk akun ini.')).toBeInTheDocument()
-  expect(screen.queryByLabelText('Frasa sandi sync')).toBeNull()
+  expect(screen.queryByLabelText('Kunci pemulihan')).toBeNull()
   expect(screen.getByRole('button', { name: 'Keluar' })).toBeInTheDocument()
 })

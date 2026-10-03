@@ -4,20 +4,18 @@ import { ApiError, EMAIL_CODE_LENGTH, NetworkError } from '../../account/api'
 import { useRepos } from '../../app/RepoContext'
 import { useSync, useSyncStatus } from '../../app/SyncContext'
 import { useExport } from '../../backup/useExport'
-import { KeyExistsError, PassphraseTooShortError, type SyncController, type SyncStatus } from '../../sync/controller'
-import { MIN_PASSPHRASE_LENGTH, WrongPassphraseError } from '../../sync/crypto'
+import { KeyExistsError, type SyncController, type SyncStatus } from '../../sync/controller'
+import { WrongPassphraseError } from '../../sync/crypto'
+import { generateRecoveryKey, normalizeRecoveryKey } from '../../sync/recoveryKey'
 import { Field } from './Field'
 
 type Navigate = (url: string) => void
 type Run = (work: () => Promise<void>) => Promise<void>
 
-class MismatchError extends Error {}
 class EmailMismatchError extends Error {}
 
 function errorKey(e: unknown): string {
   if (e instanceof WrongPassphraseError) return 'account.error.wrongPassphrase'
-  if (e instanceof PassphraseTooShortError) return 'account.error.tooShort'
-  if (e instanceof MismatchError) return 'account.error.mismatch'
   if (e instanceof EmailMismatchError) return 'account.error.emailMismatch'
   if (e instanceof KeyExistsError) return 'account.error.keyExists'
   if (e instanceof NetworkError) return 'account.error.network'
@@ -86,7 +84,7 @@ function AccountPanel({ sync, status, navigate }: { sync: SyncController; status
           </p>
         </>
       )}
-      {signedIn && status.phase === 'needs-passphrase' && status.problem !== 'plan' && <Passphrase sync={sync} status={status} run={run} busy={busy} />}
+      {signedIn && status.phase === 'needs-passphrase' && status.problem !== 'plan' && <KeySetup sync={sync} status={status} run={run} busy={busy} />}
       {signedIn && status.phase === 'ready' && <Active sync={sync} status={status} run={run} busy={busy} />}
       {error && <p role="alert">{error}</p>}
     </section>
@@ -178,12 +176,12 @@ function SignIn({
   )
 }
 
-function Passphrase({ sync, status, run, busy }: { sync: SyncController; status: SyncStatus; run: Run; busy: boolean }) {
+/** Perangkat yang sudah masuk tapi belum punya kunci: buat kunci pertama, tempel kunci yang ada, atau buat kunci baru. */
+function KeySetup({ sync, status, run, busy }: { sync: SyncController; status: SyncStatus; run: Run; busy: boolean }) {
   const { t } = useTranslation()
   const { diary } = useRepos()
   const exportNow = useExport()
-  const [first, setFirst] = useState('')
-  const [second, setSecond] = useState('')
+  const [typed, setTyped] = useState('')
   const [resetting, setResetting] = useState(false)
   const [hasDiary, setHasDiary] = useState(false)
 
@@ -197,22 +195,14 @@ function Passphrase({ sync, status, run, busy }: { sync: SyncController; status:
     }
   }, [diary])
 
-  const creating = !status.accountHasKey || resetting
-  const submit = (e: FormEvent) => {
+  const unlock = (e: FormEvent) => {
     e.preventDefault()
-    void run(async () => {
-      if (!creating) return sync.enterPassphrase(first)
-      if (first !== second) throw new MismatchError()
-      if (first.length < MIN_PASSPHRASE_LENGTH) throw new PassphraseTooShortError()
-      await (resetting ? sync.resetSync(first) : sync.createPassphrase(first))
-    })
+    void run(() => sync.enterPassphrase(normalizeRecoveryKey(typed)))
   }
 
   return (
-    <form onSubmit={submit}>
+    <>
       <p>{t('account.signedInAs', { email: status.email })}</p>
-      <h3>{resetting ? t('account.resetTitle') : creating ? t('account.createTitle') : t('account.enterTitle')}</h3>
-      <p>{resetting ? t('account.resetWarning') : creating ? t('account.createHint') : t('account.enterHint')}</p>
       {hasDiary && !resetting && (
         <p>
           {t('account.backupFirst')}{' '}
@@ -221,42 +211,116 @@ function Passphrase({ sync, status, run, busy }: { sync: SyncController; status:
           </button>
         </p>
       )}
-      <Field label={t('account.passphrase')}>
-        {(id) => (
-          <input
-            id={id}
-            type="password"
-            autoComplete={creating ? 'new-password' : 'current-password'}
-            required
-            value={first}
-            onChange={(e) => setFirst(e.target.value)}
-          />
-        )}
-      </Field>
-      {creating && (
-        <Field label={t('account.passphraseAgain')}>
-          {(id) => <input id={id} type="password" autoComplete="new-password" required value={second} onChange={(e) => setSecond(e.target.value)} />}
-        </Field>
+      {!status.accountHasKey || resetting ? (
+        <NewKey sync={sync} status={status} run={run} busy={busy} reset={resetting} onCancel={resetting ? () => setResetting(false) : undefined} />
+      ) : (
+        <form onSubmit={unlock}>
+          <h3>{t('account.enterTitle')}</h3>
+          <p>{t('account.enterHint')}</p>
+          <Field label={t('account.recoveryKey')}>
+            {(id) => (
+              <input
+                id={id}
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                required
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+              />
+            )}
+          </Field>
+          <p>
+            <button type="submit" disabled={busy}>
+              {t('account.unlock')}
+            </button>{' '}
+            <button type="button" onClick={() => setResetting(true)}>
+              {t('account.forgot')}
+            </button>
+          </p>
+        </form>
       )}
       <p>
-        <button type="submit" disabled={busy}>
-          {resetting ? t('account.reset') : creating ? t('account.create') : t('account.unlock')}
-        </button>{' '}
-        {status.accountHasKey && (
-          <button
-            type="button"
-            onClick={() => {
-              setResetting((r) => !r)
-              setFirst('')
-              setSecond('')
-            }}
-          >
-            {resetting ? t('account.cancel') : t('account.forgot')}
-          </button>
-        )}{' '}
         <button type="button" disabled={busy} onClick={() => void run(() => sync.logout())}>
           {t('account.signOut')}
         </button>
+      </p>
+    </>
+  )
+}
+
+/**
+ * Kunci pemulihan baru: dibuat di perangkat, ditampilkan sekali untuk disalin atau diunduh,
+ * dan baru dipakai (dikirim terbungkus ke server) setelah user menyatakan sudah menyimpannya.
+ */
+function NewKey({
+  sync,
+  status,
+  run,
+  busy,
+  reset,
+  onCancel,
+  onDone,
+}: {
+  sync: SyncController
+  status: SyncStatus
+  run: Run
+  busy: boolean
+  reset: boolean
+  onCancel?: () => void
+  onDone?: () => void
+}) {
+  const { t, i18n } = useTranslation()
+  const [key] = useState(generateRecoveryKey)
+  const [saved, setSaved] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const file = t('account.keyFile', {
+    key,
+    email: status.email,
+    date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'long' }).format(Date.now()),
+  })
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    void run(async () => {
+      const normalized = normalizeRecoveryKey(key)
+      await (reset ? sync.resetSync(normalized) : sync.createPassphrase(normalized))
+      onDone?.()
+    })
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <h3>{reset ? t('account.resetTitle') : t('account.createTitle')}</h3>
+      <p>{reset ? t('account.resetWarning') : t('account.createHint')}</p>
+      <p>
+        <code className="recovery-key" aria-label={t('account.recoveryKey')}>
+          {key}
+        </code>
+      </p>
+      <p>
+        <button type="button" onClick={() => void navigator.clipboard?.writeText(key).then(() => setCopied(true), () => {})}>
+          {copied ? t('account.copied') : t('account.copy')}
+        </button>{' '}
+        <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(file)}`} download="diary-recovery-key.txt">
+          {t('account.download')}
+        </a>
+      </p>
+      <p>{t('account.keepElsewhere')}</p>
+      <p>
+        <label>
+          <input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} /> {t('account.saved')}
+        </label>
+      </p>
+      <p>
+        <button type="submit" disabled={busy || !saved}>
+          {reset ? t('account.reset') : t('account.create')}
+        </button>{' '}
+        {onCancel && (
+          <button type="button" onClick={onCancel}>
+            {t('account.cancel')}
+          </button>
+        )}
       </p>
     </form>
   )
@@ -265,6 +329,7 @@ function Passphrase({ sync, status, run, busy }: { sync: SyncController; status:
 function Active({ sync, status, run, busy }: { sync: SyncController; status: SyncStatus; run: Run; busy: boolean }) {
   const { t, i18n } = useTranslation()
   const [deleting, setDeleting] = useState(false)
+  const [rekeying, setRekeying] = useState(false)
   const [typed, setTyped] = useState('')
 
   const megabytes = (bytes: number) => (bytes / (1024 * 1024)).toFixed(1)
@@ -293,10 +358,18 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
         <button type="button" disabled={busy} onClick={() => void run(() => sync.logout())}>
           {t('account.signOut')}
         </button>{' '}
+        {!rekeying && (
+          <>
+            <button type="button" onClick={() => setRekeying(true)}>
+              {t('account.newKey')}
+            </button>{' '}
+          </>
+        )}
         <button type="button" onClick={() => setDeleting((d) => !d)}>
           {deleting ? t('account.cancel') : t('account.deleteAccount')}
         </button>
       </p>
+      {rekeying && <NewKey sync={sync} status={status} run={run} busy={busy} reset onCancel={() => setRekeying(false)} onDone={() => setRekeying(false)} />}
       {deleting && (
         <form onSubmit={remove}>
           <Field label={t('account.deleteConfirm')}>

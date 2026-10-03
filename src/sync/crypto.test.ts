@@ -50,8 +50,8 @@ describe('key wrapping', () => {
     expect(await recordId(a.keys, 'entries', 'x')).not.toBe(await recordId(b.keys, 'entries', 'x'))
   })
 
-  it('uses 600,000 iterations by default and refuses unreasonable counts', async () => {
-    expect(KDF_ITERATIONS).toBe(600_000)
+  it('uses 100,000 iterations by default and refuses unreasonable counts', async () => {
+    expect(KDF_ITERATIONS).toBe(100_000)
     const { wrappedKey } = await createKey(PASS, FAST)
     for (const iterations of [1000, 99_999, 10_000_001]) {
       const attempt = openKey(PASS, { ...wrappedKey, iterations })

@@ -7,7 +7,6 @@ const CORS = {
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
 }
 const EMAIL = 'e2e@example.com'
-const PASS = 'frasa sandi e2e'
 
 /** Contexts in this set cannot reach the server, like a laptop on a train. */
 const offline = new Set<BrowserContext>()
@@ -37,17 +36,19 @@ async function signIn(page: Page, server: FakeServer) {
   await page.getByRole('button', { name: 'Masuk', exact: true }).click()
 }
 
-async function firstDevice(page: Page, server: FakeServer) {
+/** Turns sync on with the key the page generates, and returns that key as shown. */
+async function firstDevice(page: Page, server: FakeServer): Promise<string> {
   await signIn(page, server)
-  await page.getByLabel('Frasa sandi sync').fill(PASS)
-  await page.getByLabel('Ulangi frasa sandi').fill(PASS)
-  await page.getByRole('button', { name: 'Buat frasa sandi' }).click()
+  const key = (await page.getByLabel('Kunci pemulihan').textContent())!
+  await page.getByRole('checkbox', { name: 'Saya sudah menyimpan kunci ini' }).check()
+  await page.getByRole('button', { name: 'Lanjut' }).click()
   await expect(page.getByText(/^Terakhir sync:/)).toBeVisible()
+  return key
 }
 
-async function anotherDevice(page: Page, server: FakeServer) {
+async function anotherDevice(page: Page, server: FakeServer, key: string) {
   await signIn(page, server)
-  await page.getByLabel('Frasa sandi sync').fill(PASS)
+  await page.getByLabel('Kunci pemulihan').fill(key)
   await page.getByRole('button', { name: 'Buka' }).click()
   await expect(page.getByText(/^Terakhir sync:/)).toBeVisible()
 }
@@ -74,7 +75,7 @@ const editor = (page: Page) => page.getByRole('textbox', { name: 'Tulis diary' }
 test('a diary written on one device appears on another, and the server never sees it', async ({ browser }) => {
   const server = new FakeServer()
   const laptop = await newDevice(browser, server)
-  await firstDevice(laptop.page, server)
+  const key = await firstDevice(laptop.page, server)
 
   const pushesBefore = pushes(server)
   const recordsBefore = server.user(EMAIL).records.size
@@ -90,7 +91,7 @@ test('a diary written on one device appears on another, and the server never see
   }
 
   const phone = await newDevice(browser, server)
-  await anotherDevice(phone.page, server)
+  await anotherDevice(phone.page, server, key)
   await phone.page.goto('/')
   await expect(editor(phone.page)).toContainText('RAHASIA-e2e ditulis di laptop')
 
@@ -101,9 +102,9 @@ test('a diary written on one device appears on another, and the server never see
 test('a mood tapped on the phone and text written offline on the laptop both survive', async ({ browser }) => {
   const server = new FakeServer()
   const laptop = await newDevice(browser, server)
-  await firstDevice(laptop.page, server)
+  const key = await firstDevice(laptop.page, server)
   const phone = await newDevice(browser, server)
-  await anotherDevice(phone.page, server)
+  await anotherDevice(phone.page, server, key)
 
   offline.add(laptop.context)
   await laptop.page.goto('/')

@@ -187,6 +187,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .slide-body .stat-section { width: 100%; text-align: left; }
 .slide-close { color: var(--muted); }
 button.wrapped-link { border: 0; font: inherit; cursor: pointer; }
+.recovery-key { display: inline-block; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 1.1rem; letter-spacing: 0.05em; user-select: all; overflow-wrap: anywhere; }
 .letter-envelope { padding: 32px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .letter-envelope .muted { margin: 0; color: var(--muted); }
 .letter-paper { align-items: stretch; text-align: left; user-select: text; }
