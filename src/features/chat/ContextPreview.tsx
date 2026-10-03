@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import type { ContextCounts } from '../../ai/context/chatContext'
 import type { DateKey, Mood } from '../../domain/types'
+import { ChevronRight } from '../../app/icons'
 import { loadChatPrompt } from './systemPromptSource'
 
 export function ContextPreview({ date, latestUserText }: { date: DateKey; latestUserText: string }) {
@@ -28,7 +29,10 @@ export function ContextPreview({ date, latestUserText }: { date: DateKey; latest
 
   return (
     <details className="context-preview" onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary>{t('chat.contextTitle')}</summary>
+      <summary>
+        <ChevronRight />
+        {t('chat.contextTitle')}
+      </summary>
       <label>
         <input
           type="checkbox"

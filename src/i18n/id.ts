@@ -164,6 +164,7 @@ export const id = {
     backup: 'Backup',
     export: 'Export ZIP',
     import: 'Import',
+    chooseFile: 'Pilih file ZIP atau Markdown',
     lastExport: 'Export terakhir: {{date}}',
     never: 'Belum pernah export',
     reminder: 'Pengingat backup',

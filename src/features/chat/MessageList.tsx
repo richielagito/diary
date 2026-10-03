@@ -18,7 +18,7 @@ interface Row {
 
 export function MessageList({ messages, state, onRetry }: Props) {
   const { t } = useTranslation()
-  if (messages.length === 0 && state.phase === 'idle') return <p>{t('chat.empty')}</p>
+  if (messages.length === 0 && state.phase === 'idle') return <p className="chat-empty">{t('chat.empty')}</p>
   // Retry cannot help a storage error that has nothing unsaved to resend (the composer already kept the draft).
   const showRetry = state.phase === 'error' && !(state.kind === 'storage' && !state.unsaved)
 

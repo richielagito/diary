@@ -282,14 +282,14 @@ export function AiSettingsSection() {
       {modelFetch.kind === 'ok' && <p role="status">{t('aiSettings.modelsFetched', { count: modelFetch.count })}</p>}
       {modelFetch.kind === 'failed' && <p role="alert">{t('aiSettings.modelsFetchFailed')}</p>}
       <p>
-        <button type="button" onClick={() => void save()}>
+        <button type="button" className="primary" onClick={() => void save()}>
           {t('aiSettings.save')}
         </button>{' '}
         <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
           {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
         </button>{' '}
         {settings.ai && (
-          <button type="button" onClick={() => void clear()}>
+          <button type="button" className="danger" onClick={() => void clear()}>
             {t('aiSettings.clear')}
           </button>
         )}

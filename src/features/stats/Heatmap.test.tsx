@@ -60,11 +60,11 @@ test('compact renders no links and no legend', () => {
   expect(container.querySelector('.heat-legend')).toBeNull()
 })
 
-test('entry without mood uses the none colour', () => {
+test('entry without mood is drawn as a ring, not a mood fill', () => {
   renderHeat([entry('2026-10-05', null, 100)], month, 'month')
-  expect(screen.getByRole('link', { name: /5 Oktober 2026: tanpa mood, 100 kata/ })).toHaveStyle({
-    background: 'var(--mood-none)',
-  })
+  const cell = screen.getByRole('link', { name: /5 Oktober 2026: tanpa mood, 100 kata/ })
+  expect(cell).toHaveClass('heat-nomood')
+  expect(cell.style.background).toBe('')
 })
 
 describe('year auto-scroll', () => {

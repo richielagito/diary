@@ -45,11 +45,13 @@ export const CARD_HEIGHT = 1920
 const MARGIN = 80
 const CONTENT_WIDTH = CARD_WIDTH - MARGIN * 2
 const FONT = 'system-ui, sans-serif'
+/** Huruf tulisan aplikasi (dimuat dulu di renderShareCard); judul dan angka memakainya. */
+const FONT_TEXT = 'Literata, Georgia, serif'
 const MOODS: Mood[] = [5, 4, 3, 2, 1]
 
 /** maxWidth: teks dipersempit supaya tidak keluar dari kartu. */
-function text(ctx: Ctx2D, s: string, x: number, y: number, size: number, color: string, bold = false, maxWidth?: number) {
-  ctx.font = `${bold ? 'bold ' : ''}${size}px ${FONT}`
+function text(ctx: Ctx2D, s: string, x: number, y: number, size: number, color: string, bold = false, maxWidth?: number, family = FONT) {
+  ctx.font = `${bold ? '600 ' : ''}${size}px ${family}`
   ctx.fillStyle = color
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -78,10 +80,17 @@ export function drawHeatmap(ctx: Ctx2D, data: ShareCardData, palette: SharePalet
     const cx = x + (year ? week : day) * (size + gap)
     const cy = y + (year ? day : week) * (size + gap)
     roundedRect(ctx, cx, cy, size, size, size / 5)
-    if (cell.entry) {
+    if (cell.entry && cell.entry.mood !== null) {
       ctx.globalAlpha = LEVEL_OPACITY[cell.entry.level]
-      ctx.fillStyle = palette.mood[cell.entry.mood ?? 'none']
+      ctx.fillStyle = palette.mood[cell.entry.mood]
       ctx.fill()
+      ctx.globalAlpha = 1
+    } else if (cell.entry) {
+      // Tanpa mood: cincin, seperti di aplikasi.
+      ctx.globalAlpha = LEVEL_OPACITY[cell.entry.level]
+      ctx.strokeStyle = palette.mood.none
+      ctx.lineWidth = year ? 2 : 4
+      ctx.stroke()
       ctx.globalAlpha = 1
     } else {
       ctx.strokeStyle = palette.border
@@ -99,12 +108,12 @@ export function drawShareCard(ctx: Ctx2D, data: ShareCardData, palette: SharePal
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT)
 
   text(ctx, data.appName, MARGIN, 120, 36, palette.muted)
-  text(ctx, data.periodLabel, MARGIN, 250, 88, palette.text, true)
+  text(ctx, data.periodLabel, MARGIN, 250, 88, palette.text, false, undefined, FONT_TEXT)
   if (data.subtitle) text(ctx, data.subtitle, MARGIN, 310, 40, palette.muted)
 
   data.stats.forEach((s, i) => {
     const y = 470 + i * 140
-    text(ctx, s.value, MARGIN, y, 96, palette.text, true)
+    text(ctx, s.value, MARGIN, y, 96, palette.text, false, undefined, FONT_TEXT)
     text(ctx, s.label, MARGIN, y + 44, 36, palette.muted)
   })
 
@@ -149,6 +158,8 @@ export async function renderShareCard(data: ShareCardData): Promise<Blob> {
   canvas.height = CARD_HEIGHT
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('canvas unavailable')
+  // Canvas tidak menunggu webfont: tanpa ini judul bisa tergambar dengan huruf cadangan.
+  await document.fonts?.load(`88px ${FONT_TEXT}`).catch(() => undefined)
   drawShareCard(ctx, data, readPalette())
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png')

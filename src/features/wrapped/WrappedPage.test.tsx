@@ -5,7 +5,7 @@ import { i18n } from '../../i18n'
 import type { PeriodStats } from '../../stats/computeStats'
 import { renderApp, renderWithRepos } from '../../test/renderApp'
 import { renderShareCard } from './shareCard'
-import { buildSlides } from './WrappedPage'
+import { buildSlides, moodWash } from './WrappedPage'
 
 vi.mock('./shareCard', async (orig) => ({
   ...(await orig<typeof import('./shareCard')>()),
@@ -218,4 +218,10 @@ test('saving the image shows an alert when rendering fails', async () => {
   await user.click(screen.getByRole('button', { name: 'Simpan gambar' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Gagal menyimpan gambar. Coba lagi.')
   spy.mockRestore()
+})
+
+test('the background takes the two most frequent moods, skipping neutral unless it is all there is', () => {
+  expect(moodWash({ 1: 2, 2: 0, 3: 9, 4: 5, 5: 1 })).toEqual({ '--wrap-a': 'var(--mood-4)', '--wrap-b': 'var(--mood-1)' })
+  expect(moodWash({ 1: 0, 2: 0, 3: 4, 4: 0, 5: 3 })).toEqual({ '--wrap-a': 'var(--mood-5)', '--wrap-b': 'var(--mood-5)' })
+  expect(moodWash({ 1: 0, 2: 0, 3: 4, 4: 0, 5: 0 })).toEqual({ '--wrap-a': 'var(--mood-3)', '--wrap-b': 'var(--mood-3)' })
 })

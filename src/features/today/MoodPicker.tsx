@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MOOD_EMOJI, MOODS, type Mood } from '../../domain/types'
 
@@ -13,6 +14,7 @@ export function MoodPicker({ value, onChange }: { value: Mood | null; onChange: 
           title={t(`mood.${m}`)}
           aria-pressed={value === m}
           onClick={() => onChange(value === m ? null : m)}
+          style={{ '--mood': `var(--mood-${m})` } as CSSProperties}
         >
           {MOOD_EMOJI[m]}
         </button>

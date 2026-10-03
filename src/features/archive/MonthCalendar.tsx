@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { buildMonthGrid, type YearMonth } from '../../domain/calendar'
-import { parseDateKey } from '../../domain/date'
+import { dateKey, parseDateKey } from '../../domain/date'
 import type { DateKey, DayEntry } from '../../domain/types'
 
 const MONDAY = new Date(2024, 0, 1) // Senin
@@ -9,6 +9,7 @@ const MONDAY = new Date(2024, 0, 1) // Senin
 export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<DateKey, DayEntry> }) {
   const { t, i18n } = useTranslation()
   const weekday = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })
+  const today = dateKey()
   const full = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
@@ -30,13 +31,11 @@ export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<Dat
             if (entry) label += `, ${entry.mood ? t(`mood.${entry.mood}`) : t('archive.noMood')}`
             return (
               <span key={date} role="gridcell" style={{ display: 'contents' }}>
-                <Link to={`/day/${date}`} aria-label={label}>
+                <Link to={`/day/${date}`} aria-label={label} aria-current={date === today ? 'date' : undefined}>
                   {day.getDate()}
                   <span
-                    className="dot"
-                    style={{
-                      background: entry ? `var(--mood-${entry.mood ?? 'none'})` : 'transparent',
-                    }}
+                    className={entry && entry.mood === null ? 'dot dot-none' : 'dot'}
+                    style={entry?.mood ? { background: `var(--mood-${entry.mood})` } : undefined}
                   />
                 </Link>
               </span>

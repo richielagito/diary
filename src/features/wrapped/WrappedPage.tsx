@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { buildLetterInput } from '../../ai/letter/letterInput'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { dateKey } from '../../domain/date'
-import type { DayEntry } from '../../domain/types'
+import { MOODS, type DayEntry, type Mood } from '../../domain/types'
+import { Close } from '../../app/icons'
 import type { Memory } from '../../storage/MemoryRepository'
 import type { Summary } from '../../storage/SummaryRepository'
 import { computeStats, type PeriodStats } from '../../stats/computeStats'
@@ -27,6 +28,16 @@ export function buildSlides(stats: PeriodStats, letterAvailable: boolean): Slide
   if (letterAvailable) slides.push('letter')
   slides.push('closing')
   return slides
+}
+
+/**
+ * Latar Wrapped: dua mood yang paling sering muncul di periode ini. Mood netral (3) hanya dipakai
+ * kalau tidak ada yang lain, supaya warnanya berasal dari perasaan yang benar-benar terasa.
+ */
+export function moodWash(distribution: Record<Mood, number>): CSSProperties {
+  const [a, b] = MOODS.filter((m) => m !== 3 && distribution[m] > 0).sort((x, y) => distribution[y] - distribution[x])
+  const color = (m: Mood | undefined) => `var(--mood-${m ?? 3})`
+  return { '--wrap-a': color(a), '--wrap-b': color(b ?? a) } as CSSProperties
 }
 
 export function WrappedPage({ period }: { period: StatsPeriod }) {
@@ -113,14 +124,14 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
   const current = slides[index]
 
   return (
-    <div className="wrapped" {...bind}>
+    <div className="wrapped" style={moodWash(stats.mood.distribution)} {...bind}>
       <div className="wrapped-progress" aria-hidden="true">
         {slides.map((id, i) => (
           <span key={id} className={i <= index ? 'filled' : undefined} />
         ))}
       </div>
-      <Link className="wrapped-x" to="/stats" replace aria-label={t('wrapped.close')}>
-        ✕
+      <Link className="wrapped-x icon-btn" to="/stats" replace aria-label={t('wrapped.close')}>
+        <Close />
       </Link>
       <button type="button" className="sr-only-focusable" onClick={prev}>
         {t('wrapped.previous')}

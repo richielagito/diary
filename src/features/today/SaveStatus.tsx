@@ -15,7 +15,7 @@ export function SaveStatusText({ status, onExport }: { status: SaveStatus; onExp
   }
   if (status === 'idle') return null
   return (
-    <span className="save-status" role="status">
+    <span className="save-status" role="status" data-state={status}>
       {status === 'saving' ? t('save.saving') : t('save.saved')}
     </span>
   )

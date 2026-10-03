@@ -9,6 +9,8 @@ import { comparePeriods, periodContaining, periodId, shiftPeriod, type StatsPeri
 import { ConsistencyCards, MoodSection, TagSection } from './StatCards'
 import { periodLabel } from './format'
 import { Heatmap } from './Heatmap'
+import { moodWash } from '../wrapped/WrappedPage'
+import { ChevronLeft, ChevronRight } from '../../app/icons'
 
 export function StatsPage() {
   const { t, i18n } = useTranslation()
@@ -52,7 +54,7 @@ export function StatsPage() {
 
   if (!stats) {
     return (
-      <section>
+      <section className="empty-state">
         <p>{t('stats.emptyAll')}</p>
         <Link to="/">{t('stats.writeToday')}</Link>
       </section>
@@ -75,12 +77,12 @@ export function StatsPage() {
           </button>
         </div>
         <div className="month-nav">
-          <button type="button" aria-label={t('stats.previous')} disabled={!canPrev} onClick={() => setPeriod((p) => shiftPeriod(p, -1))}>
-            ‹
+          <button type="button" className="icon-btn" aria-label={t('stats.previous')} disabled={!canPrev} onClick={() => setPeriod((p) => shiftPeriod(p, -1))}>
+            <ChevronLeft />
           </button>
           <h1>{label}</h1>
-          <button type="button" aria-label={t('stats.next')} disabled={!canNext} onClick={() => setPeriod((p) => shiftPeriod(p, 1))}>
-            ›
+          <button type="button" className="icon-btn" aria-label={t('stats.next')} disabled={!canNext} onClick={() => setPeriod((p) => shiftPeriod(p, 1))}>
+            <ChevronRight />
           </button>
         </div>
       </div>
@@ -91,12 +93,12 @@ export function StatsPage() {
           <ConsistencyCards stats={stats} />
           <MoodSection stats={stats} />
           <TagSection stats={stats} />
-          <Link className="wrapped-link" to={`/wrapped/${periodId(period)}`}>
+          <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
             {t('stats.openWrapped', { period: label })}
           </Link>
         </>
       ) : (
-        <p>{t('stats.emptyPeriod')}</p>
+        <p className="muted">{t('stats.emptyPeriod')}</p>
       )}
     </section>
   )

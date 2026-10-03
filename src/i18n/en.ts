@@ -166,6 +166,7 @@ export const en: typeof id = {
     backup: 'Backup',
     export: 'Export ZIP',
     import: 'Import',
+    chooseFile: 'Choose a ZIP or Markdown file',
     lastExport: 'Last export: {{date}}',
     never: 'Never exported',
     reminder: 'Backup reminder',

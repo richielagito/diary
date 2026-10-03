@@ -132,7 +132,7 @@ export function SaveToDiary({ date, messages, disabled }: Props) {
             </label>
           ))}
           <p>
-            <button type="submit" disabled={saving || draft.text.trim() === ''}>
+            <button type="submit" className="primary" disabled={saving || draft.text.trim() === ''}>
               {t('suggest.append')}
             </button>{' '}
             <button

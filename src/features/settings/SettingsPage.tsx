@@ -41,6 +41,7 @@ export function SettingsPage() {
 
   return (
     <div className="settings">
+      <h1>{t('nav.settings')}</h1>
       <section>
         <Field label={t('settings.language')}>
           {(id) => (
@@ -76,21 +77,28 @@ export function SettingsPage() {
       <section>
         <h2>{t('settings.backup')}</h2>
         <p>{lastExport}</p>
-        <button type="button" onClick={() => void exportNow()}>
+        <button type="button" className="primary" onClick={() => void exportNow()}>
           {t('settings.export')}
         </button>
         <Field label={t('settings.import')}>
           {(id) => (
-            <input
-              id={id}
-              type="file"
-              accept=".zip,.md"
-              multiple
-              onChange={(e) => {
-                void onFiles(e.target.files)
-                e.target.value = ''
-              }}
-            />
+            <span>
+              {/* The native control's text is the browser's, not the app's language: hidden, with its own label as the button. */}
+              <input
+                id={id}
+                className="visually-hidden"
+                type="file"
+                accept=".zip,.md"
+                multiple
+                onChange={(e) => {
+                  void onFiles(e.target.files)
+                  e.target.value = ''
+                }}
+              />
+              <label htmlFor={id} className="file-btn">
+                {t('settings.chooseFile')}
+              </label>
+            </span>
           )}
         </Field>
         <Field label={t('settings.reminder')}>

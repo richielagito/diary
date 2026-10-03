@@ -105,7 +105,7 @@ export function ChatPage({ date }: { date: DateKey }) {
 
       {messages.length > 0 && chat.state.phase !== 'streaming' && (
         <p>
-          <button type="button" onClick={() => void deleteConversation()}>
+          <button type="button" className="quiet danger" onClick={() => void deleteConversation()}>
             {t('chat.deleteDay')}
           </button>
         </p>

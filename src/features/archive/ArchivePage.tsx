@@ -6,6 +6,7 @@ import { monthRange, shiftMonth, type YearMonth } from '../../domain/calendar'
 import { parseDateKey } from '../../domain/date'
 import { excerpt, searchEntries } from '../../domain/filter'
 import { MOOD_EMOJI, type DateKey, type DayEntry } from '../../domain/types'
+import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { MonthCalendar } from './MonthCalendar'
 
 export function ArchivePage() {
@@ -49,11 +50,11 @@ export function ArchivePage() {
         placeholder={t('archive.searchPlaceholder')}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        style={{ width: '100%', padding: '8px 12px', marginBottom: 16 }}
+        className="archive-search"
       />
       {searching ? (
         <>
-          <p>{results.length ? t('archive.results', { count: results.length }) : t('archive.noResults')}</p>
+          <p className="results-count">{results.length ? t('archive.results', { count: results.length }) : t('archive.noResults')}</p>
           <ul className="results" aria-label={t('archive.searchLabel')}>
             {results.map((e) => (
               <li key={e.date}>
@@ -62,8 +63,7 @@ export function ArchivePage() {
                     {e.mood ? `${MOOD_EMOJI[e.mood]} ` : ''}
                     {dayFormat.format(parseDateKey(e.date))}
                   </strong>
-                  <br />
-                  <span>{excerpt(e.markdown)}</span>
+                  <span className="excerpt">{excerpt(e.markdown)}</span>
                 </Link>
               </li>
             ))}
@@ -72,12 +72,12 @@ export function ArchivePage() {
       ) : (
         <>
           <div className="month-nav">
-            <button type="button" aria-label={t('archive.prevMonth')} onClick={() => setYm((v) => shiftMonth(v, -1))}>
-              ‹
+            <button type="button" className="icon-btn" aria-label={t('archive.prevMonth')} onClick={() => setYm((v) => shiftMonth(v, -1))}>
+              <ChevronLeft />
             </button>
             <h1>{title}</h1>
-            <button type="button" aria-label={t('archive.nextMonth')} onClick={() => setYm((v) => shiftMonth(v, 1))}>
-              ›
+            <button type="button" className="icon-btn" aria-label={t('archive.nextMonth')} onClick={() => setYm((v) => shiftMonth(v, 1))}>
+              <ChevronRight />
             </button>
           </div>
           <MonthCalendar ym={ym} entries={monthEntries} />

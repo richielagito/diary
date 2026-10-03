@@ -142,7 +142,7 @@ function SignIn({
             />
           )}
         </Field>
-        <button type="submit" disabled={busy}>
+        <button type="submit" className="primary" disabled={busy}>
           {t('account.sendCode')}
         </button>
       </form>
@@ -162,7 +162,7 @@ function SignIn({
               />
             )}
           </Field>
-          <button type="submit" disabled={busy}>
+          <button type="submit" className="primary" disabled={busy}>
             {t('account.signIn')}
           </button>
         </form>
@@ -231,7 +231,7 @@ function KeySetup({ sync, status, run, busy }: { sync: SyncController; status: S
             )}
           </Field>
           <p>
-            <button type="submit" disabled={busy}>
+            <button type="submit" className="primary" disabled={busy}>
               {t('account.unlock')}
             </button>{' '}
             <button type="button" onClick={() => setResetting(true)}>
@@ -313,7 +313,7 @@ function NewKey({
         </label>
       </p>
       <p>
-        <button type="submit" disabled={busy || !saved}>
+        <button type="submit" className={reset ? 'danger' : 'primary'} disabled={busy || !saved}>
           {reset ? t('account.reset') : t('account.create')}
         </button>{' '}
         {onCancel && (
@@ -352,7 +352,7 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
       {status.usage && <p>{t('account.usage', { used: megabytes(status.usage.bytes), limit: megabytes(status.usage.limit) })}</p>}
       {status.problem && <p role="alert">{t(`account.problem.${status.problem}`)}</p>}
       <p>
-        <button type="button" disabled={busy || status.syncing} onClick={() => void run(() => sync.syncNow())}>
+        <button type="button" className="primary" disabled={busy || status.syncing} onClick={() => void run(() => sync.syncNow())}>
           {t('account.syncNow')}
         </button>{' '}
         <button type="button" disabled={busy} onClick={() => void run(() => sync.logout())}>
@@ -365,7 +365,7 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
             </button>{' '}
           </>
         )}
-        <button type="button" onClick={() => setDeleting((d) => !d)}>
+        <button type="button" className={deleting ? undefined : 'quiet danger'} onClick={() => setDeleting((d) => !d)}>
           {deleting ? t('account.cancel') : t('account.deleteAccount')}
         </button>
       </p>
@@ -375,7 +375,7 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
           <Field label={t('account.deleteConfirm')}>
             {(id) => <input id={id} type="email" autoComplete="off" value={typed} onChange={(e) => setTyped(e.target.value)} />}
           </Field>
-          <button type="submit" disabled={busy}>
+          <button type="submit" className="danger" disabled={busy}>
             {t('account.deleteAction')}
           </button>
         </form>

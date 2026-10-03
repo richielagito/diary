@@ -45,7 +45,7 @@ export function Composer({ streaming, onSend, onStop }: Props) {
           {t('chat.stop')}
         </button>
       ) : (
-        <button type="button" onClick={() => void submit()} disabled={sending || !text.trim()}>
+        <button type="button" className="primary" onClick={() => void submit()} disabled={sending || !text.trim()}>
           {t('chat.send')}
         </button>
       )}

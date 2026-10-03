@@ -50,7 +50,7 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="import-title" className="banner" style={{ display: 'block' }}>
+    <div role="dialog" aria-modal="true" aria-labelledby="import-title" className="import-dialog">
       <h2 id="import-title">{t('import.title')}</h2>
       <ul>
         <li>{t('import.newCount', { count: newCount })}</li>
@@ -110,7 +110,7 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
           <button type="button" onClick={onClose}>
             {t('import.cancel')}
           </button>{' '}
-          <button type="button" onClick={() => void run()} disabled={state.kind === 'busy' || (parsed.valid.length === 0 && parsed.chats.length === 0 && parsed.memories.length === 0)}>
+          <button type="button" className="primary" onClick={() => void run()} disabled={state.kind === 'busy' || (parsed.valid.length === 0 && parsed.chats.length === 0 && parsed.memories.length === 0)}>
             {t('import.confirm')}
           </button>
         </>

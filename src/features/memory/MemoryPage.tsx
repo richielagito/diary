@@ -38,7 +38,7 @@ function MemoryItem({ memory, index, save }: { memory: Memory; index: number; sa
         }}
       />{' '}
       <small>({memory.source === 'user' ? t('memory.byYou') : t('memory.byAi')})</small>{' '}
-      <button type="button" onClick={() => void save(() => memories.remove(memory.id))}>
+      <button type="button" className="quiet danger" onClick={() => void save(() => memories.remove(memory.id))}>
         {t('memory.delete')}
       </button>
     </li>
@@ -113,26 +113,27 @@ export function MemoryPage() {
       <p>{t('memory.intro')}</p>
       <p>{t('memory.privacy')}</p>
       {storageFailed && <p role="alert">{t('aiError.storage')}</p>}
-      <label>
-        <input
-          type="checkbox"
-          checked={settings.aiMemoryEnabled}
-          onChange={(e) => void toggleMemory(e.target.checked)}
-        />{' '}
-        {t('memory.enable')}
-      </label>
-      <br />
-      <label>
-        <input
-          type="checkbox"
-          checked={settings.aiSummariesEnabled}
-          onChange={(e) => {
-            const enabled = e.target.checked
-            void save(() => settingsStore.set('aiSummariesEnabled', enabled))
-          }}
-        />{' '}
-        {t('memory.enableSummaries')}
-      </label>
+      <div className="toggles">
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.aiMemoryEnabled}
+            onChange={(e) => void toggleMemory(e.target.checked)}
+          />{' '}
+          {t('memory.enable')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.aiSummariesEnabled}
+            onChange={(e) => {
+              const enabled = e.target.checked
+              void save(() => settingsStore.set('aiSummariesEnabled', enabled))
+            }}
+          />{' '}
+          {t('memory.enableSummaries')}
+        </label>
+      </div>
 
       <h2>{t('memory.listTitle')}</h2>
       {memoryList.length === 0 ? (
@@ -144,7 +145,7 @@ export function MemoryPage() {
           ))}
         </ul>
       )}
-      <p>
+      <p className="inline-form">
         <input
           aria-label={t('memory.addLabel')}
           maxLength={MEMORY_TEXT_MAX}
@@ -162,7 +163,7 @@ export function MemoryPage() {
           {refresh?.status === 'running' ? t('memory.refreshing') : t('memory.refresh')}
         </button>{' '}
         {memoryList.length > 0 && (
-          <button type="button" onClick={() => void clearAll()}>
+          <button type="button" className="danger" onClick={() => void clearAll()}>
             {t('memory.clearAll')}
           </button>
         )}
@@ -187,7 +188,7 @@ export function MemoryPage() {
               <li key={s.id}>
                 <strong>{summaryLabel(s)}</strong>
                 <p>{s.text}</p>
-                <button type="button" aria-label={`${t('memory.delete')} ${summaryLabel(s)}`} onClick={() => void save(() => summaries.remove(s.id))}>
+                <button type="button" className="quiet danger" aria-label={`${t('memory.delete')} ${summaryLabel(s)}`} onClick={() => void save(() => summaries.remove(s.id))}>
                   {t('memory.delete')}
                 </button>
               </li>

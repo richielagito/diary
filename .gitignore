@@ -14,3 +14,7 @@ playwright-report
 # tooling lokal
 .claude/
 .superpowers/
+
+# impeccable: local review screenshots and per-machine config
+.impeccable/review/
+.impeccable/config.local.json

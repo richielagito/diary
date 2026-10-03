@@ -22,10 +22,14 @@ export function heatCellLabel(cell: HeatCell, t: TFunction, language: string): s
 }
 
 function cellStyle(cell: HeatCell): CSSProperties | undefined {
-  if (cell.entry) {
-    return { background: `var(--mood-${cell.entry.mood ?? 'none'})`, opacity: LEVEL_OPACITY[cell.entry.level] }
-  }
-  return undefined
+  if (!cell.entry) return undefined
+  const opacity = LEVEL_OPACITY[cell.entry.level]
+  // Tanpa mood: cincin, bukan isian, supaya tidak terbaca sebagai mood 3.
+  return cell.entry.mood === null ? { opacity } : { background: `var(--mood-${cell.entry.mood})`, borderColor: 'transparent', opacity }
+}
+
+function cellClass(cell: HeatCell): string {
+  return cell.entry && cell.entry.mood === null ? 'heat-cell heat-nomood' : 'heat-cell'
 }
 
 interface HeatmapProps {
@@ -56,9 +60,9 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
     const label = heatCellLabel(cell, t, language)
     const mark = cell.date === current ? '' : undefined
     if (cell.future) return <span key={cell.date} className="heat-cell heat-future" role="img" aria-label={label} title={label} />
-    if (compact) return <span key={cell.date} className="heat-cell" role="img" aria-label={label} style={cellStyle(cell)} data-current={mark} />
+    if (compact) return <span key={cell.date} className={cellClass(cell)} role="img" aria-label={label} style={cellStyle(cell)} data-current={mark} />
     return (
-      <Link key={cell.date} to={`/day/${cell.date}`} className="heat-cell" aria-label={label} title={label} style={cellStyle(cell)} data-current={mark} />
+      <Link key={cell.date} to={`/day/${cell.date}`} className={cellClass(cell)} aria-label={label} title={label} style={cellStyle(cell)} data-current={mark} />
     )
   }
 
@@ -106,7 +110,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
             </span>
           ))}
           <span>
-            <span className="swatch" style={{ background: 'var(--mood-none)' }} />
+            <span className="swatch swatch-none" />
             {t('stats.noMood')}
           </span>
           <span>{t('stats.legendWords')}</span>
