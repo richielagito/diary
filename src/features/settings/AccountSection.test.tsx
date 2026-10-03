@@ -89,7 +89,8 @@ test('signs in with an email code, creates the passphrase and starts syncing', a
   expect(screen.queryByLabelText('Frasa sandi sync')).toBeNull()
   await waitFor(() => expect(server.user(EMAIL).records.size).toBe(1))
   expect((await diary.get(DAY))!.markdown).toBe('sudah ada')
-})
+  // Three typed passphrase rounds plus a key derivation: close to 5 s when the whole suite runs in parallel.
+}, 15_000)
 
 test('says so when the email code is wrong', async () => {
   const server = new FakeServer()
