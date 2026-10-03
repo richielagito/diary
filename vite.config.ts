@@ -19,8 +19,11 @@ export default defineConfig({
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {
-        navigateFallback: '/index.html',
+        // The app shell is precached and served as '/', not '/index.html': hosts such as Cloudflare redirect /index.html
+        // to /, and Safari refuses a page the service worker serves from a redirected response.
+        navigateFallback: '/',
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        manifestTransforms: [async (entries) => ({ manifest: entries.map((e) => (e.url === 'index.html' ? { ...e, url: '/' } : e)), warnings: [] })],
       },
     }),
   ],
