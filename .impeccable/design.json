@@ -1,0 +1,771 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T20:57:08.574Z",
+  "title": "Design System: Diary",
+  "extensions": {
+    "provenance": "Recorded after the build from the ui-redesign branch. Code-led: the owner's pinned \"evolve, not redesign\" brief replaced the concept roll, so there is no seed key.",
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#fbfaf7",
+        "cssVar": "--bg",
+        "theme": "light",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262523",
+          "#434240",
+          "#62615f",
+          "#838280",
+          "#a6a5a2",
+          "#cac9c6",
+          "#efeeeb"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface White",
+        "canonical": "#ffffff",
+        "cssVar": "--surface",
+        "theme": "light",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sunken": {
+        "role": "neutral",
+        "displayName": "Sunken Linen",
+        "canonical": "#f3f1ec",
+        "cssVar": "--sunken",
+        "theme": "light",
+        "tonalRamp": [
+          "#0c0b08",
+          "#262521",
+          "#43423e",
+          "#63615d",
+          "#84827e",
+          "#a7a5a0",
+          "#cbc9c4",
+          "#f0eee9"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Warm Ink",
+        "canonical": "#22201c",
+        "cssVar": "--text",
+        "theme": "light",
+        "tonalRamp": [
+          "#0d0b08",
+          "#272521",
+          "#44423d",
+          "#63615c",
+          "#84827d",
+          "#a7a59f",
+          "#cbc9c3",
+          "#f1eee9"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "#6b665d",
+        "cssVar": "--muted",
+        "theme": "light",
+        "tonalRamp": [
+          "#0e0b05",
+          "#29241d",
+          "#464139",
+          "#666158",
+          "#878278",
+          "#aaa49b",
+          "#cec8be",
+          "#f4eee3"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e5e1d8",
+        "cssVar": "--border",
+        "theme": "light",
+        "tonalRamp": [
+          "#0d0b06",
+          "#28251e",
+          "#45423a",
+          "#646159",
+          "#86827a",
+          "#a8a59c",
+          "#cdc9c0",
+          "#f2eee5"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#cdc7bb",
+        "cssVar": "--border-strong",
+        "theme": "light",
+        "tonalRamp": [
+          "#0f0b04",
+          "#29241b",
+          "#464137",
+          "#666156",
+          "#878277",
+          "#aaa499",
+          "#cec8bc",
+          "#f4eee1"
+        ]
+      },
+      "danger": {
+        "role": "functional",
+        "displayName": "Alarm Red",
+        "canonical": "#b42318",
+        "cssVar": "--danger",
+        "theme": "light",
+        "tonalRamp": [
+          "#210000",
+          "#4f0000",
+          "#830000",
+          "#b12015",
+          "#d45242",
+          "#e78678",
+          "#f7b7ad",
+          "#ffe8e3"
+        ]
+      },
+      "mood-1": {
+        "role": "mood",
+        "displayName": "Mood 1, Deep Night Blue",
+        "canonical": "#2d54a0",
+        "cssVar": "--mood-1",
+        "theme": "light",
+        "tonalRamp": [
+          "#000728",
+          "#021e5c",
+          "#173c86",
+          "#365eab",
+          "#5680d0",
+          "#7ba4f1",
+          "#afcafb",
+          "#e4efff"
+        ]
+      },
+      "mood-2": {
+        "role": "mood",
+        "displayName": "Mood 2, Rain Blue",
+        "canonical": "#4db2db",
+        "cssVar": "--mood-2",
+        "theme": "light",
+        "tonalRamp": [
+          "#000e22",
+          "#002b4e",
+          "#004b6f",
+          "#006c92",
+          "#208eb6",
+          "#4db2db",
+          "#94d4f0",
+          "#dbf3ff"
+        ]
+      },
+      "mood-3": {
+        "role": "mood",
+        "displayName": "Mood 3, Stone",
+        "canonical": "#7c7368",
+        "cssVar": "--mood-3",
+        "theme": "light",
+        "tonalRamp": [
+          "#100a03",
+          "#2b241a",
+          "#494136",
+          "#686055",
+          "#8a8176",
+          "#ada398",
+          "#d1c7bb",
+          "#f7ede0"
+        ]
+      },
+      "mood-4": {
+        "role": "mood",
+        "displayName": "Mood 4, Ochre",
+        "canonical": "#d6ab32",
+        "cssVar": "--mood-4",
+        "theme": "light",
+        "tonalRamp": [
+          "#170700",
+          "#3c1d00",
+          "#603900",
+          "#825900",
+          "#a57b00",
+          "#c5a03f",
+          "#dec790",
+          "#f7eed8"
+        ]
+      },
+      "mood-5": {
+        "role": "mood",
+        "displayName": "Mood 5, Ember",
+        "canonical": "#db551d",
+        "cssVar": "--mood-5",
+        "theme": "light",
+        "tonalRamp": [
+          "#210000",
+          "#4e0000",
+          "#820200",
+          "#af2900",
+          "#d25626",
+          "#e58969",
+          "#f5b9a4",
+          "#ffe8e0"
+        ]
+      },
+      "mood-none": {
+        "role": "mood",
+        "displayName": "No Mood, Ash Ring",
+        "canonical": "#8f887b",
+        "cssVar": "--mood-none",
+        "theme": "light",
+        "tonalRamp": [
+          "#0f0a03",
+          "#2a2419",
+          "#474136",
+          "#676054",
+          "#888175",
+          "#aba497",
+          "#d0c8ba",
+          "#f5eedf"
+        ]
+      },
+      "paper-dark": {
+        "role": "neutral",
+        "displayName": "Warm Paper (dark)",
+        "canonical": "#191714",
+        "cssVar": "--bg",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0d0b08",
+          "#272521",
+          "#44423e",
+          "#63615d",
+          "#84827e",
+          "#a7a5a0",
+          "#cbc9c4",
+          "#f1eeea"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Surface White (dark)",
+        "canonical": "#211f1b",
+        "cssVar": "--surface",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0d0b08",
+          "#272521",
+          "#44423d",
+          "#63615c",
+          "#84827d",
+          "#a7a59f",
+          "#cbc9c3",
+          "#f1eee9"
+        ]
+      },
+      "sunken-dark": {
+        "role": "neutral",
+        "displayName": "Sunken Linen (dark)",
+        "canonical": "#141210",
+        "cssVar": "--sunken",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0d0b09",
+          "#272522",
+          "#44413f",
+          "#63615e",
+          "#84827f",
+          "#a7a4a2",
+          "#cbc8c6",
+          "#f1eeeb"
+        ]
+      },
+      "ink-dark": {
+        "role": "primary",
+        "displayName": "Warm Ink (dark)",
+        "canonical": "#ece8e1",
+        "cssVar": "--text",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0d0b07",
+          "#28251f",
+          "#45423c",
+          "#64615b",
+          "#85827b",
+          "#a8a49e",
+          "#ccc9c2",
+          "#f2eee7"
+        ]
+      },
+      "muted-ink-dark": {
+        "role": "neutral",
+        "displayName": "Faded Ink (dark)",
+        "canonical": "#a39d92",
+        "cssVar": "--muted",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0f0a04",
+          "#29241c",
+          "#464138",
+          "#666156",
+          "#878277",
+          "#aaa499",
+          "#cfc8bd",
+          "#f4eee2"
+        ]
+      },
+      "hairline-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#33302b",
+        "cssVar": "--border",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0d0b07",
+          "#272520",
+          "#45423c",
+          "#64615b",
+          "#85827c",
+          "#a8a49e",
+          "#ccc9c2",
+          "#f2eee7"
+        ]
+      },
+      "hairline-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Hairline (dark)",
+        "canonical": "#4a463f",
+        "cssVar": "--border-strong",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0e0b06",
+          "#28251e",
+          "#45413b",
+          "#656159",
+          "#86827a",
+          "#a9a49c",
+          "#cdc8c0",
+          "#f3eee5"
+        ]
+      },
+      "danger-dark": {
+        "role": "functional",
+        "displayName": "Alarm Red (dark)",
+        "canonical": "#f2786c",
+        "cssVar": "--danger",
+        "theme": "dark",
+        "tonalRamp": [
+          "#210000",
+          "#4f0000",
+          "#800309",
+          "#a6332d",
+          "#ce574d",
+          "#e7867b",
+          "#f7b7ae",
+          "#ffe7e4"
+        ]
+      },
+      "mood-1-dark": {
+        "role": "mood",
+        "displayName": "Mood 1, Deep Night Blue (dark)",
+        "canonical": "#84aaf5",
+        "cssVar": "--mood-1",
+        "theme": "dark",
+        "tonalRamp": [
+          "#000728",
+          "#041e5c",
+          "#1f3e7f",
+          "#3d5ea3",
+          "#5d81c8",
+          "#7ea4ef",
+          "#b0cafb",
+          "#e4efff"
+        ]
+      },
+      "mood-2-dark": {
+        "role": "mood",
+        "displayName": "Mood 2, Rain Blue (dark)",
+        "canonical": "#0082b6",
+        "cssVar": "--mood-2",
+        "theme": "dark",
+        "tonalRamp": [
+          "#000d24",
+          "#002954",
+          "#004879",
+          "#006a9c",
+          "#1b8cc1",
+          "#4cb0e6",
+          "#99d2f4",
+          "#dcf2ff"
+        ]
+      },
+      "mood-3-dark": {
+        "role": "mood",
+        "displayName": "Mood 3, Stone (dark)",
+        "canonical": "#685f54",
+        "cssVar": "--mood-3",
+        "theme": "dark",
+        "tonalRamp": [
+          "#100a03",
+          "#2b241a",
+          "#494036",
+          "#696055",
+          "#8a8175",
+          "#ada397",
+          "#d2c7bb",
+          "#f7ede0"
+        ]
+      },
+      "mood-4-dark": {
+        "role": "mood",
+        "displayName": "Mood 4, Ochre (dark)",
+        "canonical": "#a58b00",
+        "cssVar": "--mood-4",
+        "theme": "dark",
+        "tonalRamp": [
+          "#140900",
+          "#362100",
+          "#583e00",
+          "#785f00",
+          "#9a8100",
+          "#bca440",
+          "#d8ca91",
+          "#f4efd9"
+        ]
+      },
+      "mood-5-dark": {
+        "role": "mood",
+        "displayName": "Mood 5, Ember (dark)",
+        "canonical": "#ff9657",
+        "cssVar": "--mood-5",
+        "theme": "dark",
+        "tonalRamp": [
+          "#200000",
+          "#4d0400",
+          "#7a1a00",
+          "#a03f00",
+          "#c6621c",
+          "#e28d5c",
+          "#f2bb9d",
+          "#ffe9dd"
+        ]
+      },
+      "mood-none-dark": {
+        "role": "mood",
+        "displayName": "No Mood, Ash Ring (dark)",
+        "canonical": "#78726a",
+        "cssVar": "--mood-none",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0f0a05",
+          "#29241d",
+          "#47413a",
+          "#666058",
+          "#878179",
+          "#aaa49b",
+          "#cfc8bf",
+          "#f4ede4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Wrapped slide titles only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page h1 in Literata; the Today date heading scales clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem)."
+      },
+      "writing": {
+        "displayName": "Writing",
+        "purpose": "The editor and anything read as a page."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section h2 in the system sans."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Interface prose."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons, inputs, nav links, banners."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Small print, legends, save status."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Code and the recovery key."
+      }
+    },
+    "fonts": [
+      {
+        "family": "Literata",
+        "files": [
+          "/fonts/literata-latin-opsz-normal.woff2",
+          "/fonts/literata-latin-opsz-italic.woff2"
+        ],
+        "weights": "200 900",
+        "axes": [
+          "wght",
+          "opsz"
+        ],
+        "license": "OFL (public/fonts/LICENSE-Literata.txt)",
+        "cssVar": "--font-text",
+        "note": "Self-hosted for offline use and privacy. Chosen over Newsreader; a swap changes only --font-text and the @font-face files."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "pop",
+        "value": "0 6px 24px -8px rgb(34 32 28 / 0.18), 0 1px 3px rgb(34 32 28 / 0.08)",
+        "purpose": "Floating layers and paper objects: dialogs, format bubble, import dialog, Wrapped envelope and letter."
+      },
+      {
+        "name": "pop-dark",
+        "value": "0 8px 28px -8px rgb(0 0 0 / 0.6), 0 1px 3px rgb(0 0 0 / 0.4)",
+        "purpose": "Dark-theme value of pop."
+      },
+      {
+        "name": "focus-halo",
+        "value": "0 0 0 3px color-mix(in oklab, var(--text) 12%, transparent)",
+        "purpose": "Focused input halo, with the border turning ink."
+      },
+      {
+        "name": "ring",
+        "value": "inset 0 0 0 1.5px",
+        "purpose": "Today ring in ink; no-mood ring in --mood-none."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "150ms ease-out",
+        "purpose": "Colour, border and background state changes."
+      },
+      {
+        "name": "press",
+        "value": "100ms ease-out, translateY(1px)",
+        "purpose": "Button press."
+      },
+      {
+        "name": "mood-pick",
+        "value": "200ms ease-out",
+        "purpose": "Mood picker greyscale to colour."
+      },
+      {
+        "name": "slide-in",
+        "value": "520ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Wrapped slide entrance: fade, rise 16px, scale 0.985, blur 6px."
+      },
+      {
+        "name": "drift",
+        "value": "24s ease-in-out infinite alternate",
+        "purpose": "Wrapped mood wash drift."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition-duration: 0.01ms",
+        "purpose": "Applied under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stat-ledger-stack",
+        "value": "520px"
+      },
+      {
+        "name": "nav-tight",
+        "value": "400px"
+      },
+      {
+        "name": "nav-tighter",
+        "value": "360px"
+      }
+    ],
+    "icons": {
+      "source": "src/app/icons.tsx",
+      "grid": "20px",
+      "stroke": 1.75,
+      "caps": "round",
+      "color": "currentColor",
+      "note": "Inline SVG line icons, decorative beside labelled controls. Mood emoji are data, not icons."
+    },
+    "themes": {
+      "default": "follows prefers-color-scheme",
+      "override": "data-theme=\"light\" | \"dark\" on :root"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one ink action per group.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary{font:inherit;font-family:var(--font-ui);font-size:0.9375rem;line-height:1.3;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:0.5rem 0.95rem;min-height:2.5rem;cursor:pointer;transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,transform 100ms ease-out;background:var(--text);border-color:var(--text);color:var(--bg);font-weight:500;}.ds-btn-primary:hover{background:color-mix(in oklab,var(--text) 86%,var(--bg));}.ds-btn-primary:active{transform:translateY(1px);}.ds-btn-primary:focus-visible{outline:2px solid var(--text);outline-offset:2px;}"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Quiet outline button; the default for secondary actions.",
+      "html": "<button class=\"ds-btn\">Export</button>",
+      "css": ".ds-btn{font:inherit;font-family:var(--font-ui);font-size:0.9375rem;line-height:1.3;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:0.5rem 0.95rem;min-height:2.5rem;cursor:pointer;transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,transform 100ms ease-out;}.ds-btn:hover{border-color:var(--text);}.ds-btn:active{transform:translateY(1px);}.ds-btn:focus-visible{outline:2px solid var(--text);outline-offset:2px;}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Bare text action in faded ink; sunken fill on hover.",
+      "html": "<button class=\"ds-btn-quiet\">Cancel</button>",
+      "css": ".ds-btn-quiet{font:inherit;font-family:var(--font-ui);font-size:0.9375rem;line-height:1.3;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:0.5rem 0.95rem;min-height:2.5rem;cursor:pointer;transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,transform 100ms ease-out;background:none;border-color:transparent;color:var(--muted);padding-inline:0.5rem;}.ds-btn-quiet:hover{color:var(--text);background:var(--sunken);}.ds-btn-quiet:focus-visible{outline:2px solid var(--text);outline-offset:2px;}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action; danger text and a soft danger border.",
+      "html": "<button class=\"ds-btn-danger\">Delete entry</button>",
+      "css": ".ds-btn-danger{font:inherit;font-family:var(--font-ui);font-size:0.9375rem;line-height:1.3;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:0.5rem 0.95rem;min-height:2.5rem;cursor:pointer;transition:background-color 150ms ease-out,border-color 150ms ease-out,color 150ms ease-out,transform 100ms ease-out;color:var(--danger);border-color:color-mix(in oklab,var(--danger) 40%,transparent);}.ds-btn-danger:hover{border-color:var(--danger);}.ds-btn-danger:focus-visible{outline:2px solid var(--text);outline-offset:2px;}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Circular bare button for month arrows and close; 20px line icon.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"Next month\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.5 4.5 13 10l-5.5 5.5\"/></svg></button>",
+      "css": ".ds-icon-btn{display:inline-grid;place-items:center;width:2.5rem;height:2.5rem;padding:0;border:0;border-radius:999px;background:none;color:var(--muted);cursor:pointer;}.ds-icon-btn:hover{background:var(--sunken);color:var(--text);}.ds-icon-btn:focus-visible{outline:2px solid var(--text);outline-offset:2px;}.ds-icon-btn svg{display:block;}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Surface field with a strong hairline; ink border and soft ink halo on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search entries\">",
+      "css": ".ds-input{font:inherit;font-family:var(--font-ui);font-size:0.9375rem;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;padding:0.5rem 0.75rem;min-height:2.5rem;transition:border-color 150ms ease-out;}.ds-input::placeholder{color:var(--muted);}.ds-input:hover:not(:focus){border-color:color-mix(in oklab,var(--text) 45%,var(--border-strong));}.ds-input:focus{border-color:var(--text);outline:none;box-shadow:0 0 0 3px color-mix(in oklab,var(--text) 12%,transparent);}"
+    },
+    {
+      "name": "Top Text Nav",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Sticky text nav; active link is ink with a 2px underline on the hairline.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"active\">Today</a><a href=\"#\">Archive</a><a href=\"#\">Chat</a><a href=\"#\">Stats</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-nav{display:flex;gap:1.5rem;padding:0.5rem 1.25rem 0;background:var(--bg);border-bottom:1px solid var(--border);font-family:var(--font-ui);}.ds-nav a{color:var(--muted);text-decoration:none;font-size:0.9375rem;padding:0.75rem 0 0.7rem;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color 150ms ease-out,border-color 150ms ease-out;}.ds-nav a:hover{color:var(--text);}.ds-nav a.active{color:var(--text);border-bottom-color:var(--text);}.ds-nav a:focus-visible{outline:2px solid var(--text);outline-offset:-2px;}"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Pill with a hairline edge for tags and chat history.",
+      "html": "<span class=\"ds-chip\">#work <span class=\"ds-muted\">12</span></span>",
+      "css": ".ds-chip{display:inline-block;padding:0.2rem 0.65rem;border:1px solid var(--border);border-radius:999px;font-family:var(--font-ui);font-size:0.875rem;background:var(--surface);color:var(--text);}.ds-muted{color:var(--muted);margin-left:0.15rem;}"
+    },
+    {
+      "name": "Mood Picker",
+      "kind": "custom",
+      "refersTo": "mood-button",
+      "description": "Five emoji in circles; greyscale at rest, mood-tinted fill and ring when chosen.",
+      "html": "<div class=\"ds-mood\"><button aria-label=\"Mood 1\" style=\"--mood:var(--mood-1)\">😞</button><button aria-label=\"Mood 2\" style=\"--mood:var(--mood-2)\">🙁</button><button aria-label=\"Mood 3\" style=\"--mood:var(--mood-3)\">😐</button><button aria-label=\"Mood 4\" aria-pressed=\"true\" style=\"--mood:var(--mood-4)\">🙂</button><button aria-label=\"Mood 5\" style=\"--mood:var(--mood-5)\">😄</button></div>",
+      "css": ".ds-mood{display:flex;gap:0.375rem;}.ds-mood button{width:2.75rem;height:2.75rem;padding:0;font-size:1.375rem;line-height:1;border:1px solid transparent;border-radius:999px;background:none;filter:grayscale(1);opacity:0.78;cursor:pointer;transition:filter 200ms ease-out,opacity 200ms ease-out,background-color 200ms ease-out,border-color 200ms ease-out,transform 150ms ease-out;}.ds-mood button:hover{filter:none;opacity:1;}.ds-mood button[aria-pressed=\"true\"]{filter:none;opacity:1;background:color-mix(in oklab,var(--mood) 20%,transparent);border-color:color-mix(in oklab,var(--mood) 60%,transparent);}.ds-mood button:active{transform:scale(0.94);}.ds-mood button:focus-visible{outline:2px solid var(--text);outline-offset:2px;}"
+    },
+    {
+      "name": "Mood Calendar Day",
+      "kind": "custom",
+      "refersTo": "mood-none",
+      "description": "Mood days get a filled dot, entry-without-mood days a ring, today an ink ring.",
+      "html": "<div class=\"ds-cal\"><a href=\"#\">3<span class=\"ds-dot\" style=\"background:var(--mood-4)\"></span></a><a href=\"#\">4<span class=\"ds-dot ds-dot-none\"></span></a><a href=\"#\" aria-current=\"date\">5<span class=\"ds-dot\" style=\"background:var(--mood-1)\"></span></a></div>",
+      "css": ".ds-cal{display:grid;grid-template-columns:repeat(3,3rem);gap:0.25rem;}.ds-cal a{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.3rem;border-radius:10px;text-decoration:none;color:var(--text);font-family:var(--font-ui);font-size:0.9375rem;font-variant-numeric:tabular-nums;transition:background-color 150ms ease-out;}.ds-cal a:hover{background:var(--sunken);}.ds-cal a[aria-current=\"date\"]{box-shadow:inset 0 0 0 1.5px var(--text);font-weight:600;}.ds-cal a:focus-visible{outline:2px solid var(--text);outline-offset:2px;}.ds-dot{width:7px;height:7px;border-radius:50%;}.ds-dot-none{box-shadow:inset 0 0 0 1.5px var(--mood-none);}"
+    },
+    {
+      "name": "Chat Bubbles",
+      "kind": "custom",
+      "refersTo": "chat-bubble-user",
+      "description": "User speaks in ink, the companion on surface with a hairline; tail corner on the speaker side.",
+      "html": "<ul class=\"ds-msgs\"><li class=\"ds-msg ds-user\">Long day.</li><li class=\"ds-msg ds-ai\">Want to tell me about it?</li></ul>",
+      "css": ".ds-msgs{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.625rem;font-family:var(--font-ui);}.ds-msg{max-width:85%;padding:0.625rem 0.95rem;line-height:1.5;}.ds-user{align-self:flex-end;background:var(--text);color:var(--bg);border-radius:18px 18px 6px 18px;}.ds-ai{align-self:flex-start;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:18px 18px 18px 6px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Ink on Warm Paper",
+    "overview": "Diary is a notebook that steps back so the writing leads. The interface is monochrome: warm off-white paper, near-black ink, hairline rules, and a serif writing face for anything the user wrote or reads as a page. There are no brand accents. The accent colour is the text colour, so a primary button is simply a filled block of ink.\n\nColour is reserved for one thing: mood. Mood is an ordinal 1 to 5 scale, drawn as a cool-to-warm diverging palette through a neutral middle, and it appears only where mood is the data (picker, calendar dots, heatmap, distribution bars, the Wrapped wash and share image). Daily screens stay quiet and dense in the way a page is dense: one centred column, generous line height, rules instead of cards. Wrapped is the single expressive surface, where the period's moods wash the page and serif titles get large.\n\nThe system deliberately refuses the category default of an indigo-accented card dashboard: no tinted brand colour, no grid of shadowed stat cards, no UI or animation libraries. Everything is plain CSS on custom properties in `src/styles.css`, with light and dark themes that follow the system unless overridden.",
+    "keyCharacteristics": [
+      "Monochrome UI: ink on warm paper, accent equals text colour.",
+      "Mood is the only expressive colour; danger is the only functional one.",
+      "Literata for writing surfaces and page titles; system sans for interface.",
+      "Hairline borders and tonal sunken fills instead of shadows.",
+      "One centred 44rem column with a sticky top text nav.",
+      "Wrapped is the one loud surface; everything else is calm."
+    ],
+    "rules": [
+      {
+        "name": "The Mood Is The Only Colour Rule",
+        "body": "Hue appears only where mood is the data. Every other element is drawn from ink, paper and their mixes; a new screen that needs \"a bit of colour\" uses ink weight or a sunken fill instead.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ring, Not Fill Rule",
+        "body": "A day with an entry but no mood is a 1.5px inset ring in `mood-none`, never a filled swatch, so it cannot be read as mood 3.",
+        "section": "colors"
+      },
+      {
+        "name": "The Never Colour Alone Rule",
+        "body": "Mood is always also carried by its emoji, label or accessible name; colour reinforces, it does not inform alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Means Page Rule",
+        "body": "Literata is for things the user writes or reads as a page (entry, titles, excerpts, letters, stat figures). Controls, labels and navigation stay in the system sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Swap Point Rule",
+        "body": "The writing face is set only through `--font-text` and its `@font-face` files. Literata was chosen over Newsreader; swapping it touches nothing else.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Over Shadow Rule",
+        "body": "Lists, sections, stat rows, banners and cards separate with a 1px hairline or a sunken fill. A resting surface never gets a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use ink (`--text`) as the only UI accent: primary fill, active underline, focus outline, checkbox accent.",
+      "**Do** read every colour from the custom properties on `:root` so both themes and the Wrapped share image stay correct.",
+      "**Do** draw a day with an entry but no mood as a 1.5px `--mood-none` ring.",
+      "**Do** keep mood emoji as the mood glyphs; they are data, not icons.",
+      "**Do** use Literata through `--font-text` for written and page content, and the system sans for controls.",
+      "**Do** separate content with hairlines and sunken fills; reserve `--shadow-pop` for floating layers and paper objects.",
+      "**Do** keep one primary (ink) button per group.",
+      "**Do** self-host fonts and inline icons as 20px, 1.75-stroke SVG; the app makes no asset requests.",
+      "**Do** gate every animation behind `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "**Don't** introduce a brand or accent hue; colour outside the mood scale is limited to `--danger` for errors, destructive actions and the crisis card.",
+      "**Don't** use mood colours for decoration, status or emphasis outside mood marks.",
+      "**Don't** fill a no-mood day.",
+      "**Don't** add UI or animation libraries, icon fonts or remote fonts.",
+      "**Don't** build dashboards of shadowed cards; summaries are hairline ledgers.",
+      "**Don't** add icons to the nav; it is a sticky top text nav.",
+      "**Don't** bring Wrapped's washes, large titles or motion into the daily screens."
+    ]
+  }
+}
