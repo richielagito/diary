@@ -25,15 +25,18 @@ export function SettingsPage() {
   }, [hash])
   const [importing, setImporting] = useState<{ parsed: ParsedImport; existing: Set<DateKey> } | null>(null)
 
+  const [importFailed, setImportFailed] = useState(false)
+
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return
+    setImportFailed(false)
     try {
       const parsed = await readImportFiles([...files], Date.now())
       const existing = new Set((await diary.list()).map((e) => e.date))
       setImporting({ parsed, existing })
     } catch (err) {
       console.error(err)
-      window.alert(t('import.failed'))
+      setImportFailed(true)
     }
   }
 
@@ -103,6 +106,7 @@ export function SettingsPage() {
             </span>
           )}
         </Field>
+        {importFailed && <p role="alert">{t('import.failed')}</p>}
         <Field label={t('settings.reminder')}>
           {(id) => (
             <select

@@ -6,6 +6,17 @@ export function MoodPicker({ value, onChange, past = false }: { value: Mood | nu
   const { t } = useTranslation()
   return (
     <div className="mood-row">
+      {/* Above the faces: first the question they answer, then the name of the chosen one and a visible way to clear it. */}
+      {value ? (
+        <p className="mood-caption">
+          <span aria-hidden="true">{t(`mood.${value}`)}</span>
+          <button type="button" className="quiet" onClick={() => onChange(null)}>
+            {t('day.clearMood')}
+          </button>
+        </p>
+      ) : (
+        <p className="mood-caption">{t(past ? 'day.moodPromptPast' : 'day.moodPrompt')}</p>
+      )}
       <div className="mood-picker" role="group" aria-label={t(past ? 'day.moodLabelPast' : 'day.moodLabel')}>
         {MOODS.map((m) => (
           <button
@@ -21,17 +32,6 @@ export function MoodPicker({ value, onChange, past = false }: { value: Mood | nu
           </button>
         ))}
       </div>
-      {/* The emoji alone do not say which is which: the chosen one is named, and clearing is a visible word. */}
-      {value ? (
-        <p className="mood-caption">
-          <span aria-hidden="true">{t(`mood.${value}`)}</span>
-          <button type="button" className="quiet" onClick={() => onChange(null)}>
-            {t('day.clearMood')}
-          </button>
-        </p>
-      ) : (
-        <p className="mood-caption">{t(past ? 'day.moodPromptPast' : 'day.moodPrompt')}</p>
-      )}
     </div>
   )
 }

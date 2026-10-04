@@ -12,15 +12,20 @@ import { WrappedPage } from '../features/wrapped/WrappedPage'
 import { parsePeriodId, periodRange } from '../stats/range'
 import { needsAttention, useSyncStatus } from './SyncContext'
 import { useApplyPreferences } from './useApplyPreferences'
+import { useKeyboardOpen } from './useKeyboardOpen'
 
 function Layout() {
   const { t } = useTranslation()
   useApplyPreferences()
   const attention = needsAttention(useSyncStatus())
+  const keyboard = useKeyboardOpen()
 
   return (
-    <div className="shell">
-      <nav className="nav">
+    <div className="shell" data-keyboard={keyboard || undefined}>
+      <a className="skip-link" href="#main">
+        {t('nav.skip')}
+      </a>
+      <nav className="nav" aria-label={t('nav.label')}>
         <NavLink to="/" end>
           {t('nav.today')}
         </NavLink>
@@ -37,7 +42,7 @@ function Layout() {
           )}
         </NavLink>
       </nav>
-      <main className="page">
+      <main className="page" id="main" tabIndex={-1}>
         <Outlet />
       </main>
     </div>

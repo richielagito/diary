@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { buildMonthGrid, type YearMonth } from '../../domain/calendar'
@@ -12,8 +13,20 @@ export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<Dat
   const today = dateKey()
   const full = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' })
 
+  // A grid moves by arrows: left and right by a day, up and down by a week (only between days that can be opened).
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]
+    if (!step) return
+    const days = [...e.currentTarget.querySelectorAll<HTMLElement>('a, .future, .empty')]
+    const at = days.indexOf(document.activeElement as HTMLElement)
+    const target = days[at + step]
+    if (at < 0 || target?.tagName !== 'A') return
+    e.preventDefault()
+    target.focus()
+  }
+
   return (
-    <div className="calendar" role="grid">
+    <div className="calendar" role="grid" onKeyDown={onKeyDown}>
       <div role="row" style={{ display: 'contents' }}>
         {Array.from({ length: 7 }, (_, i) => (
           <span key={i} role="columnheader" className="weekday">

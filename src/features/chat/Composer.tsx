@@ -38,7 +38,9 @@ export function Composer({ streaming, onSend, onStop }: Props) {
         aria-label={t('chat.inputLabel')}
         placeholder={t('chat.placeholder')}
         value={text}
-        disabled={streaming || sending}
+        // Read-only, not disabled: a disabled field drops focus, and on a phone the keyboard would fold on every send.
+        readOnly={streaming || sending}
+        aria-busy={streaming || sending}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}
       />

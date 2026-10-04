@@ -475,3 +475,14 @@ test('a refused write that comes back after the editor is gone, but before the p
   expect(stored).toContain('kalimat laptop')
   expect(stored).toContain('paragraf hp')
 }, 15000)
+
+test('day arrows step between days and focus the new date; arrows on a mood button stay put', async () => {
+  const { user } = await renderApp('/day/2026-09-20')
+  await user.click(await screen.findByRole('link', { name: 'Hari sebelumnya' }))
+  const heading = await screen.findByRole('heading', { level: 1, name: /19\sSeptember\s2026/ })
+  expect(heading).toHaveFocus()
+  await user.click(screen.getByRole('button', { name: 'Biasa' }))
+  await user.keyboard('{ArrowLeft}')
+  expect(screen.getByRole('heading', { level: 1, name: /19\sSeptember\s2026/ })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Hari berikutnya' })).toHaveAttribute('href', '/day/2026-09-20')
+})

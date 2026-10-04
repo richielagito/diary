@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import type { CreateProvider } from '../../ai/provider/createProvider'
 import type { ListModels } from '../../ai/provider/listModels'
 import { ProviderError } from '../../ai/provider/types'
@@ -22,6 +22,18 @@ test('defaults to anthropic with default model; saving stores config', async () 
     expect((await settingsStore.getAll()).ai).toEqual({ provider: 'anthropic', apiKey: 'sk-ant-test', baseUrl: '', model: 'claude-opus-5-5', fastModel: '' }),
   )
   expect(await screen.findByText('Tersimpan.')).toBeInTheDocument()
+})
+
+test('the first AI save asks what may be sent, and each choice applies at once', async () => {
+  const { settingsStore, user } = await renderApp('/settings')
+  await user.type(await screen.findByLabelText('API key'), 'sk-ant-test')
+  await user.click(screen.getByRole('button', { name: 'Simpan' }))
+  const choices = await screen.findByRole('group', { name: 'Apa saja yang boleh dikirim ke AI?' })
+  await user.click(within(choices).getByRole('checkbox', { name: /Sertakan diary/ }))
+  await user.click(within(choices).getByRole('checkbox', { name: 'Saran tag otomatis saat mengetik #' }))
+  await waitFor(async () => expect(await settingsStore.getAll()).toMatchObject({ aiIncludeDiary: false, aiTagSuggest: false }))
+  await user.click(within(choices).getByRole('button', { name: 'Selesai' }))
+  expect(screen.queryByRole('group', { name: 'Apa saja yang boleh dikirim ke AI?' })).not.toBeInTheDocument()
 })
 
 test('switching to OpenRouter fills preset base URL and default model', async () => {
@@ -65,8 +77,8 @@ test('existing config is loaded and can be cleared', async () => {
   const ai = { provider: 'openai' as const, apiKey: 'sk-x', baseUrl: 'https://api.openai.com/v1', model: 'my-model' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect((await settingsStore.getAll()).ai).toBeNull())
 })
 
@@ -129,8 +141,8 @@ test('a failure clearing AI settings shows an error and keeps the form', async (
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
   vi.spyOn(settingsStore, 'set').mockRejectedValueOnce(new Error('quota'))
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Gagal menyimpan pengaturan.')
   expect(screen.getByLabelText('Model')).toHaveValue('my-model')
   expect(errorSpy).toHaveBeenCalledWith(expect.any(Error))

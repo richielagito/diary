@@ -52,3 +52,20 @@ test('search with no match', async () => {
   await user.type(await screen.findByRole('searchbox', { name: 'Cari' }), 'zzz')
   expect(await screen.findByText('Tidak ada hasil')).toBeInTheDocument()
 })
+
+test('a search in the URL opens straight into its results, grouped by month with the match marked', async () => {
+  await renderApp('/archive?q=pagi', seed)
+  expect(await screen.findByText('1 hasil')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'September 2026' })).toBeInTheDocument()
+  expect(screen.getByText('pagi', { selector: 'mark' })).toBeInTheDocument()
+})
+
+test('arrow keys move between days in the calendar', async () => {
+  const { user } = await renderApp('/archive', seed)
+  const cal = await screen.findByRole('grid')
+  within(cal).getByRole('link', { name: '10 September 2026' }).focus()
+  await user.keyboard('{ArrowRight}')
+  expect(within(cal).getByRole('link', { name: '11 September 2026' })).toHaveFocus()
+  await user.keyboard('{ArrowUp}')
+  expect(within(cal).getByRole('link', { name: '4 September 2026' })).toHaveFocus()
+})

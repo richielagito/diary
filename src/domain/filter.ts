@@ -25,3 +25,21 @@ export function excerpt(markdown: string, max = 120): string {
     .trim()
   return flat.length > max ? flat.slice(0, max) + '…' : flat
 }
+
+/**
+ * The excerpt around the first word of the query found in the text, split so the match can be marked.
+ * Tag-only queries (or no match in the text) fall back to the opening of the entry.
+ */
+export function excerptAround(markdown: string, query: string, max = 120): { before: string; match: string; after: string } {
+  const flat = excerpt(markdown, Infinity)
+  const word = query.trim().toLowerCase().split(/\s+/).find((w) => w && !w.startsWith('#'))
+  const at = word ? flat.toLowerCase().indexOf(word) : -1
+  if (at < 0) return { before: excerpt(markdown, max), match: '', after: '' }
+  const start = Math.max(0, at - Math.floor((max - word!.length) / 3))
+  const end = Math.min(flat.length, start + max)
+  return {
+    before: (start > 0 ? '…' : '') + flat.slice(start, at),
+    match: flat.slice(at, at + word!.length),
+    after: flat.slice(at + word!.length, end) + (end < flat.length ? '…' : ''),
+  }
+}

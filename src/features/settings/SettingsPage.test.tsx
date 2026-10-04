@@ -33,10 +33,9 @@ test('shows never-exported and persist-denied note', async () => {
 test('import file pick failure alerts the user', async () => {
   const { diary, user } = await renderApp('/settings')
   const error = vi.spyOn(console, 'error').mockImplementation(() => {})
-  const alert = vi.spyOn(window, 'alert').mockImplementation(() => {})
   vi.spyOn(diary, 'list').mockRejectedValue(new Error('DatabaseClosedError'))
   await user.upload(await screen.findByLabelText('Import'), new File(['isi'], '2026-09-05.md'))
-  await waitFor(() => expect(alert).toHaveBeenCalledWith('Import gagal. Tidak ada data yang berubah.'))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Import gagal. Tidak ada data yang berubah.')
   expect(error).toHaveBeenCalled()
 })
 

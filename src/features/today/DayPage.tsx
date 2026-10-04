@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { useRepos } from '../../app/RepoContext'
 import { addDays, dateKey, parseDateKey } from '../../domain/date'
@@ -162,43 +162,68 @@ export function DayPage({ date }: { date: DateKey }) {
   }
 
 
+  // Day, month and year stay on one line: a narrow screen breaks after the weekday, never between "4" and "Oktober".
+  let afterWeekday = 0
   const heading = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(parseDateKey(date))
+  })
+    .formatToParts(parseDateKey(date))
+    .map((p) => {
+      if (p.type === 'weekday') afterWeekday = 1
+      else if (afterWeekday && p.type === 'literal' && afterWeekday++ > 1) return p.value.replace(/ /g, ' ')
+      return p.value
+    })
+    .join('')
   const today = dateKey()
   const isToday = date === today
   const prev = `/day/${addDays(date, -1)}`
   const next = addDays(date, 1) === today ? '/' : `/day/${addDays(date, 1)}`
 
-  // Arrow keys page through days, except while typing (the editor and inputs keep their own arrows).
+  // Arrow keys page through days only when nothing interactive has focus: fields, buttons and links keep their arrows.
   const navigate = useNavigate()
+  const stepped = { stepped: true }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return
       const el = e.target as HTMLElement | null
-      if (el?.closest('input, textarea, select, [contenteditable="true"]')) return
-      if (e.key === 'ArrowLeft') navigate(prev)
-      else if (e.key === 'ArrowRight' && !isToday) navigate(next)
+      if (el?.closest('a, button, input, textarea, select, summary, [contenteditable="true"], [role="group"]')) return
+      if (e.key === 'ArrowLeft') navigate(prev, { state: { stepped: true } })
+      else if (e.key === 'ArrowRight' && !isToday) navigate(next, { state: { stepped: true } })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [navigate, prev, next, isToday])
 
+  // After stepping to another day, focus lands on its date, so a screen reader hears where it arrived.
+  const location = useLocation()
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if ((location.state as { stepped?: boolean } | null)?.stepped) headingRef.current?.focus()
+  }, [location.state])
+
   return (
     <article>
       <BackupBanner />
       <header className="day-header">
-        <h1>{heading}</h1>
+        <h1 ref={headingRef} tabIndex={-1}>
+          {heading}
+        </h1>
         <div className="day-step">
-          <Link className="icon-btn" to={prev} aria-label={t('day.prevDay')}>
+          <Link className="icon-btn" to={prev} state={stepped} aria-label={t('day.prevDay')}>
             <ChevronLeft />
           </Link>
-          <button type="button" className="icon-btn" aria-label={t('day.nextDay')} disabled={isToday} onClick={() => navigate(next)}>
-            <ChevronRight />
-          </button>
+          {isToday ? (
+            <a className="icon-btn" role="link" aria-disabled="true" aria-label={t('day.nextDay')}>
+              <ChevronRight />
+            </a>
+          ) : (
+            <Link className="icon-btn" to={next} state={stepped} aria-label={t('day.nextDay')}>
+              <ChevronRight />
+            </Link>
+          )}
         </div>
         <div className="day-meta">
           {!isToday && <Link to="/">{t('day.backToToday')}</Link>}

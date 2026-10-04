@@ -1,5 +1,5 @@
 export const id = {
-  nav: { today: 'Hari ini', chat: 'Curhat', archive: 'Arsip', stats: 'Statistik', settings: 'Pengaturan' },
+  nav: { skip: 'Langsung ke isi', label: 'Navigasi utama', today: 'Hari ini', chat: 'Curhat', archive: 'Arsip', stats: 'Statistik', settings: 'Pengaturan' },
   stats: {
     heatmapLabel: 'Heatmap mood',
     noMood: 'Tanpa mood',
@@ -43,6 +43,10 @@ export const id = {
     openWrapped: 'Lihat Wrapped {{period}}',
   },
   chat: {
+    diaryShared: 'Diary ikut dikirim ke AI.',
+    diaryNotShared: 'Diary tidak ikut dikirim ke AI.',
+    stopSharing: 'Jangan sertakan',
+    startSharing: 'Sertakan',
     title: 'Curhat',
     placeholder: 'Ceritakan apa yang kamu rasakan…',
     inputLabel: 'Pesan',
@@ -80,6 +84,12 @@ export const id = {
     body: 'Kedengarannya kamu sedang melalui masa yang sangat berat. Kalau kamu merasa ingin menyakiti diri atau sedang dalam bahaya, hubungi layanan di bawah atau orang yang kamu percaya sekarang juga.',
   },
   aiSettings: {
+    personaAutosave: 'Gaya, nama, dan instruksi tersimpan otomatis.',
+    clearAction: 'Ya, hapus',
+    cancel: 'Batal',
+    sharingTitle: 'Apa saja yang boleh dikirim ke AI?',
+    sharingIntro: 'AI sudah tersambung. Tiap pilihan di bawah mengirim sebagian isi diary atau curhat ke provider AI-mu. Centang yang kamu izinkan; semuanya bisa diubah lagi kapan saja.',
+    sharingDone: 'Selesai',
     title: 'AI',
     provider: 'Provider',
     providers: {

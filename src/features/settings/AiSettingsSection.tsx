@@ -8,6 +8,7 @@ import { fastConfig, fastModelOf } from '../../ai/provider/fastConfig'
 import { testConnection, type ConnectionResult } from '../../ai/provider/testConnection'
 import { isOpenAICompatible, PROVIDER_PRESETS, type AiConfig, type ProviderErrorKind, type ProviderKind } from '../../ai/provider/types'
 import { Field } from './Field'
+import { SharingChoices } from './SharingChoices'
 
 const PROVIDERS = Object.keys(PROVIDER_PRESETS) as ProviderKind[]
 
@@ -104,8 +105,10 @@ export function AiSettingsSection() {
     const missing = missingFields()
     if (missing.length) return setStatus({ kind: 'missing', fields: missing })
     try {
+      const first = !settings.ai
       await settingsStore.set('ai', cleaned())
       setStatus({ kind: 'saved' })
+      if (first) setAskSharing(true)
     } catch (err) {
       console.error(err)
       setStatus({ kind: 'saveFailed' })
@@ -172,8 +175,9 @@ export function AiSettingsSection() {
     }
   }
 
+  const [confirmingClear, setConfirmingClear] = useState(false)
   const clear = async () => {
-    if (!window.confirm(t('aiSettings.clearConfirm'))) return
+    setConfirmingClear(false)
     try {
       await settingsStore.set('ai', null)
       setConfig(initialConfig(null))
@@ -184,6 +188,8 @@ export function AiSettingsSection() {
       setStatus({ kind: 'saveFailed' })
     }
   }
+
+  const [askSharing, setAskSharing] = useState(false)
 
   const savePersona = async (patch: Partial<typeof settings.persona>) => {
     const current = (await settingsStore.getAll()).persona
@@ -270,22 +276,6 @@ export function AiSettingsSection() {
       </p>
       {modelFetch.kind === 'ok' && <p role="status">{t('aiSettings.modelsFetched', { count: modelFetch.count })}</p>}
       {modelFetch.kind === 'failed' && <p role="alert">{t('aiSettings.modelsFetchFailed')}</p>}
-      <p>
-        <button type="button" className="primary" onClick={() => void save()}>
-          {t('aiSettings.save')}
-        </button>{' '}
-        <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
-          {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
-        </button>
-      </p>
-      {/* Bukan live region: diumumkan tiap ketikan akan mengganggu pembaca layar. */}
-      {unsaved && status.kind !== 'saved' && <p>{t('aiSettings.unsaved')}</p>}
-      {status.kind === 'saved' && <p role="status">{t('aiSettings.saved')}</p>}
-      {status.kind === 'testOk' && <p role="status">{t('aiSettings.testOk')}</p>}
-      {status.kind === 'saveFailed' && <p role="alert">{t('aiSettings.saveFailed')}</p>}
-      {status.kind === 'missing' && <p role="alert">{t('aiSettings.required', { fields: status.fields.join(', ') })}</p>}
-      {status.kind === 'testFail' && <p role="alert">{errorText(status.error, status.detail)}</p>}
-      {status.kind === 'testFastFail' && <p role="alert">{t('aiSettings.fastTestFailed', { reason: errorText(status.error, status.detail) })}</p>}
       <details className="settings-advanced" open={status.kind === 'testFastFail' || undefined}>
         <summary>
           <ChevronRight />
@@ -309,6 +299,23 @@ export function AiSettingsSection() {
         </Field>
       </details>
       <p>
+        <button type="button" className="primary" onClick={() => void save()}>
+          {t('aiSettings.save')}
+        </button>{' '}
+        <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
+          {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
+        </button>
+      </p>
+      {/* Bukan live region: diumumkan tiap ketikan akan mengganggu pembaca layar. */}
+      {unsaved && status.kind !== 'saved' && <p>{t('aiSettings.unsaved')}</p>}
+      {status.kind === 'saved' && <p role="status">{t('aiSettings.saved')}</p>}
+      {status.kind === 'testOk' && <p role="status">{t('aiSettings.testOk')}</p>}
+      {status.kind === 'saveFailed' && <p role="alert">{t('aiSettings.saveFailed')}</p>}
+      {status.kind === 'missing' && <p role="alert">{t('aiSettings.required', { fields: status.fields.join(', ') })}</p>}
+      {status.kind === 'testFail' && <p role="alert">{errorText(status.error, status.detail)}</p>}
+      {status.kind === 'testFastFail' && <p role="alert">{t('aiSettings.fastTestFailed', { reason: errorText(status.error, status.detail) })}</p>}
+      {askSharing && <SharingChoices onDone={() => setAskSharing(false)} />}
+      <p>
         <label>
           <input
             type="checkbox"
@@ -323,6 +330,7 @@ export function AiSettingsSection() {
       </p>
 
       <h3>{t('aiSettings.persona')}</h3>
+      <p>{t('aiSettings.personaAutosave')}</p>
       <Field label={t('aiSettings.style')}>
         {(id) => (
           <select id={id} value={settings.persona.style} onChange={(e) => void savePersona({ style: e.target.value as PersonaStyle })}>
@@ -364,13 +372,26 @@ export function AiSettingsSection() {
           </span>
         )}
       </Field>
-      {settings.ai && (
-        <p className="settings-danger">
-          <button type="button" className="danger" onClick={() => void clear()}>
-            {t('aiSettings.clear')}
-          </button>
-        </p>
-      )}
+      {settings.ai &&
+        (confirmingClear ? (
+          <div className="settings-danger" role="group" aria-label={t('aiSettings.clear')}>
+            <p>{t('aiSettings.clearConfirm')}</p>
+            <p>
+              <button type="button" className="danger" onClick={() => void clear()}>
+                {t('aiSettings.clearAction')}
+              </button>{' '}
+              <button type="button" className="quiet" onClick={() => setConfirmingClear(false)}>
+                {t('aiSettings.cancel')}
+              </button>
+            </p>
+          </div>
+        ) : (
+          <p className="settings-danger">
+            <button type="button" className="quiet danger" onClick={() => setConfirmingClear(true)}>
+              {t('aiSettings.clear')}
+            </button>
+          </p>
+        ))}
     </section>
   )
 }

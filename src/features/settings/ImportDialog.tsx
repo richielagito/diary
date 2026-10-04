@@ -37,6 +37,11 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
     conflicts.slice(0, LISTED_CONFLICTS).map((d) => dayFormat.format(parseDateKey(d))).join(', ') +
     (conflicts.length > LISTED_CONFLICTS ? ` ${t('import.andMore', { count: conflicts.length - LISTED_CONFLICTS })}` : '')
   const busy = state.kind === 'busy'
+  // Closing the modal (not just unmounting it) hands focus back to the control that opened it.
+  const close = () => {
+    ref.current?.close?.()
+    onClose()
+  }
 
   const run = async () => {
     setState({ kind: 'busy' })
@@ -74,7 +79,7 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
       className="import-dialog"
       onCancel={(e) => {
         e.preventDefault()
-        if (!busy) onClose()
+        if (!busy) close()
       }}
     >
       <h2 id="import-title">{t('import.title')}</h2>
@@ -108,7 +113,7 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
           ) : (
             parsed.memories.length > 0 && <p>{t('import.doneMemories', { count: state.memoriesAdded })}</p>
           )}
-          <button type="button" className="primary" autoFocus onClick={onClose}>
+          <button type="button" className="primary" autoFocus onClick={close}>
             {t('import.close')}
           </button>
         </>
@@ -135,7 +140,7 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
           )}
           {state.kind === 'failed' && <p role="alert">{t('import.failed')}</p>}
           <p className="dialog-actions">
-            <button type="button" onClick={onClose} disabled={busy}>
+            <button type="button" onClick={close} disabled={busy}>
               {t('import.cancel')}
             </button>
             <button type="button" className="primary" onClick={() => void run()} disabled={busy || (parsed.valid.length === 0 && parsed.chats.length === 0 && parsed.memories.length === 0)}>

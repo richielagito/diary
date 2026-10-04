@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
 import { monthRange, shiftMonth, type YearMonth } from '../../domain/calendar'
 import { parseDateKey } from '../../domain/date'
-import { excerpt, searchEntries } from '../../domain/filter'
+import { excerptAround, searchEntries } from '../../domain/filter'
 import { MOOD_EMOJI, type DateKey, type DayEntry } from '../../domain/types'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { MonthCalendar } from './MonthCalendar'
@@ -18,9 +18,10 @@ export function ArchivePage() {
   })
   const [monthEntries, setMonthEntries] = useState<Map<DateKey, DayEntry>>(new Map())
   const [all, setAll] = useState<DayEntry[] | null>(null)
-  // Stats links here with ?q=#tag, so a tag there opens its days.
-  const [params] = useSearchParams()
-  const [query, setQuery] = useState(() => params.get('q') ?? '')
+  // The query lives in the URL: Back from a result returns to the same search, and Stats links here with ?q=#tag.
+  const [params, setParams] = useSearchParams()
+  const query = params.get('q') ?? ''
+  const setQuery = (q: string) => setParams(q ? { q } : {}, { replace: true })
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +42,7 @@ export function ArchivePage() {
   const title = new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(
     new Date(ym.year, ym.month - 1, 1),
   )
+  const monthFormat = new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' })
   const dayFormat = new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
   const searching = query.trim() !== ''
   const now = new Date()
@@ -61,17 +63,27 @@ export function ArchivePage() {
           <h1 className="visually-hidden">{t('nav.archive')}</h1>
           <p className="results-count">{results.length ? t('archive.results', { count: results.length }) : t('archive.noResults')}</p>
           <ul className="results" aria-label={t('archive.searchLabel')}>
-            {results.map((e) => (
-              <li key={e.date}>
-                <Link to={`/day/${e.date}`}>
-                  <strong>
-                    <span className="result-mood">{e.mood ? MOOD_EMOJI[e.mood] : <span className="dot dot-none" aria-hidden="true" />}</span>
-                    {dayFormat.format(parseDateKey(e.date))}
-                  </strong>
-                  <span className="excerpt">{excerpt(e.markdown)}</span>
-                </Link>
-              </li>
-            ))}
+            {results.map((e, i) => {
+              const month = e.date.slice(0, 7)
+              const { before, match, after } = excerptAround(e.markdown, query)
+              return (
+                <li key={e.date}>
+                  {/* Results are grouped under their month, inside one list so the count stays honest. */}
+                  {month !== results[i - 1]?.date.slice(0, 7) && <h2 className="results-month">{monthFormat.format(parseDateKey(`${month}-01`))}</h2>}
+                  <Link to={`/day/${e.date}`}>
+                    <strong>
+                      <span className="result-mood">{e.mood ? MOOD_EMOJI[e.mood] : <span className="dot dot-none" aria-hidden="true" />}</span>
+                      {dayFormat.format(parseDateKey(e.date))}
+                    </strong>
+                    <span className="excerpt">
+                      {before}
+                      {match && <mark>{match}</mark>}
+                      {after}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
           </ul>
         </>
       ) : (

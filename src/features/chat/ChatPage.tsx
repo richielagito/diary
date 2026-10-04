@@ -20,7 +20,7 @@ const HISTORY_LINKS = 14
 
 export function ChatPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
-  const { diary, chats, memories, summaries } = useRepos()
+  const { diary, chats, memories, summaries, settingsStore } = useRepos()
   const settings = useSettings()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [dates, setDates] = useState<DateKey[]>([])
@@ -118,11 +118,22 @@ export function ChatPage({ date }: { date: DateKey }) {
       {(settings.ai || messages.length > 0) && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
 
       {showCrisis && <CrisisCard />}
+      {/* The card appears inside the flow; this tells a screen reader it arrived. */}
+      <p className="visually-hidden" aria-live="assertive">
+        {showCrisis ? t('crisis.title') : ''}
+      </p>
 
       <SaveToDiary date={date} messages={messages} disabled={chat.state.phase === 'streaming'} />
 
       {settings.ai && (
         <>
+          {/* What goes out with each message is stated where the message is written, not only in a fold below. */}
+          <p className="chat-sharing">
+            {t(settings.aiIncludeDiary ? 'chat.diaryShared' : 'chat.diaryNotShared')}
+            <button type="button" className="quiet" onClick={() => void settingsStore.set('aiIncludeDiary', !settings.aiIncludeDiary)}>
+              {t(settings.aiIncludeDiary ? 'chat.stopSharing' : 'chat.startSharing')}
+            </button>
+          </p>
           <Composer streaming={chat.state.phase === 'streaming'} onSend={chat.send} onStop={chat.stop} />
           <ContextPreview date={date} latestUserText={[...messages].reverse().find((m) => m.role === 'user')?.content ?? ''} />
         </>

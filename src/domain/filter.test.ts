@@ -1,4 +1,4 @@
-import { excerpt, searchEntries } from './filter'
+import { excerpt, excerptAround, searchEntries } from './filter'
 import type { DayEntry } from './types'
 
 const e = (date: string, markdown: string, tags: string[] = []): DayEntry => ({
@@ -47,4 +47,14 @@ test('excerpt unescapes backslash-escaped markdown', () => {
 test('excerpt keeps one literal backslash from an escaped pair, and still strips a real delimiter that follows it', () => {
   // Stored string: "C:" + an escaped literal backslash (`\\`, i.e. two backslash chars) + real unescaped *tebal*.
   expect(excerpt('C:\\\\*tebal*')).toBe('C:\\tebal')
+})
+
+test('excerptAround centres on the first matching word and marks it', () => {
+  const md = 'Pagi biasa. '.repeat(20) + 'Sore ketemu Sari di kedai kopi dekat stasiun. ' + 'Malam tenang. '.repeat(20)
+  const { before, match, after } = excerptAround(md, '#teman kopi', 60)
+  expect(match).toBe('kopi')
+  expect(before.startsWith('…')).toBe(true)
+  expect(after.endsWith('…')).toBe(true)
+  expect((before + match + after).length).toBeLessThanOrEqual(62)
+  expect(excerptAround('isi biasa', '#tag')).toEqual({ before: 'isi biasa', match: '', after: '' })
 })

@@ -1,7 +1,7 @@
 import type { id } from './id'
 
 export const en: typeof id = {
-  nav: { today: 'Today', chat: 'Talk', archive: 'Archive', stats: 'Stats', settings: 'Settings' },
+  nav: { skip: 'Skip to content', label: 'Main navigation', today: 'Today', chat: 'Talk', archive: 'Archive', stats: 'Stats', settings: 'Settings' },
   stats: {
     heatmapLabel: 'Mood heatmap',
     noMood: 'No mood',
@@ -45,6 +45,10 @@ export const en: typeof id = {
     openWrapped: 'View Wrapped {{period}}',
   },
   chat: {
+    diaryShared: 'Your diary is sent to the AI.',
+    diaryNotShared: 'Your diary is not sent to the AI.',
+    stopSharing: 'Leave it out',
+    startSharing: 'Include it',
     title: 'Talk',
     placeholder: 'Tell me how you feel…',
     inputLabel: 'Message',
@@ -82,6 +86,12 @@ export const en: typeof id = {
     body: 'It sounds like you are going through something very hard. If you feel like hurting yourself or you are in danger, please contact one of the services below or someone you trust right now.',
   },
   aiSettings: {
+    personaAutosave: 'Style, name and instructions save automatically.',
+    clearAction: 'Yes, remove',
+    cancel: 'Cancel',
+    sharingTitle: 'What may be sent to the AI?',
+    sharingIntro: 'AI is connected. Each choice below sends part of your diary or chats to your AI provider. Tick what you allow; you can change any of it later.',
+    sharingDone: 'Done',
     title: 'AI',
     provider: 'Provider',
     providers: {
