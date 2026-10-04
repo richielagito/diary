@@ -15,6 +15,11 @@ test('selects mood and toggles off when clicking active mood', async () => {
   expect(onChange).toHaveBeenLastCalledWith(null)
 })
 
+test('faces run from happiest to saddest', () => {
+  render(<MoodPicker value={null} onChange={() => {}} />)
+  expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Senang', 'Baik', 'Biasa', 'Kurang baik', 'Sedih'])
+})
+
 test('group is labelled', () => {
   render(<MoodPicker value={null} onChange={() => {}} />)
   expect(screen.getByRole('group', { name: 'Mood hari ini' })).toBeInTheDocument()

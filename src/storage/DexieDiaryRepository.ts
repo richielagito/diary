@@ -57,6 +57,10 @@ export class DexieDiaryRepository implements DiaryRepository {
     return this.db.entries.orderBy('date').toArray()
   }
 
+  async isEmpty(): Promise<boolean> {
+    return (await this.db.entries.count()) === 0
+  }
+
   delete(date: DateKey): Promise<void> {
     return this.db.entries.delete(date)
   }

@@ -18,7 +18,8 @@ export function MoodPicker({ value, onChange, past = false }: { value: Mood | nu
         <p className="mood-caption">{t(past ? 'day.moodPromptPast' : 'day.moodPrompt')}</p>
       )}
       <div className="mood-picker" role="group" aria-label={t(past ? 'day.moodLabelPast' : 'day.moodLabel')}>
-        {MOODS.map((m) => (
+        {/* Happiest first: the row reads from a good day to a heavy one. */}
+        {[...MOODS].reverse().map((m) => (
           <button
             key={m}
             type="button"

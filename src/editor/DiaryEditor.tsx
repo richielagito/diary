@@ -1,6 +1,7 @@
+import { posToDOMRect, type ChainedCommands } from '@tiptap/core'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
-import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createExtensions } from './extensions'
 import { TagSuggest } from './tagSuggest'
@@ -96,18 +97,37 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
     }),
   })
 
+  // A format button pins the menu where it stands: bold or italic resizes the selected text, and the menu should not chase it.
+  // The pin holds until the selection moves; scrolling still carries the menu along with the text.
+  const pinned = useRef<{ from: number; to: number; rect: DOMRect; scrollY: number } | null>(null)
+  const pinnedAnchor = useCallback(() => {
+    const pin = pinned.current
+    const { from, to } = editor?.state.selection ?? {}
+    if (!pin || pin.from !== from || pin.to !== to) {
+      pinned.current = null
+      return null
+    }
+    const r = pin.rect
+    const rect = new DOMRect(r.x, r.y + pin.scrollY - window.scrollY, r.width, r.height)
+    return { getBoundingClientRect: () => rect, getClientRects: () => [rect] }
+  }, [editor])
+
   if (!editor) return null
-  const chain = () => editor.chain().focus()
+  const format = (toggle: (c: ChainedCommands) => ChainedCommands) => () => {
+    const { from, to } = editor.state.selection
+    pinned.current ??= { from, to, rect: posToDOMRect(editor.view, from, to), scrollY: window.scrollY }
+    toggle(editor.chain().focus()).run()
+  }
   const buttons = [
-    { key: 'bold', label: 'B', run: () => chain().toggleBold().run() },
-    { key: 'italic', label: 'I', run: () => chain().toggleItalic().run() },
-    { key: 'strike', label: 'S', run: () => chain().toggleStrike().run() },
-    { key: 'code', label: '</>', run: () => chain().toggleCode().run() },
+    { key: 'bold', label: 'B', run: format((c) => c.toggleBold()) },
+    { key: 'italic', label: 'I', run: format((c) => c.toggleItalic()) },
+    { key: 'strike', label: 'S', run: format((c) => c.toggleStrike()) },
+    { key: 'code', label: '</>', run: format((c) => c.toggleCode()) },
   ] as const
 
   return (
     <>
-      <BubbleMenu editor={editor} className="bubble">
+      <BubbleMenu editor={editor} className="bubble" getReferencedVirtualElement={pinnedAnchor}>
         {buttons.map((b) => (
           <button key={b.key} type="button" aria-label={t(`editor.${b.key}`)} aria-pressed={active?.[b.key]} onClick={b.run}>
             {b.label}

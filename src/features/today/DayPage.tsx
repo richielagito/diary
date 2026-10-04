@@ -31,8 +31,6 @@ export function DayPage({ date }: { date: DateKey }) {
   const editorRef = useRef<DiaryEditorHandle>(null)
   const [loaded, setLoaded] = useState<{ markdown: string } | null>(null)
   const [mood, setMood] = useState<Mood | null>(null)
-  /** An empty page explains itself once: where the words go and how tags work. Gone at the first word. */
-  const [blank, setBlank] = useState(false)
   const [moodError, setMoodError] = useState(false)
   /** True sejak mood diklik sampai tersimpan; selama itu watch tidak menimpa mood di layar. */
   const moodPending = useRef(false)
@@ -43,6 +41,8 @@ export function DayPage({ date }: { date: DateKey }) {
   const sending = useRef<string | null>(null)
   const alive = useRef(true)
   const absorbRef = useRef<(incoming: string) => void>(() => {})
+  /** True while the page shows the first-run welcome text that is not stored yet. */
+  const welcome = useRef(false)
 
   /** Dinaikkan tiap kali `base` diisi teks yang bukan tulisan editor ini sendiri (gabungan dari luar). */
   const foreign = useRef(0)
@@ -124,23 +124,27 @@ export function DayPage({ date }: { date: DateKey }) {
 
   useEffect(() => {
     let cancelled = false
-    void diary.get(date).then((entry) => {
+    void (async () => {
+      const entry = await diary.get(date)
+      // First run: today's page of an empty diary opens on a welcome text. It is stored only once the user edits it or picks a mood,
+      // so a new device that later signs in does not push it into an account that already has a diary.
+      const firstRun = !entry && date === dateKey() && (await diary.isEmpty())
       if (cancelled) return
       // Teks yang gagal tersimpan waktu halaman ini ditutup menang atas isi lama, lalu disimpan ulang.
       const draft = takeUnsavedDraft(date)
       const stored = entry?.markdown ?? ''
       base.current = stored
       // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
-      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : stored
+      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? t('day.welcome') : stored
+      welcome.current = firstRun && !draft
       setLoaded({ markdown })
-      setBlank(!markdown.trim())
       if (draft) schedule(markdown)
       setMood(entry?.mood ?? null)
-    })
+    })()
     return () => {
       cancelled = true
     }
-  }, [diary, date, schedule])
+  }, [diary, date, schedule, t])
 
   // Perubahan dari luar (sync atau tab lain) untuk tanggal ini.
   useEffect(() => {
@@ -152,6 +156,11 @@ export function DayPage({ date }: { date: DateKey }) {
   }, [diary, date, loaded])
 
   const onMood = (m: Mood | null) => {
+    // A mood keeps the welcome text with it, so the entry shows the same on the next visit.
+    if (welcome.current) {
+      welcome.current = false
+      schedule(editorRef.current?.getMarkdown() ?? '')
+    }
     moodPending.current = true
     setMood(m)
     // Mood tetap tampil walau gagal tersimpan; banner error muncul seperti pada teks.
@@ -165,13 +174,14 @@ export function DayPage({ date }: { date: DateKey }) {
   }
 
 
-  // Day, month and year stay on one line: a narrow screen breaks after the weekday, never between "4" and "Oktober".
+  const today = dateKey()
+  // "Minggu, 4 Okt": the year shows only for another year. Day, month and year stay on one line: a narrow screen breaks after the weekday.
   let afterWeekday = 0
   const heading = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'long',
     day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    month: 'short',
+    year: date.slice(0, 4) === today.slice(0, 4) ? undefined : 'numeric',
   })
     .formatToParts(parseDateKey(date))
     .map((p) => {
@@ -180,7 +190,6 @@ export function DayPage({ date }: { date: DateKey }) {
       return p.value
     })
     .join('')
-  const today = dateKey()
   const isToday = date === today
   const prev = `/day/${addDays(date, -1)}`
   const next = addDays(date, 1) === today ? '/' : `/day/${addDays(date, 1)}`
@@ -229,7 +238,6 @@ export function DayPage({ date }: { date: DateKey }) {
           )}
         </div>
         <div className="day-meta">
-          {!isToday && <Link to="/">{t('day.backToToday')}</Link>}
           <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
         </div>
       </header>
@@ -241,14 +249,13 @@ export function DayPage({ date }: { date: DateKey }) {
           placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
           label={t('day.editorLabel')}
           onChange={(markdown) => {
-            setBlank(!markdown.trim())
+            welcome.current = false
             autosave.schedule(markdown)
           }}
           onBlur={() => void autosave.flush()}
           tagSuggest={tagSuggest}
         />
       )}
-      {loaded && blank && <p className="day-hint">{t('day.hint')}</p>}
     </article>
   )
 }

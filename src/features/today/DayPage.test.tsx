@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { AppRoutes } from '../../app/App'
 import { RepoProvider } from '../../app/RepoContext'
+import { dateKey } from '../../domain/date'
 import type { Mood } from '../../domain/types'
 import { rememberUnsavedDraft } from '../../editor/useAutosave'
 import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
@@ -43,9 +44,38 @@ test('mood save failure shows error banner and keeps selection; next success cle
   await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
 })
 
-test('shows formatted date heading', async () => {
-  await open('2026-09-20')
-  expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('20')
+test('date heading is short and names the year only for another year', async () => {
+  const year = Number(dateKey().slice(0, 4))
+  const { unmount } = await open(`${year}-03-01`)
+  expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(/^\S+, 1\sMar$/)
+  unmount()
+  await open(`${year - 1}-03-01`)
+  expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(new RegExp(`^\\S+, 1\\sMar\\s${year - 1}$`))
+})
+
+test('first run: today on an empty diary opens on the welcome text, stored only once the user writes', async () => {
+  stubLayout()
+  const { diary, user } = await renderApp('/')
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  expect(box).toHaveTextContent('Selamat datang')
+  expect(await diary.isEmpty()).toBe(true)
+  await user.click(box)
+  await user.keyboard('halo')
+  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toContain('halo'), { timeout: 3000 })
+  expect((await diary.get(dateKey()))?.markdown).toContain('Selamat datang')
+})
+
+test('first run: picking a mood keeps the welcome text in the entry', async () => {
+  const { diary, user } = await renderApp('/')
+  expect(await screen.findByRole('textbox', { name: 'Tulis diary' })).toHaveTextContent('Selamat datang')
+  await user.click(screen.getByRole('button', { name: 'Senang' }))
+  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toContain('Selamat datang'), { timeout: 3000 })
+  expect((await diary.get(dateKey()))?.mood).toBe(5)
+})
+
+test('no welcome text once the diary has any entry', async () => {
+  await renderApp('/', { entries: [{ date: '2026-01-02', markdown: 'lama' }] })
+  expect(await screen.findByRole('textbox', { name: 'Tulis diary' })).not.toHaveTextContent('Selamat datang')
 })
 
 test('external change (other tab) refreshes editor when not dirty', async () => {
@@ -201,11 +231,6 @@ test('a restored draft is merged with a stored text that changed meanwhile', asy
     },
     { timeout: 3000 },
   )
-})
-
-test('past day shows back-to-today link', async () => {
-  await open('2026-09-20')
-  expect(await screen.findByRole('link', { name: 'Kembali ke hari ini' })).toBeInTheDocument()
 })
 
 test('typing # shows known tags as chips and Tab accepts one, which is autosaved', async () => {
@@ -479,10 +504,10 @@ test('a refused write that comes back after the editor is gone, but before the p
 test('day arrows step between days and focus the new date; arrows on a mood button stay put', async () => {
   const { user } = await renderApp('/day/2026-09-20')
   await user.click(await screen.findByRole('link', { name: 'Hari sebelumnya' }))
-  const heading = await screen.findByRole('heading', { level: 1, name: /19\sSeptember\s2026/ })
+  const heading = await screen.findByRole('heading', { level: 1, name: /19\sSep/ })
   expect(heading).toHaveFocus()
   await user.click(screen.getByRole('button', { name: 'Biasa' }))
   await user.keyboard('{ArrowLeft}')
-  expect(screen.getByRole('heading', { level: 1, name: /19\sSeptember\s2026/ })).toBeInTheDocument()
+  expect(screen.getByRole('heading', { level: 1, name: /19\sSep/ })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Hari berikutnya' })).toHaveAttribute('href', '/day/2026-09-20')
 })

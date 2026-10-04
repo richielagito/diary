@@ -32,6 +32,8 @@ export interface DiaryRepository {
   /** Urut naik berdasarkan tanggal. Range inklusif. */
   list(range?: { from: DateKey; to: DateKey }): Promise<DayEntry[]>
   delete(date: DateKey): Promise<void>
+  /** Tidak ada entri sama sekali, di tanggal mana pun. */
+  isEmpty(): Promise<boolean>
   /** Satu transaksi: berhasil semua atau tidak ada yang berubah. */
   importMany(entries: EntryInput[], onConflict: 'skip' | 'overwrite'): Promise<ImportResult>
   watch(date: DateKey, cb: (entry: DayEntry | undefined) => void): Unsubscribe

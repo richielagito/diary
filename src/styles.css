@@ -313,11 +313,9 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .day-header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.25rem 1rem; }
 .day-header h1 { margin: 0; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem); }
 .day-header h1:focus { outline: none; }
-.day-hint { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.8125rem; }
 .day-step { display: flex; margin-right: -0.5rem; }
 .day-header .banner { grid-column: 1 / -1; flex-basis: 100%; margin: 0.75rem 0 0; }
 .day-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; min-height: 1.5rem; font-size: 0.875rem; }
-.day-meta > a { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .save-status { color: var(--muted); font-size: 0.8125rem; display: inline-flex; align-items: center; gap: 0.4rem; }
 .save-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
 .save-status[data-state='saving']::before { animation: pulse 1s ease-in-out infinite alternate; }
