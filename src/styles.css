@@ -187,6 +187,15 @@ p > button.quiet:first-child { margin-left: -0.5rem; }
 :where(input, select, textarea):disabled { opacity: 0.55; }
 :where(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
 :where(textarea) { line-height: 1.5; resize: vertical; }
+/* The search clear button in the palette, not the browser's blue. */
+:where(input[type='search'])::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  background: var(--muted);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 5l10 10M15 5 5 15' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  cursor: pointer;
+}
 :where(select) {
   appearance: none;
   padding-right: 2.25rem;
@@ -391,7 +400,12 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .results li { border-bottom: 1px solid var(--border); }
 .results a { display: block; padding: 0.875rem 0.25rem; color: var(--text); text-decoration: none; border-radius: 6px; }
 .results a:hover { background: var(--sunken); }
+.results strong { display: flex; align-items: center; gap: 0.5rem; }
+/* One column for the mood mark, so rows with and without a mood line up. */
+.result-mood { display: inline-grid; place-items: center; width: 1.4em; flex: none; }
+.result-mood .dot { width: 7px; height: 7px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--mood-none); }
 .results .excerpt {
+  margin-left: calc(1.4em + 0.5rem);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -439,7 +453,7 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat-history { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.875rem; }
 .chat-history a { padding: 0.2rem 0.65rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.8125rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
 .chat-history a:hover { color: var(--text); border-color: var(--border-strong); }
-.chat-empty { color: var(--muted); }
+.chat-empty { margin: 1.5rem 0; font-family: var(--font-text); font-size: 1.125rem; font-style: italic; color: var(--muted); }
 .messages { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.625rem; }
 .bubble-msg { max-width: 85%; padding: 0.625rem 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .bubble-msg.user { align-self: flex-end; background: var(--text); color: var(--bg); border-radius: 18px 18px 6px 18px; }
@@ -482,6 +496,10 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 /* relative: offsetLeft sel dihitung terhadap kontainer scroll (auto-scroll ke minggu ini) */
 .heatmap-year .heat-scroll { position: relative; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .heatmap-year .heat-inner { width: max-content; }
+/* Fade the edge that still has weeks beyond it, so a cut-off month label reads as "scroll", not as a glitch. */
+.heat-scroll[data-fade-start] { mask-image: linear-gradient(to right, transparent, #000 2rem); }
+.heat-scroll[data-fade-end] { mask-image: linear-gradient(to right, #000 calc(100% - 2rem), transparent); }
+.heat-scroll[data-fade-start][data-fade-end] { mask-image: linear-gradient(to right, transparent, #000 2rem, #000 calc(100% - 2rem), transparent); }
 .heatmap-year .heat-months, .heatmap-year .heat-grid { display: grid; grid-auto-columns: var(--cell); gap: var(--gap); }
 .heatmap-year .heat-months { grid-auto-flow: column; margin-bottom: 4px; font-size: 0.7rem; color: var(--muted); }
 .heatmap-year .heat-month { white-space: nowrap; }
@@ -536,8 +554,13 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .tag-stats li { padding: 0.2rem 0.65rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; background: var(--surface); }
 .tag-stats .muted { margin-left: 0.15rem; }
 .stats .muted, .wrapped .muted { color: var(--muted); font-size: 0.85rem; }
-.empty-state { padding: 3rem 0; text-align: center; }
-.empty-state p { font-family: var(--font-text); font-size: 1.25rem; }
+.empty-state { padding: 4rem 0; text-align: center; display: grid; justify-items: center; gap: 1.25rem; }
+.empty-state p { margin: 0; max-width: 26rem; font-family: var(--font-text); font-size: 1.25rem; line-height: 1.5; text-wrap: balance; }
+.empty-state a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.6rem 1.25rem; border-radius: 8px; background: var(--text); color: var(--bg); font-weight: 500; text-decoration: none; }
+.empty-state a:hover { background: color-mix(in oklab, var(--text) 86%, var(--bg)); }
+/* "Nothing here yet" lines inside a section: quiet, never mistaken for data. */
+.stat-section > p:not([class]), .stats > p.muted { color: var(--muted); font-size: 0.9375rem; }
+.stats > p.muted { margin-top: 1.25rem; font-family: var(--font-text); font-style: italic; font-size: 1.0625rem; }
 
 .wrapped-link {
   display: inline-flex;

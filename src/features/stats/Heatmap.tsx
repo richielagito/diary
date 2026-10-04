@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { parseDateKey } from '../../domain/date'
@@ -45,6 +45,15 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
   const { t, i18n } = useTranslation()
   const language = i18n.language
   const scroller = useRef<HTMLDivElement>(null)
+  /** Tepi yang masih menyimpan sel di luar layar; tepi itu dipudarkan supaya terlihat bisa digeser. */
+  const [edges, setEdges] = useState({ start: false, end: false })
+  const updateEdges = () => {
+    const el = scroller.current
+    if (!el) return
+    const start = el.scrollLeft > 1
+    const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+    setEdges((e) => (e.start === start && e.end === end ? e : { start, end }))
+  }
 
   // Sel terakhir yang sudah lewat = hari ini di periode berjalan
   const current = mode === 'year' && scrollToToday ? (cells.filter((c) => c.inRange && !c.future).at(-1)?.date ?? null) : null
@@ -53,6 +62,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
     const cell = current ? el?.querySelector<HTMLElement>('[data-current]') : null
     // Kolom hari ini berhenti satu sel dari tepi kanan, bukan di akhir tahun yang masih kosong
     if (el && cell) el.scrollLeft = Math.max(0, cell.offsetLeft + 2 * cell.offsetWidth - el.clientWidth)
+    updateEdges()
   }, [current])
 
   const renderCell = (cell: HeatCell) => {
@@ -72,7 +82,13 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
   return (
     <div className={`heatmap heatmap-${mode}${compact ? ' heatmap-compact' : ''}`} role="group" aria-label={t('stats.heatmapLabel')}>
       {mode === 'year' ? (
-        <div className="heat-scroll" ref={scroller}>
+        <div
+          className="heat-scroll"
+          ref={scroller}
+          onScroll={updateEdges}
+          data-fade-start={edges.start || undefined}
+          data-fade-end={edges.end || undefined}
+        >
           <div className="heat-inner">
             {!compact && (
               <div className="heat-months" style={{ gridTemplateColumns: `repeat(${weeks}, var(--cell))` }} aria-hidden="true">

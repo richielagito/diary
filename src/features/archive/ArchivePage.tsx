@@ -60,7 +60,7 @@ export function ArchivePage() {
               <li key={e.date}>
                 <Link to={`/day/${e.date}`}>
                   <strong>
-                    {e.mood ? `${MOOD_EMOJI[e.mood]} ` : ''}
+                    <span className="result-mood">{e.mood ? MOOD_EMOJI[e.mood] : <span className="dot dot-none" aria-hidden="true" />}</span>
                     {dayFormat.format(parseDateKey(e.date))}
                   </strong>
                   <span className="excerpt">{excerpt(e.markdown)}</span>
