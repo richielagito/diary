@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { readImportFiles, type ParsedImport } from '../../backup/importFiles'
 import { useExport } from '../../backup/useExport'
@@ -17,6 +18,11 @@ export function SettingsPage() {
   const { diary, settingsStore } = useRepos()
   const settings = useSettings()
   const exportNow = useExport()
+  const { hash } = useLocation()
+  // "Atur AI" elsewhere links to #ai; the router does not scroll to fragments by itself.
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView?.()
+  }, [hash])
   const [importing, setImporting] = useState<{ parsed: ParsedImport; existing: Set<DateKey> } | null>(null)
 
   const onFiles = async (files: FileList | null) => {
@@ -70,10 +76,6 @@ export function SettingsPage() {
         </Field>
       </section>
 
-      <AiSettingsSection />
-
-      <AccountSection />
-
       <section>
         <h2>{t('settings.backup')}</h2>
         <p>{lastExport}</p>
@@ -122,6 +124,10 @@ export function SettingsPage() {
         {settings.persistGranted === true && <p>{t('settings.persistGranted')}</p>}
         {settings.persistGranted === false && <p>{t('settings.persistDenied')}</p>}
       </section>
+
+      <AccountSection />
+
+      <AiSettingsSection />
 
       {importing && (
         <ImportDialog parsed={importing.parsed} existing={importing.existing} onClose={() => setImporting(null)} />

@@ -24,8 +24,8 @@ function Layout() {
         <NavLink to="/" end>
           {t('nav.today')}
         </NavLink>
-        <NavLink to="/chat">{t('nav.chat')}</NavLink>
         <NavLink to="/archive">{t('nav.archive')}</NavLink>
+        <NavLink to="/chat">{t('nav.chat')}</NavLink>
         <NavLink to="/stats">{t('nav.stats')}</NavLink>
         <NavLink to="/settings">
           {t('nav.settings')}
@@ -46,7 +46,8 @@ function Layout() {
 
 function DayRoute() {
   const { date = '' } = useParams()
-  if (!isValidDateKey(date)) return <Navigate to="/" replace />
+  // A future day cannot have happened yet; today has its own home.
+  if (!isValidDateKey(date) || date >= dateKey()) return <Navigate to="/" replace />
   return <DayPage key={date} date={date} />
 }
 

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { useRepos } from '../../app/RepoContext'
-import { dateKey, parseDateKey } from '../../domain/date'
+import { addDays, dateKey, parseDateKey } from '../../domain/date'
 import { mergeText } from '../../domain/mergeText'
 import { StaleTextError } from '../../storage/DiaryRepository'
 import type { DateKey, Mood } from '../../domain/types'
@@ -167,22 +168,49 @@ export function DayPage({ date }: { date: DateKey }) {
     month: 'long',
     year: 'numeric',
   }).format(parseDateKey(date))
-  const isToday = date === dateKey()
+  const today = dateKey()
+  const isToday = date === today
+  const prev = `/day/${addDays(date, -1)}`
+  const next = addDays(date, 1) === today ? '/' : `/day/${addDays(date, 1)}`
+
+  // Arrow keys page through days, except while typing (the editor and inputs keep their own arrows).
+  const navigate = useNavigate()
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return
+      const el = e.target as HTMLElement | null
+      if (el?.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (e.key === 'ArrowLeft') navigate(prev)
+      else if (e.key === 'ArrowRight' && !isToday) navigate(next)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [navigate, prev, next, isToday])
 
   return (
     <article>
       <BackupBanner />
       <header className="day-header">
         <h1>{heading}</h1>
-        {!isToday && <Link to="/">{t('day.backToToday')}</Link>}
-        <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
+        <div className="day-step">
+          <Link className="icon-btn" to={prev} aria-label={t('day.prevDay')}>
+            <ChevronLeft />
+          </Link>
+          <button type="button" className="icon-btn" aria-label={t('day.nextDay')} disabled={isToday} onClick={() => navigate(next)}>
+            <ChevronRight />
+          </button>
+        </div>
+        <div className="day-meta">
+          {!isToday && <Link to="/">{t('day.backToToday')}</Link>}
+          <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
+        </div>
       </header>
-      <MoodPicker value={mood} onChange={onMood} />
+      <MoodPicker value={mood} onChange={onMood} past={!isToday} />
       {loaded && (
         <DiaryEditor
           ref={editorRef}
           initialMarkdown={loaded.markdown}
-          placeholder={t('day.placeholder')}
+          placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
           label={t('day.editorLabel')}
           onChange={autosave.schedule}
           onBlur={() => void autosave.flush()}

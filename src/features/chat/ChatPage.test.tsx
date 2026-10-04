@@ -22,7 +22,7 @@ function failOnce(kind: ProviderErrorKind, reply: string): CreateProvider {
 test('without AI config shows setup card and no composer', async () => {
   await renderApp(`/chat/${DATE}`)
   expect(await screen.findByText('AI belum diatur')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Atur AI' })).toHaveAttribute('href', '/settings')
+  expect(screen.getByRole('link', { name: 'Atur AI' })).toHaveAttribute('href', '/settings#ai')
   expect(screen.queryByRole('textbox', { name: 'Pesan' })).not.toBeInTheDocument()
 })
 

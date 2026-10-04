@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ChevronRight } from '../../app/icons'
 import { ApiError, EMAIL_CODE_LENGTH, NetworkError } from '../../account/api'
 import { useRepos } from '../../app/RepoContext'
 import { useSync, useSyncStatus } from '../../app/SyncContext'
@@ -354,21 +355,30 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
       <p>
         <button type="button" className="primary" disabled={busy || status.syncing} onClick={() => void run(() => sync.syncNow())}>
           {t('account.syncNow')}
-        </button>{' '}
-        <button type="button" disabled={busy} onClick={() => void run(() => sync.logout())}>
-          {t('account.signOut')}
-        </button>{' '}
-        {!rekeying && (
-          <>
-            <button type="button" onClick={() => setRekeying(true)}>
-              {t('account.newKey')}
-            </button>{' '}
-          </>
-        )}
-        <button type="button" className={deleting ? undefined : 'quiet danger'} onClick={() => setDeleting((d) => !d)}>
-          {deleting ? t('account.cancel') : t('account.deleteAccount')}
         </button>
       </p>
+      {/* Rare and weighty actions stay one tap away instead of crowding Sync now. */}
+      <details className="account-manage" open={rekeying || deleting || undefined}>
+        <summary>
+          <ChevronRight />
+          {t('account.manage')}
+        </summary>
+        <p>
+          <button type="button" disabled={busy} onClick={() => void run(() => sync.logout())}>
+            {t('account.signOut')}
+          </button>{' '}
+          {!rekeying && (
+            <>
+              <button type="button" onClick={() => setRekeying(true)}>
+                {t('account.newKey')}
+              </button>{' '}
+            </>
+          )}
+          <button type="button" className={deleting ? undefined : 'quiet danger'} onClick={() => setDeleting((d) => !d)}>
+            {deleting ? t('account.cancel') : t('account.deleteAccount')}
+          </button>
+        </p>
+      </details>
       {rekeying && <NewKey sync={sync} status={status} run={run} busy={busy} reset onCancel={() => setRekeying(false)} onDone={() => setRekeying(false)} />}
       {deleting && (
         <form onSubmit={remove}>

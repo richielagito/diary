@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
 import { monthRange, shiftMonth, type YearMonth } from '../../domain/calendar'
 import { parseDateKey } from '../../domain/date'
@@ -18,7 +18,9 @@ export function ArchivePage() {
   })
   const [monthEntries, setMonthEntries] = useState<Map<DateKey, DayEntry>>(new Map())
   const [all, setAll] = useState<DayEntry[] | null>(null)
-  const [query, setQuery] = useState('')
+  // Stats links here with ?q=#tag, so a tag there opens its days.
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(() => params.get('q') ?? '')
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +43,8 @@ export function ArchivePage() {
   )
   const dayFormat = new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
   const searching = query.trim() !== ''
+  const now = new Date()
+  const atCurrentMonth = ym.year === now.getFullYear() && ym.month === now.getMonth() + 1
 
   return (
     <section>
@@ -54,6 +58,7 @@ export function ArchivePage() {
       />
       {searching ? (
         <>
+          <h1 className="visually-hidden">{t('nav.archive')}</h1>
           <p className="results-count">{results.length ? t('archive.results', { count: results.length }) : t('archive.noResults')}</p>
           <ul className="results" aria-label={t('archive.searchLabel')}>
             {results.map((e) => (
@@ -76,7 +81,7 @@ export function ArchivePage() {
               <ChevronLeft />
             </button>
             <h1>{title}</h1>
-            <button type="button" className="icon-btn" aria-label={t('archive.nextMonth')} onClick={() => setYm((v) => shiftMonth(v, 1))}>
+            <button type="button" className="icon-btn" aria-label={t('archive.nextMonth')} disabled={atCurrentMonth} onClick={() => setYm((v) => shiftMonth(v, 1))}>
               <ChevronRight />
             </button>
           </div>

@@ -178,7 +178,7 @@ The system deliberately refuses the category default of an indigo-accented card 
 - Mood is the only expressive colour; danger is the only functional one.
 - Literata for writing surfaces and page titles; system sans for interface.
 - Hairline borders and tonal sunken fills instead of shadows.
-- One centred 44rem column with a sticky top text nav.
+- One centred 44rem column with a sticky top text nav on wider screens and a fixed bottom text nav on phones.
 - Wrapped is the one loud surface; everything else is calm.
 
 ## Colors
@@ -239,7 +239,7 @@ Cool (heavy) to warm (bright) through a neutral middle; each theme has its own s
 
 ## Layout
 
-A single centred column (`.shell`, max 44rem) with 1.25rem side padding (1rem under 360px) and 5rem bottom padding. A sticky top text nav spans the column edge to edge, horizontally scrollable without a visible scrollbar, and tightens its gap and type at 400px and 360px. Spacing is rem-based and comes from a short ladder (0.25, 0.5, 0.75, 1, 1.25, 1.75, 2rem); section breaks use 1.5 to 2.25rem plus a hairline rule rather than boxes.
+A single centred column (`.shell`, max 44rem) with 1.25rem side padding (1rem under 360px) and 5rem bottom padding. Above 640px a sticky top text nav spans the column edge to edge. At 640px and below it becomes a fixed bottom bar within thumb reach: the same text links on a top hairline, the active link marked by a 2px ink rule above it, at least 3.25rem tall plus the safe-area inset, tightening its type at 400px and 360px. It hides while a text field has focus, and the chat composer sits on top of it through `--nav-h`. Order: Hari ini, Arsip, Curhat, Statistik, Pengaturan. Spacing is rem-based and comes from a short ladder (0.25, 0.5, 0.75, 1, 1.25, 1.75, 2rem); section breaks use 1.5 to 2.25rem plus a hairline rule rather than boxes.
 
 Groups of buttons are paragraphs that become wrapping flex rows with a 0.5rem gap. Settings fields are label-left, control-right rows that wrap on narrow screens, with controls capped at 20rem. The stats summary is a three-column ledger divided by hairlines that collapses to label/value rows at 520px. Calendars and the month heatmap are seven-column grids of square cells. Chat pins its composer to the bottom with the safe-area inset. Wrapped is a full-viewport overlay with slides centred in a 30rem column.
 

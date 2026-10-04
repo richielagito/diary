@@ -65,6 +65,7 @@ test('existing config is loaded and can be cleared', async () => {
   const ai = { provider: 'openai' as const, apiKey: 'sk-x', baseUrl: 'https://api.openai.com/v1', model: 'my-model' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
   await waitFor(async () => expect((await settingsStore.getAll()).ai).toBeNull())
 })
@@ -128,6 +129,7 @@ test('a failure clearing AI settings shows an error and keeps the form', async (
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
   vi.spyOn(settingsStore, 'set').mockRejectedValueOnce(new Error('quota'))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Gagal menyimpan pengaturan.')
   expect(screen.getByLabelText('Model')).toHaveValue('my-model')

@@ -26,7 +26,7 @@ export interface PeriodStats {
   writtenRatio: number // elapsedDays === 0 ? 0 : daysWritten / elapsedDays
   totalWords: number
   currentStreak: number // atas SEMUA entri sampai hari ini
-  longestStreak: number // dalam [from, elapsedTo]
+  longestStreak: number // runtun yang menyentuh [from, elapsedTo], panjangnya dihitung utuh
   mood: {
     count: number
     average: number | null
@@ -128,7 +128,7 @@ export function computeStats(allEntries: DayEntry[], period: StatsPeriod, today:
     writtenRatio: range.elapsedDays === 0 ? 0 : daysWritten / range.elapsedDays,
     totalWords: inPeriod.reduce((s, e) => s + e.wordCount, 0),
     currentStreak: currentStreak(upToToday.map((e) => e.date), today),
-    longestStreak: longestStreak(inPeriod.map((e) => e.date)),
+    longestStreak: longestStreak(upToToday.map((e) => e.date), { from: range.from, to: range.elapsedTo }),
     mood: {
       count: moodCount,
       average: moodCount === 0 ? null : moodSum / moodCount,

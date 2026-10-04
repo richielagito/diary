@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ChevronRight } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { PERSONA_MAX_INSTRUCTION, PERSONA_STYLES, type PersonaStyle } from '../../ai/prompt/persona'
 import { fastConfig, fastModelOf } from '../../ai/provider/fastConfig'
@@ -172,6 +173,7 @@ export function AiSettingsSection() {
   }
 
   const clear = async () => {
+    if (!window.confirm(t('aiSettings.clearConfirm'))) return
     try {
       await settingsStore.set('ai', null)
       setConfig(initialConfig(null))
@@ -188,8 +190,24 @@ export function AiSettingsSection() {
     await settingsStore.set('persona', { ...current, ...patch })
   }
 
+  const baseUrlField = (
+    <Field label={t('aiSettings.baseUrl')}>
+      {(id) => (
+        <input
+          id={id}
+          type="url"
+          value={config.baseUrl}
+          onChange={(e) => {
+            update({ baseUrl: e.target.value })
+            resetModelList()
+          }}
+        />
+      )}
+    </Field>
+  )
+
   return (
-    <section>
+    <section id="ai">
       <h2>{t('aiSettings.title')}</h2>
       <p>{t('aiSettings.privacy')}</p>
       <p>
@@ -235,39 +253,10 @@ export function AiSettingsSection() {
           </span>
         )}
       </Field>
-      {compatible && (
-        <Field label={t('aiSettings.baseUrl')}>
-          {(id) => (
-            <input
-              id={id}
-              type="url"
-              value={config.baseUrl}
-              onChange={(e) => {
-                update({ baseUrl: e.target.value })
-                resetModelList()
-              }}
-            />
-          )}
-        </Field>
-      )}
+      {compatible && !preset.baseUrl.startsWith('https://') && baseUrlField}
       {config.provider === 'ollama' && <p>{t('aiSettings.ollamaHint')}</p>}
       <Field label={t('aiSettings.model')}>
         {(id) => <input id={id} list={modelListId} value={config.model} onChange={(e) => update({ model: e.target.value })} />}
-      </Field>
-      <Field label={t('aiSettings.fastModel')}>
-        {(id) => (
-          <>
-            <input
-              id={id}
-              list={modelListId}
-              placeholder={fastModelOf(config)}
-              aria-describedby={`${id}-hint`}
-              value={config.fastModel}
-              onChange={(e) => update({ fastModel: e.target.value })}
-            />
-            <small id={`${id}-hint`}>{t('aiSettings.fastModelHint')}</small>
-          </>
-        )}
       </Field>
       <datalist id={modelListId}>
         {(fetchedModels ?? preset.suggestedModels).map((m) => (
@@ -287,12 +276,7 @@ export function AiSettingsSection() {
         </button>{' '}
         <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
           {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
-        </button>{' '}
-        {settings.ai && (
-          <button type="button" className="danger" onClick={() => void clear()}>
-            {t('aiSettings.clear')}
-          </button>
-        )}
+        </button>
       </p>
       {/* Bukan live region: diumumkan tiap ketikan akan mengganggu pembaca layar. */}
       {unsaved && status.kind !== 'saved' && <p>{t('aiSettings.unsaved')}</p>}
@@ -302,6 +286,28 @@ export function AiSettingsSection() {
       {status.kind === 'missing' && <p role="alert">{t('aiSettings.required', { fields: status.fields.join(', ') })}</p>}
       {status.kind === 'testFail' && <p role="alert">{errorText(status.error, status.detail)}</p>}
       {status.kind === 'testFastFail' && <p role="alert">{t('aiSettings.fastTestFailed', { reason: errorText(status.error, status.detail) })}</p>}
+      <details className="settings-advanced" open={status.kind === 'testFastFail' || undefined}>
+        <summary>
+          <ChevronRight />
+          {t('aiSettings.advanced')}
+        </summary>
+        {compatible && preset.baseUrl.startsWith('https://') && baseUrlField}
+        <Field label={t('aiSettings.fastModel')}>
+          {(id) => (
+            <>
+              <input
+                id={id}
+                list={modelListId}
+                placeholder={fastModelOf(config)}
+                aria-describedby={`${id}-hint`}
+                value={config.fastModel}
+                onChange={(e) => update({ fastModel: e.target.value })}
+              />
+              <small id={`${id}-hint`}>{t('aiSettings.fastModelHint')}</small>
+            </>
+          )}
+        </Field>
+      </details>
       <p>
         <label>
           <input
@@ -358,6 +364,13 @@ export function AiSettingsSection() {
           </span>
         )}
       </Field>
+      {settings.ai && (
+        <p className="settings-danger">
+          <button type="button" className="danger" onClick={() => void clear()}>
+            {t('aiSettings.clear')}
+          </button>
+        </p>
+      )}
     </section>
   )
 }

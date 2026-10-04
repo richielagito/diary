@@ -148,6 +148,7 @@ export function MemoryPage() {
       <p className="inline-form">
         <input
           aria-label={t('memory.addLabel')}
+          placeholder={t('memory.addLabel')}
           maxLength={MEMORY_TEXT_MAX}
           value={draft}
           disabled={full}
@@ -157,7 +158,7 @@ export function MemoryPage() {
           {t('memory.add')}
         </button>
       </p>
-      {full && <p>{t('memory.full')}</p>}
+      {full && <p>{t('memory.full', { max: MEMORY_MAX })}</p>}
       <p>
         <button type="button" onClick={() => void runRefresh()} disabled={!settings.ai || !settings.aiMemoryEnabled || refresh?.status === 'running'}>
           {refresh?.status === 'running' ? t('memory.refreshing') : t('memory.refresh')}

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ChevronRight } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { detectCrisis } from '../../ai/safety/crisis'
 import { parseDateKey } from '../../domain/date'
@@ -55,6 +56,21 @@ export function ChatPage({ date }: { date: DateKey }) {
   }, [refusedNow])
   const showCrisis = refused || refusedNow || messages.some((m) => m.role === 'user' && detectCrisis(m.content))
 
+  // Follow the conversation: open at the latest message (where the crisis card sits too), and keep following
+  // new and streaming replies unless the user has scrolled up to reread.
+  const following = useRef(true)
+  useEffect(() => {
+    const onScroll = () => {
+      following.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  const partial = chat.state.phase === 'streaming' ? chat.state.partial : ''
+  useEffect(() => {
+    if (following.current) window.scrollTo?.({ top: document.documentElement.scrollHeight })
+  }, [messages.length, partial, showCrisis, chat.state.phase])
+
   const dayFormat = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' })
   const fullFormat = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const otherDates = dates.filter((d) => d !== date).slice(-HISTORY_LINKS).reverse()
@@ -68,15 +84,21 @@ export function ChatPage({ date }: { date: DateKey }) {
       <header>
         <h1>{t('chat.title')}</h1>
         <p>{fullFormat.format(parseDateKey(date))}</p>
-        <Link to="/memory">{t('chat.memoryLink')}</Link>
+        {settings.ai && <Link to="/memory">{t('chat.memoryLink')}</Link>}
         {otherDates.length > 0 && (
-          <nav className="chat-history" aria-label={t('chat.history')}>
-            {otherDates.map((d) => (
-              <Link key={d} to={`/chat/${d}`}>
-                {dayFormat.format(parseDateKey(d))}
-              </Link>
-            ))}
-          </nav>
+          <details className="chat-history">
+            <summary>
+              <ChevronRight />
+              {t('chat.history')}
+            </summary>
+            <nav aria-label={t('chat.history')}>
+              {otherDates.map((d) => (
+                <Link key={d} to={`/chat/${d}`}>
+                  {dayFormat.format(parseDateKey(d))}
+                </Link>
+              ))}
+            </nav>
+          </details>
         )}
       </header>
 
@@ -86,11 +108,14 @@ export function ChatPage({ date }: { date: DateKey }) {
             <h2>{t('chat.noConfigTitle')}</h2>
             <p>{t('chat.noConfigBody')}</p>
           </div>
-          <Link to="/settings">{t('chat.openSettings')}</Link>
+          <Link className="button primary" to="/settings#ai">
+            {t('chat.openSettings')}
+          </Link>
         </div>
       )}
 
-      <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />
+      {/* Without AI, "I'm listening" would be a promise the page cannot keep. */}
+      {(settings.ai || messages.length > 0) && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
 
       {showCrisis && <CrisisCard />}
 

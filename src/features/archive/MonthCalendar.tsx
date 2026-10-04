@@ -31,13 +31,20 @@ export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<Dat
             if (entry) label += `, ${entry.mood ? t(`mood.${entry.mood}`) : t('archive.noMood')}`
             return (
               <span key={date} role="gridcell" style={{ display: 'contents' }}>
-                <Link to={`/day/${date}`} aria-label={label} aria-current={date === today ? 'date' : undefined}>
-                  {day.getDate()}
-                  <span
-                    className={entry && entry.mood === null ? 'dot dot-none' : 'dot'}
-                    style={entry?.mood ? { background: `var(--mood-${entry.mood})` } : undefined}
-                  />
-                </Link>
+                {date > today ? (
+                  // Days that have not happened yet are shown, not opened.
+                  <span className="future" role="img" aria-label={label}>
+                    {day.getDate()}
+                  </span>
+                ) : (
+                  <Link to={date === today ? '/' : `/day/${date}`} aria-label={label} aria-current={date === today ? 'date' : undefined}>
+                    {day.getDate()}
+                    <span
+                      className={entry && entry.mood === null ? 'dot dot-none' : 'dot'}
+                      style={entry?.mood ? { background: `var(--mood-${entry.mood})` } : undefined}
+                    />
+                  </Link>
+                )}
               </span>
             )
           })}

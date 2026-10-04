@@ -144,7 +144,12 @@ body {
 :where(button):where(:active:not(:disabled)) { transform: translateY(1px); }
 :where(button):disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary { background: var(--text); border-color: var(--text); color: var(--bg); font-weight: 500; }
+button.primary:disabled { opacity: 1; background: color-mix(in oklab, var(--text) 35%, var(--bg)); border-color: transparent; }
 button.primary:hover:not(:disabled) { background: color-mix(in oklab, var(--text) 86%, var(--bg)); }
+/* A link that leads somewhere as the page's main step wears the primary button. */
+a.button { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.95rem; border-radius: 8px; font-size: 0.9375rem; font-weight: 500; text-decoration: none; white-space: nowrap; }
+a.button.primary { background: var(--text); color: var(--bg); transition: background-color 150ms ease-out; }
+a.button.primary:hover { background: color-mix(in oklab, var(--text) 86%, var(--bg)); }
 button.danger { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 40%, transparent); }
 button.danger:hover:not(:disabled) { border-color: var(--danger); }
 button.quiet { background: none; border-color: transparent; color: var(--muted); padding-inline: 0.5rem; }
@@ -156,8 +161,8 @@ p > button.quiet:first-child { margin-left: -0.5rem; }
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   min-height: 0;
   padding: 0;
   border: 0;
@@ -257,11 +262,41 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .nav a:hover { color: var(--text); }
 .nav a.active { color: var(--text); border-bottom-color: var(--text); }
 .nav a:focus-visible { outline-offset: -2px; }
-@media (max-width: 400px) { .nav { gap: 1.1rem; } .nav a { font-size: 0.875rem; } }
+/* Phones: the nav moves within thumb reach, still text on a hairline. It steps aside while typing,
+   when the keyboard needs the room and the composer takes the bottom edge. */
+@media (max-width: 640px) {
+  .shell { --nav-h: calc(3.25rem + env(safe-area-inset-bottom)); padding-top: env(safe-area-inset-top); padding-bottom: calc(var(--nav-h) + 3rem); }
+  .nav {
+    position: fixed;
+    inset: auto 0 0;
+    justify-content: space-evenly;
+    gap: 0;
+    margin: 0;
+    padding: 0 0.25rem env(safe-area-inset-bottom);
+    border-bottom: 0;
+    border-top: 1px solid var(--border);
+  }
+  .nav a {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 3.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.6rem;
+    border-bottom: 0;
+    border-top: 2px solid transparent;
+    margin: -1px 0 0;
+  }
+  .nav a.active { border-top-color: var(--text); }
+  .page { padding-top: 1.25rem; }
+  .shell:has(:is(textarea, [contenteditable='true'], input:not([type='checkbox'], [type='radio'], [type='file'])):focus) { --nav-h: 0px; }
+  .shell:has(:is(textarea, [contenteditable='true'], input:not([type='checkbox'], [type='radio'], [type='file'])):focus) .nav { display: none; }
+}
+@media (max-width: 400px) { .nav a { font-size: 0.875rem; padding-inline: 0.4rem; } }
 @media (max-width: 360px) {
   .shell { padding-inline: 1rem; }
-  .nav { gap: 0.8rem; margin-inline: -1rem; padding-inline: 1rem; }
-  .nav a { font-size: 0.8125rem; }
+  .nav a { font-size: 0.8125rem; padding-inline: 0.3rem; }
 }
 .nav-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--danger); vertical-align: 0.15em; }
 .page { min-height: 60vh; }
@@ -271,16 +306,21 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 
 /* ---------- Today ---------- */
 
-.day-header { display: flex; justify-content: space-between; align-items: baseline; gap: 0.25rem 1rem; flex-wrap: wrap; }
-.day-header h1 { flex: 1 1 18rem; margin: 0; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem); }
-.day-header .banner { flex-basis: 100%; margin: 0.75rem 0 0; }
-.day-meta { display: flex; align-items: baseline; gap: 1rem; font-size: 0.875rem; }
+.day-header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.25rem 1rem; }
+.day-header h1 { margin: 0; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem); }
+.day-step { display: flex; margin-right: -0.5rem; }
+.day-header .banner { grid-column: 1 / -1; flex-basis: 100%; margin: 0.75rem 0 0; }
+.day-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; min-height: 1.5rem; font-size: 0.875rem; }
+.day-meta > a { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .save-status { color: var(--muted); font-size: 0.8125rem; display: inline-flex; align-items: center; gap: 0.4rem; }
 .save-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
 .save-status[data-state='saving']::before { animation: pulse 1s ease-in-out infinite alternate; }
 @keyframes pulse { from { opacity: 0.2; } to { opacity: 0.8; } }
 
-.mood-picker { display: flex; gap: 0.375rem; margin: 1rem 0 1.75rem; }
+.mood-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; margin: 1rem 0 1.75rem; }
+.mood-picker { display: flex; gap: 0.375rem; }
+.mood-caption { display: flex; align-items: center; gap: 0.25rem; margin: 0; min-height: 2.75rem; color: var(--muted); font-size: 0.9375rem; }
+.mood-caption > span { color: var(--text); font-weight: 500; }
 .mood-picker button {
   width: 2.75rem;
   height: 2.75rem;
@@ -291,8 +331,8 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
   border: 1px solid transparent;
   border-radius: 999px;
   background: none;
-  filter: grayscale(1);
-  opacity: 0.78;
+  filter: grayscale(0.6);
+  opacity: 0.85;
   transition: filter 200ms ease-out, opacity 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, transform 150ms ease-out;
 }
 .mood-picker button:hover { filter: none; opacity: 1; }
@@ -377,7 +417,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 
 .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
 .calendar .weekday { text-align: center; color: var(--muted); font-size: 0.75rem; padding-bottom: 0.35rem; }
-.calendar a, .calendar span.empty {
+.calendar a, .calendar span.empty, .calendar span.future {
   aspect-ratio: 1;
   display: flex;
   flex-direction: column;
@@ -392,6 +432,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
   transition: background-color 150ms ease-out;
 }
 .calendar a:hover { background: var(--sunken); }
+.calendar span.future { color: var(--muted); opacity: 0.6; }
 .calendar a[aria-current='date'] { box-shadow: inset 0 0 0 1.5px var(--text); font-weight: 600; }
 .calendar .dot { width: 7px; height: 7px; border-radius: 50%; }
 .calendar .dot-none { box-shadow: inset 0 0 0 1.5px var(--mood-none); }
@@ -422,7 +463,12 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .settings section { padding: 1.5rem 0; border-top: 1px solid var(--border); }
 .settings section:first-of-type { border-top: 0; padding-top: 0.5rem; }
 .settings section > h2:first-child { margin-top: 0; }
-.settings section > p { color: var(--muted); font-size: 0.9375rem; }
+.settings section > p { color: var(--muted); font-size: 0.9375rem; max-width: 65ch; }
+.settings details > summary { min-height: 2.75rem; }
+.settings details[open] > summary { margin-bottom: 0.25rem; }
+.settings details { margin: 0.5rem 0; }
+.settings label:has(> input[type='checkbox']) { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; }
+.settings-danger { margin-top: 1.5rem; }
 .settings section > p:has(> button), .settings section > p:has(> label), .settings section > p:has(> a) { color: var(--text); }
 .settings .field { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.4rem 1rem; margin: 0.75rem 0; }
 .settings .field > label { font-weight: 500; font-size: 0.9375rem; }
@@ -439,7 +485,10 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .file-btn:hover { border-color: var(--text); }
 input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset: 2px; }
 .recovery-key { display: inline-block; padding: 0.6rem 0.9rem; border: 1px dashed var(--border-strong); border-radius: 8px; background: var(--sunken); font-family: var(--font-mono); font-size: 1.05rem; letter-spacing: 0.06em; user-select: all; overflow-wrap: anywhere; }
-.import-dialog { margin: 1.5rem 0; padding: 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-pop); }
+.import-dialog { width: min(480px, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow-y: auto; padding: 1.25rem; }
+.import-dialog fieldset small { color: var(--muted); }
+.import-dialog::backdrop { background: color-mix(in oklab, var(--text) 30%, transparent); }
+.dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin: 1rem 0 0; }
 .import-dialog h2 { margin-top: 0; }
 .import-dialog ul { color: var(--muted); font-size: 0.9375rem; }
 
@@ -450,7 +499,11 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat > header h1 { margin: 0; }
 .chat > header p { grid-column: 1 / -1; margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
 .chat > header > a { grid-column: 2; grid-row: 1; font-size: 0.875rem; text-align: right; }
-.chat-history { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.875rem; }
+.chat > header > a { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: flex-end; }
+.chat-history { grid-column: 1 / -1; margin-top: 0.25rem; }
+.chat-history > summary { min-height: 2.75rem; }
+.chat-history[open] > summary { margin-bottom: 0.25rem; }
+.chat-history nav { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 .chat-history a { padding: 0.2rem 0.65rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.8125rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
 .chat-history a:hover { color: var(--text); border-color: var(--border-strong); }
 .chat-empty { margin: 1.5rem 0; font-family: var(--font-text); font-size: 1.125rem; font-style: italic; color: var(--muted); }
@@ -459,7 +512,9 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .bubble-msg.user { align-self: flex-end; background: var(--text); color: var(--bg); border-radius: 18px 18px 6px 18px; }
 .bubble-msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 18px 18px 18px 6px; }
 .bubble-msg .meta { display: block; font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem; }
-.composer { position: sticky; bottom: 0; z-index: 5; display: flex; gap: 0.5rem; align-items: flex-end; padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom)); background: var(--bg); }
+/* Focus moved by Tab never lands behind the sticky composer. */
+html:has(.composer) { scroll-padding-bottom: 6rem; }
+.composer { position: sticky; bottom: var(--nav-h, 0px); z-index: 5; display: flex; gap: 0.5rem; align-items: flex-end; padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom)); background: var(--bg); }
 .composer textarea { flex: 1; min-height: 2.75rem; max-height: 12rem; padding: 0.6rem 0.9rem; border-radius: 12px; }
 .composer button { min-height: 2.75rem; }
 .crisis { border: 1px solid color-mix(in oklab, var(--danger) 45%, transparent); border-radius: 12px; padding: 1rem 1.25rem; background: color-mix(in oklab, var(--danger) 6%, var(--surface)); }
@@ -523,7 +578,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 
 .stats-header { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
 .stats-mode { display: inline-flex; align-self: flex-start; gap: 2px; padding: 3px; background: var(--sunken); border: 1px solid var(--border); border-radius: 10px; }
-.stats-mode button { min-height: 2rem; padding: 0.2rem 0.95rem; border: 0; border-radius: 7px; background: none; color: var(--muted); font-size: 0.875rem; }
+.stats-mode button { min-height: 2.75rem; padding: 0.2rem 0.95rem; border: 0; border-radius: 7px; background: none; color: var(--muted); font-size: 0.875rem; }
 .stats-mode button:hover { color: var(--text); }
 .stats-mode button[aria-pressed='true'] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 0.1); }
 .stats-header .month-nav { margin-bottom: 0; }
@@ -551,7 +606,12 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .mood-dist .dist-count { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .mood-bars { width: 100%; height: auto; display: block; }
 .tag-stats { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.tag-stats li { padding: 0.2rem 0.65rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; background: var(--surface); }
+.tag-stats li { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.65rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; background: var(--surface); }
+.tag-stats a { color: inherit; text-decoration: none; }
+.tag-stats li:has(> a) { position: relative; transition: border-color 150ms ease-out; }
+.tag-stats li:has(> a):hover { border-color: var(--border-strong); }
+/* The whole chip is the target, not just its word. */
+.tag-stats a::after { content: ''; position: absolute; inset: -4px 0; }
 .tag-stats .muted { margin-left: 0.15rem; }
 .stats .muted, .wrapped .muted { color: var(--muted); font-size: 0.85rem; }
 .empty-state { padding: 4rem 0; text-align: center; display: grid; justify-items: center; gap: 1.25rem; }

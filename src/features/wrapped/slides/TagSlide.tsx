@@ -7,7 +7,7 @@ export function TagSlide({ stats }: { stats: PeriodStats }) {
   return (
     <div className="slide-body">
       <h2 className="slide-title">{t('wrapped.tagsTitle')}</h2>
-      <TagSection stats={stats} showFresh={stats.period.kind === 'year'} />
+      <TagSection stats={stats} showFresh={stats.period.kind === 'year'} linked={false} />
     </div>
   )
 }

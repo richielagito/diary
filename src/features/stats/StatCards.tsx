@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import { MOOD_EMOJI, MOODS, type Mood } from '../../domain/types'
 import type { PeriodStats } from '../../stats/computeStats'
 import { formatMood, formatNumber, monthKeyLabel, trendLabel } from './format'
@@ -68,18 +69,28 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
               </li>
             ))}
           </ul>
-          <h3>{t('stats.moodTrend')}</h3>
-          <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, stats.period.kind, lang), average: p.average }))} />
+          {/* One point is not a trend. */}
+          {mood.trend.filter((p) => p.average !== null).length >= 2 && (
+            <>
+              <h3>{t('stats.moodTrend')}</h3>
+              <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, stats.period.kind, lang), average: p.average }))} />
+            </>
+          )}
         </>
       )}
     </section>
   )
 }
 
-export function TagSection({ stats, showFresh = true }: { stats: PeriodStats; showFresh?: boolean }) {
+export function TagSection({ stats, showFresh = true, linked = true }: { stats: PeriodStats; showFresh?: boolean; linked?: boolean }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const { tags } = stats
+  // A tag opens its days in Archive search; inside Wrapped it stays plain so taps keep moving the story.
+  const tagName = (tag: string) => (linked ? <Link to={`/archive?q=${encodeURIComponent(`#${tag}`)}`}>#{tag}</Link> : <span>#{tag}</span>)
+  // "New" only says something when it differs from the top tags right above it.
+  const top = new Set(tags.top.map((x) => x.tag))
+  const fresh = tags.fresh.filter((tag) => !top.has(tag))
   return (
     <section className="stat-section">
       <h2>{t('stats.tagsTitle')}</h2>
@@ -91,7 +102,7 @@ export function TagSection({ stats, showFresh = true }: { stats: PeriodStats; sh
           <ul className="tag-stats">
             {tags.top.map((x) => (
               <li key={x.tag}>
-                <span>#{x.tag}</span> <span className="muted">{t('stats.tagDays', { count: x.days })}</span>
+                {tagName(x.tag)} <span className="muted">{t('stats.tagDays', { count: x.days })}</span>
               </li>
             ))}
           </ul>
@@ -101,19 +112,19 @@ export function TagSection({ stats, showFresh = true }: { stats: PeriodStats; sh
               <ul className="tag-stats">
                 {tags.moodLift.map((x) => (
                   <li key={x.tag}>
-                    <span>#{x.tag}</span> <span className="muted">+{formatMood(x.lift, lang)}</span>
+                    {tagName(x.tag)} <span className="muted">+{formatMood(x.lift, lang)}</span>
                   </li>
                 ))}
               </ul>
             </>
           )}
-          {showFresh && tags.fresh.length > 0 && (
+          {showFresh && fresh.length > 0 && (
             <>
               <h3>{t('stats.freshTags')}</h3>
               <ul className="tag-stats">
-                {tags.fresh.map((tag) => (
+                {fresh.map((tag) => (
                   <li key={tag}>
-                    <span>#{tag}</span>
+                    {tagName(tag)}
                   </li>
                 ))}
               </ul>

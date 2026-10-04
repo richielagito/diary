@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { parseDateKey } from '../../domain/date'
 import { useRepos } from '../../app/RepoContext'
 import { buildPreview, type ParsedImport } from '../../backup/importFiles'
 import type { DateKey } from '../../domain/types'
@@ -11,14 +12,31 @@ interface Props {
   onClose: () => void
 }
 
+const LISTED_CONFLICTS = 8
+
 export function ImportDialog({ parsed, existing, onClose }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const ref = useRef<HTMLDialogElement>(null)
+  // A real modal: focus moves in, the page behind is inert, Esc closes. Older engines get a plain open dialog.
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog || dialog.open) return
+    if (dialog.showModal) dialog.showModal()
+    else dialog.setAttribute('open', '')
+  }, [])
   const { diary, chats, memories } = useRepos()
   const [mode, setMode] = useState<'skip' | 'overwrite'>('skip')
   const [state, setState] = useState<{ kind: 'idle' | 'busy' | 'failed' } | { kind: 'done'; result: ImportResult; chatsAdded: number | 'failed'; memoriesAdded: number | 'failed' }>({
     kind: 'idle',
   })
   const { newCount, conflictCount } = buildPreview(parsed, existing)
+  // "Overwrite" names the days it would replace, so the choice is not made blind.
+  const dayFormat = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })
+  const conflicts = parsed.valid.filter((e) => existing.has(e.date)).map((e) => e.date).sort()
+  const conflictDates =
+    conflicts.slice(0, LISTED_CONFLICTS).map((d) => dayFormat.format(parseDateKey(d))).join(', ') +
+    (conflicts.length > LISTED_CONFLICTS ? ` ${t('import.andMore', { count: conflicts.length - LISTED_CONFLICTS })}` : '')
+  const busy = state.kind === 'busy'
 
   const run = async () => {
     setState({ kind: 'busy' })
@@ -50,7 +68,15 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
   }
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="import-title" className="import-dialog">
+    <dialog
+      ref={ref}
+      aria-labelledby="import-title"
+      className="import-dialog"
+      onCancel={(e) => {
+        e.preventDefault()
+        if (!busy) onClose()
+      }}
+    >
       <h2 id="import-title">{t('import.title')}</h2>
       <ul>
         <li>{t('import.newCount', { count: newCount })}</li>
@@ -82,8 +108,8 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
           ) : (
             parsed.memories.length > 0 && <p>{t('import.doneMemories', { count: state.memoriesAdded })}</p>
           )}
-          <button type="button" onClick={onClose}>
-            OK
+          <button type="button" className="primary" autoFocus onClick={onClose}>
+            {t('import.close')}
           </button>
         </>
       ) : (
@@ -104,17 +130,20 @@ export function ImportDialog({ parsed, existing, onClose }: Props) {
                 />
                 {t('import.overwrite')}
               </label>
+              {mode === 'overwrite' && <small>{t('import.overwriteHint', { dates: conflictDates })}</small>}
             </fieldset>
           )}
           {state.kind === 'failed' && <p role="alert">{t('import.failed')}</p>}
-          <button type="button" onClick={onClose}>
-            {t('import.cancel')}
-          </button>{' '}
-          <button type="button" className="primary" onClick={() => void run()} disabled={state.kind === 'busy' || (parsed.valid.length === 0 && parsed.chats.length === 0 && parsed.memories.length === 0)}>
-            {t('import.confirm')}
-          </button>
+          <p className="dialog-actions">
+            <button type="button" onClick={onClose} disabled={busy}>
+              {t('import.cancel')}
+            </button>
+            <button type="button" className="primary" onClick={() => void run()} disabled={busy || (parsed.valid.length === 0 && parsed.chats.length === 0 && parsed.memories.length === 0)}>
+              {t('import.confirm')}
+            </button>
+          </p>
         </>
       )}
-    </div>
+    </dialog>
   )
 }

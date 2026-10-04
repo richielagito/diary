@@ -24,7 +24,9 @@ export function Composer({ streaming, onSend, onStop }: Props) {
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+    // On a touch keyboard Enter is a new line; sending stays on the button, so half a thought never goes out.
+    const touch = window.matchMedia?.('(pointer: coarse)').matches
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && !touch) {
       e.preventDefault()
       void submit()
     }

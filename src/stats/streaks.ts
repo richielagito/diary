@@ -1,13 +1,21 @@
 import { addDays } from '../domain/date'
 import type { DateKey } from '../domain/types'
 
-/** dates: terurut naik dan unik. */
-export function longestStreak(dates: DateKey[]): number {
+/**
+ * dates: terurut naik dan unik. Dengan `within`, hanya runtun yang menyentuh rentang itu yang dihitung, tapi
+ * panjangnya utuh melewati batas bulan atau tahun, supaya runtun terpanjang tidak pernah kalah dari runtun saat ini.
+ */
+export function longestStreak(dates: DateKey[], within?: { from: DateKey; to: DateKey }): number {
   let best = 0
   let run = 0
+  let start = ''
   for (let i = 0; i < dates.length; i++) {
-    run = i > 0 && dates[i] === addDays(dates[i - 1], 1) ? run + 1 : 1
-    if (run > best) best = run
+    if (i > 0 && dates[i] === addDays(dates[i - 1], 1)) run++
+    else {
+      run = 1
+      start = dates[i]
+    }
+    if (run > best && (!within || (start <= within.to && dates[i] >= within.from))) best = run
   }
   return best
 }
