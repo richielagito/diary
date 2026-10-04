@@ -17,4 +17,10 @@ playwright-report
 
 # impeccable: local review screenshots and per-machine config
 .impeccable/review/
+.impeccable/critique/
+.impeccable/questions/
 .impeccable/config.local.json
+
+# test and build caches
+.vitest/
+*.tsbuildinfo
