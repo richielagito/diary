@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ConfirmButton } from '../../app/ConfirmButton'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { extractMemories, type ExtractResult } from '../../ai/memory/extractMemories'
 import { MEMORY_MAX, MEMORY_TEXT_MAX } from '../../ai/memory/limits'
@@ -37,7 +38,7 @@ function MemoryItem({ memory, index, save }: { memory: Memory; index: number; sa
           if (!text.trim()) setText(memory.text)
         }}
       />{' '}
-      <small>({memory.source === 'user' ? t('memory.byYou') : t('memory.byAi')})</small>{' '}
+      <small>{memory.source === 'user' ? t('memory.byYou') : t('memory.byAi')}</small>{' '}
       <button type="button" className="quiet danger" onClick={() => void save(() => memories.remove(memory.id))}>
         {t('memory.delete')}
       </button>
@@ -78,9 +79,7 @@ export function MemoryPage() {
     if (await save(() => memories.add(text, 'user'))) setDraft('')
   }
 
-  const clearAll = async () => {
-    if (window.confirm(t('memory.clearConfirm'))) await save(() => Promise.all([memories.clear(), letters.clear()]))
-  }
+  const clearAll = () => save(() => Promise.all([memories.clear(), letters.clear()]))
 
   const toggleMemory = (enabled: boolean) =>
     save(async () => {
@@ -162,12 +161,7 @@ export function MemoryPage() {
       <p>
         <button type="button" onClick={() => void runRefresh()} disabled={!settings.ai || !settings.aiMemoryEnabled || refresh?.status === 'running'}>
           {refresh?.status === 'running' ? t('memory.refreshing') : t('memory.refresh')}
-        </button>{' '}
-        {memoryList.length > 0 && (
-          <button type="button" className="danger" onClick={() => void clearAll()}>
-            {t('memory.clearAll')}
-          </button>
-        )}
+        </button>
       </p>
       {!settings.ai && <p>{t('memory.needsAi')}</p>}
       {!settings.aiMemoryEnabled && <p>{t('memory.refreshOff')}</p>}
@@ -195,6 +189,17 @@ export function MemoryPage() {
               </li>
             ))}
         </ul>
+      )}
+
+      {/* The one irreversible action on the page sits at its end, away from "Perbarui". */}
+      {memoryList.length > 0 && (
+        <ConfirmButton
+          className="settings-danger"
+          label={t('memory.clearAll')}
+          question={t('memory.clearConfirm')}
+          confirmLabel={t('common.yesDelete')}
+          onConfirm={() => void clearAll()}
+        />
       )}
     </section>
   )

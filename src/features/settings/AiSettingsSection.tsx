@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ConfirmButton } from '../../app/ConfirmButton'
 import { ChevronRight } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { PERSONA_MAX_INSTRUCTION, PERSONA_STYLES, type PersonaStyle } from '../../ai/prompt/persona'
@@ -175,9 +176,7 @@ export function AiSettingsSection() {
     }
   }
 
-  const [confirmingClear, setConfirmingClear] = useState(false)
   const clear = async () => {
-    setConfirmingClear(false)
     try {
       await settingsStore.set('ai', null)
       setConfig(initialConfig(null))
@@ -372,26 +371,15 @@ export function AiSettingsSection() {
           </span>
         )}
       </Field>
-      {settings.ai &&
-        (confirmingClear ? (
-          <div className="settings-danger" role="group" aria-label={t('aiSettings.clear')}>
-            <p>{t('aiSettings.clearConfirm')}</p>
-            <p>
-              <button type="button" className="danger" onClick={() => void clear()}>
-                {t('aiSettings.clearAction')}
-              </button>{' '}
-              <button type="button" className="quiet" onClick={() => setConfirmingClear(false)}>
-                {t('aiSettings.cancel')}
-              </button>
-            </p>
-          </div>
-        ) : (
-          <p className="settings-danger">
-            <button type="button" className="quiet danger" onClick={() => setConfirmingClear(true)}>
-              {t('aiSettings.clear')}
-            </button>
-          </p>
-        ))}
+      {settings.ai && (
+        <ConfirmButton
+          className="settings-danger"
+          label={t('aiSettings.clear')}
+          question={t('aiSettings.clearConfirm')}
+          confirmLabel={t('common.yesDelete')}
+          onConfirm={() => void clear()}
+        />
+      )}
     </section>
   )
 }

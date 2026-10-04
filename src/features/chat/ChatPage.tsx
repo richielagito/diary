@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ConfirmButton } from '../../app/ConfirmButton'
 import { ChevronRight } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { detectCrisis } from '../../ai/safety/crisis'
@@ -75,10 +76,6 @@ export function ChatPage({ date }: { date: DateKey }) {
   const fullFormat = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const otherDates = dates.filter((d) => d !== date).slice(-HISTORY_LINKS).reverse()
 
-  const deleteConversation = async () => {
-    if (window.confirm(t('chat.deleteConfirm'))) await chats.deleteByDate(date)
-  }
-
   return (
     <section className="chat">
       <header>
@@ -140,11 +137,12 @@ export function ChatPage({ date }: { date: DateKey }) {
       )}
 
       {messages.length > 0 && chat.state.phase !== 'streaming' && (
-        <p>
-          <button type="button" className="quiet danger" onClick={() => void deleteConversation()}>
-            {t('chat.deleteDay')}
-          </button>
-        </p>
+        <ConfirmButton
+          label={t('chat.deleteDay')}
+          question={t('chat.deleteConfirm')}
+          confirmLabel={t('common.yesDelete')}
+          onConfirm={() => void chats.deleteByDate(date)}
+        />
       )}
     </section>
   )

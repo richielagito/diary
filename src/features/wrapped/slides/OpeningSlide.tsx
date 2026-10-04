@@ -9,7 +9,16 @@ export function OpeningSlide({ stats }: { stats: PeriodStats }) {
   const title = t(key, { count: stats.daysWritten, period: periodLabel(stats.period, lang), days: formatNumber(stats.daysWritten, lang) })
   return (
     <div className="slide-body">
-      <h1 className="slide-title">{stats.range.isCurrent ? `${title} ${t('wrapped.soFar')}` : title}</h1>
+      {/* "So far" qualifies the title, so it is said quietly beside it rather than in display size. */}
+      <h1 className="slide-title">
+        {title}
+        {stats.range.isCurrent && (
+          <>
+            {' '}
+            <span className="slide-title-note">{t('wrapped.soFar')}</span>
+          </>
+        )}
+      </h1>
       <p className="slide-lead">{t('wrapped.totalWords', { count: stats.totalWords, words: formatNumber(stats.totalWords, lang) })}</p>
       <p className="slide-lead">{t('wrapped.longestStreak', { count: stats.longestStreak })}</p>
     </div>

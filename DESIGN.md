@@ -48,6 +48,11 @@ typography:
     fontSize: "1.125rem"
     fontWeight: 400
     lineHeight: 1.75
+  page-title:
+    fontFamily: "Literata, Georgia, 'Times New Roman', serif"
+    fontSize: "clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem)"
+    fontWeight: 500
+    lineHeight: 1.2
   title:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
     fontSize: "1.0625rem"
@@ -63,6 +68,11 @@ typography:
     fontSize: "0.9375rem"
     fontWeight: 400
     lineHeight: 1.3
+  small:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.5
   label:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
     fontSize: "0.8125rem"

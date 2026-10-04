@@ -190,11 +190,11 @@ test('the draft uses the main model, uncached, even when a fast model is set', a
 })
 
 test('an old draft does not come back after the conversation is deleted', async () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   const { user } = await open(replyWith(REPLY))
   await user.click(await screen.findByRole('button', { name: 'Simpan jadi diary' }))
   await draftBox()
   await user.click(screen.getByRole('button', { name: 'Hapus percakapan ini' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Simpan jadi diary' })).not.toBeInTheDocument())
   await user.type(screen.getByRole('textbox', { name: 'Pesan' }), 'halo baru{Enter}')
   await screen.findByRole('button', { name: 'Simpan jadi diary' })

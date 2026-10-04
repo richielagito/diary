@@ -31,6 +31,8 @@ export function DayPage({ date }: { date: DateKey }) {
   const editorRef = useRef<DiaryEditorHandle>(null)
   const [loaded, setLoaded] = useState<{ markdown: string } | null>(null)
   const [mood, setMood] = useState<Mood | null>(null)
+  /** An empty page explains itself once: where the words go and how tags work. Gone at the first word. */
+  const [blank, setBlank] = useState(false)
   const [moodError, setMoodError] = useState(false)
   /** True sejak mood diklik sampai tersimpan; selama itu watch tidak menimpa mood di layar. */
   const moodPending = useRef(false)
@@ -131,6 +133,7 @@ export function DayPage({ date }: { date: DateKey }) {
       // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
       const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : stored
       setLoaded({ markdown })
+      setBlank(!markdown.trim())
       if (draft) schedule(markdown)
       setMood(entry?.mood ?? null)
     })
@@ -237,11 +240,15 @@ export function DayPage({ date }: { date: DateKey }) {
           initialMarkdown={loaded.markdown}
           placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
           label={t('day.editorLabel')}
-          onChange={autosave.schedule}
+          onChange={(markdown) => {
+            setBlank(!markdown.trim())
+            autosave.schedule(markdown)
+          }}
           onBlur={() => void autosave.flush()}
           tagSuggest={tagSuggest}
         />
       )}
+      {loaded && blank && <p className="day-hint">{t('day.hint')}</p>}
     </article>
   )
 }

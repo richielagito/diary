@@ -1,4 +1,5 @@
 export const id = {
+  common: { cancel: 'Batal', yesDelete: 'Ya, hapus' },
   nav: { skip: 'Langsung ke isi', label: 'Navigasi utama', today: 'Hari ini', chat: 'Curhat', archive: 'Arsip', stats: 'Statistik', settings: 'Pengaturan' },
   stats: {
     heatmapLabel: 'Heatmap mood',
@@ -85,8 +86,6 @@ export const id = {
   },
   aiSettings: {
     personaAutosave: 'Gaya, nama, dan instruksi tersimpan otomatis.',
-    clearAction: 'Ya, hapus',
-    cancel: 'Batal',
     sharingTitle: 'Apa saja yang boleh dikirim ke AI?',
     sharingIntro: 'AI sudah tersambung. Tiap pilihan di bawah mengirim sebagian isi diary atau curhat ke provider AI-mu. Centang yang kamu izinkan; semuanya bisa diubah lagi kapan saja.',
     sharingDone: 'Selesai',
@@ -142,6 +141,7 @@ export const id = {
     body: 'Browser ini memblokir penyimpanan lokal (IndexedDB), jadi diary tidak bisa berjalan. Coba keluar dari mode privat atau izinkan penyimpanan untuk situs ini.',
   },
   day: {
+    hint: 'Tersimpan otomatis di perangkat ini. Ketik #kata untuk memberi tag.',
     editorLabel: 'Tulis diary',
     placeholder: 'Apa yang terjadi hari ini?',
     moodLabel: 'Mood hari ini',
@@ -314,8 +314,8 @@ export const id = {
     listTitle: 'Memori',
     empty: 'Belum ada memori.',
     itemLabel: 'Memori {{n}}',
-    byYou: 'kamu',
-    byAi: 'AI',
+    byYou: 'Ditulis kamu',
+    byAi: 'Dicatat AI',
     delete: 'Hapus',
     addLabel: 'Tambah memori',
     add: 'Tambah',

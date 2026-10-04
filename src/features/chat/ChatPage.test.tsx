@@ -124,7 +124,6 @@ test('a context preview that fails to load is logged and stays hidden', async ()
 })
 
 test('history links to other days and deleting the conversation', async () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   const { chats, user } = await open(replyWith('x'), {
     chats: [
       { date: DATE, role: 'user', content: 'hari ini', createdAt: 2, status: 'complete' },
@@ -134,6 +133,7 @@ test('history links to other days and deleting the conversation', async () => {
   const link = await screen.findByRole('link', { name: /15/ })
   expect(link).toHaveAttribute('href', '/chat/2026-09-15')
   await user.click(await screen.findByRole('button', { name: 'Hapus percakapan ini' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect(await chats.listByDate(DATE)).toEqual([]))
   expect(await chats.listByDate('2026-09-15')).toHaveLength(1)
   vi.restoreAllMocks()

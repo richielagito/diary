@@ -313,6 +313,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .day-header { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.25rem 1rem; }
 .day-header h1 { margin: 0; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem); }
 .day-header h1:focus { outline: none; }
+.day-hint { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.8125rem; }
 .day-step { display: flex; margin-right: -0.5rem; }
 .day-header .banner { grid-column: 1 / -1; flex-basis: 100%; margin: 0.75rem 0 0; }
 .day-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; min-height: 1.5rem; font-size: 0.875rem; }
@@ -549,7 +550,7 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 .memory-list, .summary-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; }
 .memory-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
 .memory-list textarea { flex: 1 1 100%; width: 100%; min-height: 2.75rem; field-sizing: content; }
-.memory-list small { margin-right: auto; }
+.memory-list small { margin-right: auto; color: var(--muted); font-size: 0.8125rem; }
 .summary-list li { padding: 0.875rem 0; border-bottom: 1px solid var(--border); }
 .summary-list p { margin: 0.25rem 0 0.25rem; color: var(--muted); font-size: 0.9375rem; }
 .inline-form { display: flex; gap: 0.5rem; margin: 1rem 0; }
@@ -703,6 +704,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .wrapped-x { position: absolute; top: max(4px, env(safe-area-inset-top)); right: 10px; }
 .slide { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem 3rem; }
 .slide-body { width: 100%; max-width: 30rem; display: flex; flex-direction: column; align-items: center; gap: 1.25rem; text-align: center; }
+.slide-title-note { font-family: var(--font-ui); font-size: 1rem; font-weight: 400; letter-spacing: 0; color: var(--muted); white-space: nowrap; }
 .slide-title {
   font-family: var(--font-text);
   font-optical-sizing: auto;

@@ -1,6 +1,7 @@
 import type { id } from './id'
 
 export const en: typeof id = {
+  common: { cancel: 'Cancel', yesDelete: 'Yes, delete' },
   nav: { skip: 'Skip to content', label: 'Main navigation', today: 'Today', chat: 'Talk', archive: 'Archive', stats: 'Stats', settings: 'Settings' },
   stats: {
     heatmapLabel: 'Mood heatmap',
@@ -87,8 +88,6 @@ export const en: typeof id = {
   },
   aiSettings: {
     personaAutosave: 'Style, name and instructions save automatically.',
-    clearAction: 'Yes, remove',
-    cancel: 'Cancel',
     sharingTitle: 'What may be sent to the AI?',
     sharingIntro: 'AI is connected. Each choice below sends part of your diary or chats to your AI provider. Tick what you allow; you can change any of it later.',
     sharingDone: 'Done',
@@ -144,6 +143,7 @@ export const en: typeof id = {
     body: 'This browser blocks local storage (IndexedDB), so the diary cannot run. Try leaving private mode or allow storage for this site.',
   },
   day: {
+    hint: 'Saved automatically on this device. Type #word to tag the day.',
     editorLabel: 'Write diary',
     placeholder: 'What happened today?',
     moodLabel: "Today's mood",
@@ -316,8 +316,8 @@ export const en: typeof id = {
     listTitle: 'Memories',
     empty: 'No memories yet.',
     itemLabel: 'Memory {{n}}',
-    byYou: 'you',
-    byAi: 'AI',
+    byYou: 'Added by you',
+    byAi: 'Noted by AI',
     delete: 'Delete',
     addLabel: 'Add a memory',
     add: 'Add',

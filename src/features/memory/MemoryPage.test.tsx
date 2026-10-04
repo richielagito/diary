@@ -10,7 +10,7 @@ test('lists memories with their source, and edits make them yours', async () => 
   const { memories, user } = await renderApp('/memory', { memories: [{ text: 'Punya kucing Mochi', source: 'auto' }] })
   const item = await screen.findByRole('textbox', { name: 'Memori 1' })
   expect(item).toHaveValue('Punya kucing Mochi')
-  expect(screen.getByText('(AI)')).toBeInTheDocument()
+  expect(screen.getByText('Dicatat AI')).toBeInTheDocument()
   await user.clear(item)
   await user.type(item, 'Punya dua kucing')
   await waitFor(async () => expect((await memories.list())[0]).toMatchObject({ text: 'Punya dua kucing', source: 'user' }))
@@ -26,13 +26,13 @@ test('clearing a memory textbox never deletes it; the Hapus button does', async 
 })
 
 test('add and clear all', async () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   const { memories, user } = await renderApp('/memory')
   expect(await screen.findByText('Belum ada memori.')).toBeInTheDocument()
   await user.type(screen.getByRole('textbox', { name: 'Tambah memori' }), 'Kuliah di ITB')
   await user.click(screen.getByRole('button', { name: 'Tambah' }))
   await waitFor(async () => expect((await memories.list()).map((m) => [m.text, m.source])).toEqual([['Kuliah di ITB', 'user']]))
   await user.click(screen.getByRole('button', { name: 'Hapus semua memori' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect(await memories.list()).toEqual([]))
   vi.restoreAllMocks()
 })
@@ -181,7 +181,6 @@ test('a storage failure shows an alert that clears on the next successful change
 
 test('failing deletes, edits, clear all and toggles also show the storage alert', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => {})
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   const { memories, summaries, settingsStore, user } = await renderApp('/memory', {
     memories: [{ text: 'a', source: 'auto' }],
     summaries: [{ id: 'month:2026-08', kind: 'month', periodStart: '2026-08-01', periodEnd: '2026-08-31', text: 'agustus', entryCount: 1, sourceUpdatedAt: 1, createdAt: 1 }],
@@ -205,6 +204,7 @@ test('failing deletes, edits, clear all and toggles also show the storage alert'
   await expectNoAlert()
   vi.spyOn(memories, 'clear').mockRejectedValueOnce(new Error('x'))
   await user.click(screen.getByRole('button', { name: 'Hapus semua memori' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await expectAlert()
 
   vi.spyOn(settingsStore, 'set').mockResolvedValueOnce().mockRejectedValueOnce(new Error('x')).mockRejectedValueOnce(new Error('x'))
@@ -250,13 +250,13 @@ test('adding is blocked at 100 memories', async () => {
 })
 
 test('clear all memories also removes stored Wrapped letters', async () => {
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
   const { letters, user } = await renderApp('/memory', {
     memories: [{ text: 'a', source: 'auto' }],
     letters: [{ periodId: '2026-09', text: 'Surat', fingerprint: 'f', createdAt: 1 }],
   })
   expect(await letters.get('2026-09')).toBeDefined()
   await user.click(await screen.findByRole('button', { name: 'Hapus semua memori' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect(await letters.get('2026-09')).toBeUndefined())
   vi.restoreAllMocks()
 })

@@ -36,7 +36,7 @@ const segments = () => document.querySelectorAll('.wrapped-progress > span').len
 test('opening slide, progress bar and no main nav', async () => {
   await renderApp('/wrapped/2026-10', seed)
   expect(await screen.findByRole('group', { name: '1 dari 4' })).toBeInTheDocument()
-  expect(screen.getByText('Oktober 2026, kamu menulis 3 hari (sejauh ini)')).toBeInTheDocument()
+  expect(screen.getByRole('heading', { name: 'Oktober 2026, kamu menulis 3 hari (sejauh ini)' })).toBeInTheDocument()
   expect(segments()).toBe(4)
   expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats')
@@ -151,7 +151,7 @@ test('no letter slide when diary context is off', async () => {
 
 test('direct load applies language and theme without the Layout', async () => {
   await renderApp('/wrapped/2026-10', { ...seed, settings: { language: 'en', theme: 'dark' } })
-  expect(await screen.findByText('October 2026, you wrote 3 days (so far)')).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'October 2026, you wrote 3 days (so far)' })).toBeInTheDocument()
   expect(screen.getByRole('group', { name: '1 of 4' })).toBeInTheDocument()
   expect(document.documentElement.dataset.theme).toBe('dark')
   expect(document.documentElement.lang).toBe('en')
@@ -159,7 +159,7 @@ test('direct load applies language and theme without the Layout', async () => {
 
 test('English singular day and word counts', async () => {
   await renderApp('/wrapped/2026-10', { entries: [{ date: '2026-10-01', markdown: 'halo' }], settings: { language: 'en' } })
-  expect(await screen.findByText('October 2026, you wrote 1 day (so far)')).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'October 2026, you wrote 1 day (so far)' })).toBeInTheDocument()
   expect(screen.getByText('1 word written')).toBeInTheDocument()
   expect(screen.getByText('Longest streak 1 day')).toBeInTheDocument()
 })
