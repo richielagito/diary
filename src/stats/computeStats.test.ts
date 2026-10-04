@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DateKey, DayEntry, Mood } from '../domain/types'
-import { computeStats } from './computeStats'
+import { computeStats, mostFrequentMoods } from './computeStats'
 
 function entry(date: DateKey, over: Partial<DayEntry> = {}): DayEntry {
   return { date, markdown: 'x', mood: null, tags: [], wordCount: 10, createdAt: 0, updatedAt: 0, ...over }
@@ -106,5 +106,13 @@ describe('computeStats year mood', () => {
   it('only months up to elapsedTo', () => {
     const s = computeStats([], year, '2026-03-15')
     expect(s.mood.trend.map((p) => p.key)).toEqual(['2026-01', '2026-02', '2026-03'])
+  })
+})
+
+describe('mostFrequentMoods', () => {
+  it('names the mood set on the most days, every one of them on a tie, and nothing without moods', () => {
+    expect(mostFrequentMoods({ 1: 0, 2: 1, 3: 4, 4: 6, 5: 2 })).toEqual({ moods: [4], days: 6 })
+    expect(mostFrequentMoods({ 1: 3, 2: 0, 3: 0, 4: 0, 5: 3 })).toEqual({ moods: [1, 5], days: 3 })
+    expect(mostFrequentMoods({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 })).toEqual({ moods: [], days: 0 })
   })
 })

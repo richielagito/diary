@@ -613,7 +613,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
   .stat-card strong { font-size: 1.05rem; text-align: right; }
 }
 .stat-section h2 { margin-top: 2.25rem; }
-.mood-average strong { font-family: var(--font-text); font-weight: 500; font-size: 1.35rem; }
+.mood-average strong { font-family: var(--font-text); font-weight: 500; font-size: 1.35rem; white-space: nowrap; }
 .mood-average span { color: var(--muted); }
 .mood-extremes { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; color: var(--muted); font-size: 0.9375rem; }
 .mood-dist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }

@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { MOOD_EMOJI, MOODS, type Mood } from '../../domain/types'
+import { MOOD_EMOJI, MOODS } from '../../domain/types'
 import type { PeriodStats } from '../../stats/computeStats'
 import { formatMood, formatNumber, monthKeyLabel, trendLabel } from './format'
 import { MoodBars } from './MoodBars'
+import { MostFrequentMood } from './MostFrequentMood'
 
 export function ConsistencyCards({ stats }: { stats: PeriodStats }) {
   const { t, i18n } = useTranslation()
@@ -44,12 +45,7 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
         <p>{t('stats.noMoodYet')}</p>
       ) : (
         <>
-          <p className="mood-average">
-            <span>{t('stats.moodAverage')}: </span>
-            <strong>
-              {MOOD_EMOJI[Math.round(mood.average) as Mood]} {formatMood(mood.average, lang)}
-            </strong>
-          </p>
+          <MostFrequentMood className="mood-average" distribution={mood.distribution} />
           {stats.period.kind === 'year' && (mood.brightest || mood.heaviest) && (
             <p className="mood-extremes">
               {mood.brightest && <span>{t('stats.brightest', { month: monthKeyLabel(mood.brightest, lang) })}</span>}

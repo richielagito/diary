@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { MOOD_EMOJI, type Mood } from '../../../domain/types'
 import type { PeriodStats } from '../../../stats/computeStats'
-import { formatMood, monthKeyLabel, trendLabel } from '../../stats/format'
+import { monthKeyLabel, trendLabel } from '../../stats/format'
 import { Heatmap } from '../../stats/Heatmap'
 import { MoodBars } from '../../stats/MoodBars'
+import { MostFrequentMood } from '../../stats/MostFrequentMood'
 
 export function MoodSlide({ stats }: { stats: PeriodStats }) {
   const { t, i18n } = useTranslation()
@@ -13,11 +13,7 @@ export function MoodSlide({ stats }: { stats: PeriodStats }) {
   return (
     <div className="slide-body">
       <h2 className="slide-title">{t('wrapped.moodTitle')}</h2>
-      {mood.average !== null && (
-        <p className="slide-lead">
-          <span aria-hidden="true">{MOOD_EMOJI[Math.round(mood.average) as Mood]}</span> {formatMood(mood.average, lang)}
-        </p>
-      )}
+      <MostFrequentMood className="slide-lead mood-average" distribution={mood.distribution} />
       <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, kind, lang), average: p.average }))} />
       {kind === 'year' && (mood.brightest || mood.heaviest) && (
         <p className="mood-extremes">
