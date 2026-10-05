@@ -13,5 +13,5 @@ describe('wordLevels', () => {
     expect(wordLevel(5, t)).toBe(4)
   })
   it('too few counts gives null', () => expect(wordThresholds([1, 2, 3])).toBeNull())
-  it('opacity per level', () => expect(LEVEL_OPACITY).toEqual({ 1: 0.35, 2: 0.55, 3: 0.8, 4: 1 }))
+  it('opacity per level', () => expect(LEVEL_OPACITY).toEqual({ 1: 0.5, 2: 0.68, 3: 0.84, 4: 1 }))
 })

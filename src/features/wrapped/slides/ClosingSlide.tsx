@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { MOODS_SHOWN } from '../../../domain/types'
 import type { PeriodStats } from '../../../stats/computeStats'
 import { periodId } from '../../../stats/range'
 import { formatNumber, periodLabel } from '../../stats/format'
@@ -42,8 +43,25 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
     }
   }
 
+  const dist = stats.mood.distribution
+  const moods = MOODS_SHOWN.filter((m) => dist[m] > 0)
   return (
     <div className="slide-body">
+      {/* The ending works without the AI letter: the period's moods as one band of colour, happiest first. */}
+      {moods.length > 0 && (
+        <>
+          <h2 className="slide-title">{t('wrapped.colour', { period: periodLabel(stats.period, lang) })}</h2>
+          <div
+            className="mood-strip"
+            role="img"
+            aria-label={moods.map((m) => `${t(`mood.${m}`)} ${t('stats.moodDays', { count: dist[m] })}`).join(', ')}
+          >
+            {moods.map((m) => (
+              <span key={m} style={{ flexGrow: dist[m], background: `var(--mood-${m})` }} />
+            ))}
+          </div>
+        </>
+      )}
       <p className="slide-lead">{t('wrapped.thanks')}</p>
       <button type="button" className="wrapped-link" disabled={busy} onClick={() => void save()}>
         {t('wrapped.saveImage')}

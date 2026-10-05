@@ -24,3 +24,15 @@ test('group is labelled', () => {
   render(<MoodPicker value={null} onChange={() => {}} />)
   expect(screen.getByRole('group', { name: 'Mood hari ini' })).toBeInTheDocument()
 })
+
+test('the faces are one tab stop and arrow keys move between them', async () => {
+  const user = userEvent.setup()
+  render(<MoodPicker value={4} onChange={() => {}} />)
+  await user.tab()
+  expect(screen.getByRole('button', { name: 'Baik' })).toHaveFocus()
+  await user.keyboard('{ArrowRight}')
+  expect(screen.getByRole('button', { name: 'Biasa' })).toHaveFocus()
+  await user.keyboard('{ArrowLeft}{ArrowLeft}{ArrowLeft}')
+  // Wraps from the first face to the last.
+  expect(screen.getByRole('button', { name: 'Sedih' })).toHaveFocus()
+})

@@ -51,6 +51,9 @@ export function AiSettingsSection() {
   const tagSuggestHintId = useId()
   const [name, setName] = useState(settings.persona.name)
   const [instruction, setInstruction] = useState(settings.persona.customInstruction)
+  /** A working connection folds to one line; its fields open on "Ubah", and always when nothing is set up. */
+  const [editing, setEditing] = useState(false)
+  const showForm = editing || !settings.ai
 
   /** Error 'unknown' ikut menampilkan pesan asli provider (misalnya "503 model overloaded") supaya penyebabnya terlihat. */
   const errorText = (kind: ProviderErrorKind, detail?: string) => (detail ? `${t(`aiError.${kind}`)} (${detail})` : t(`aiError.${kind}`))
@@ -109,6 +112,7 @@ export function AiSettingsSection() {
       const first = !settings.ai
       await settingsStore.set('ai', cleaned())
       setStatus({ kind: 'saved' })
+      setEditing(false)
       if (first) setAskSharing(true)
     } catch (err) {
       console.error(err)
@@ -215,96 +219,120 @@ export function AiSettingsSection() {
     <section id="ai">
       <h2>{t('aiSettings.title')}</h2>
       <p>{t('aiSettings.privacy')}</p>
+      <details className="settings-advanced">
+        <summary>
+          <ChevronRight />
+          {t('aiSettings.privacyMore')}
+        </summary>
+        <p>{t('aiSettings.privacyDetail')}</p>
+      </details>
       <p>
         <Link to="/memory" state={{ from: '/settings#ai' }}>{t('aiSettings.memoryLink')}</Link>
       </p>
-      <Field label={t('aiSettings.provider')}>
-        {(id) => (
-          <select
-            id={id}
-            value={config.provider}
-            onChange={(e) => {
-              const provider = e.target.value as ProviderKind
-              // fastModel '' lets the new provider's preset fast model apply.
-              update({ provider, apiKey: '', baseUrl: PROVIDER_PRESETS[provider].baseUrl, model: PROVIDER_PRESETS[provider].defaultModel, fastModel: '' })
-              setShowKey(false)
-              resetModelList()
-            }}
-          >
-            {PROVIDERS.map((p) => (
-              <option key={p} value={p}>
-                {t(`aiSettings.providers.${p}`)}
-              </option>
-            ))}
-          </select>
-        )}
-      </Field>
-      <Field label={t('aiSettings.apiKey')}>
-        {(id) => (
+      {!showForm && settings.ai && (
+        <p className="ai-summary">
           <span>
-            <input
-              id={id}
-              type={showKey ? 'text' : 'password'}
-              autoComplete="off"
-              value={config.apiKey}
-              onChange={(e) => {
-                update({ apiKey: e.target.value })
-                resetModelList()
-              }}
-            />
-            <button type="button" onClick={() => setShowKey((s) => !s)}>
-              {showKey ? t('aiSettings.hideKey') : t('aiSettings.showKey')}
-            </button>
+            {t('aiSettings.connected', { provider: t(`aiSettings.providers.${settings.ai.provider}`), model: settings.ai.model })}
           </span>
-        )}
-      </Field>
-      {compatible && !preset.baseUrl.startsWith('https://') && baseUrlField}
-      {config.provider === 'ollama' && <p>{t('aiSettings.ollamaHint')}</p>}
-      <Field label={t('aiSettings.model')}>
-        {(id) => <input id={id} list={modelListId} value={config.model} onChange={(e) => update({ model: e.target.value })} />}
-      </Field>
-      <datalist id={modelListId}>
-        {(fetchedModels ?? preset.suggestedModels).map((m) => (
-          <option key={m} value={m} />
-        ))}
-      </datalist>
-      <p>
-        <button type="button" onClick={() => void fetchModels()} disabled={modelFetch.kind === 'fetching'}>
-          {modelFetch.kind === 'fetching' ? t('aiSettings.fetchingModels') : t('aiSettings.fetchModels')}
-        </button>
-      </p>
-      {modelFetch.kind === 'ok' && <p role="status">{t('aiSettings.modelsFetched', { count: modelFetch.count })}</p>}
-      {modelFetch.kind === 'failed' && <p role="alert">{t('aiSettings.modelsFetchFailed')}</p>}
-      <details className="settings-advanced" open={status.kind === 'testFastFail' || undefined}>
-        <summary>
-          <ChevronRight />
-          {t('aiSettings.advanced')}
-        </summary>
-        {compatible && preset.baseUrl.startsWith('https://') && baseUrlField}
-        <Field label={t('aiSettings.fastModel')}>
-          {(id) => (
-            <>
-              <input
+          <button type="button" onClick={() => setEditing(true)}>
+            {t('aiSettings.edit')}
+          </button>{' '}
+          <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
+            {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
+          </button>
+        </p>
+      )}
+      {showForm && (
+        <>
+          <Field label={t('aiSettings.provider')}>
+            {(id) => (
+              <select
                 id={id}
-                list={modelListId}
-                placeholder={fastModelOf(config)}
-                aria-describedby={`${id}-hint`}
-                value={config.fastModel}
-                onChange={(e) => update({ fastModel: e.target.value })}
-              />
-              <small id={`${id}-hint`}>{t('aiSettings.fastModelHint')}</small>
-            </>
-          )}
-        </Field>
-      </details>
-      <p>
-        <button type="button" className="primary" onClick={() => void save()}>
-          {t('aiSettings.save')}
-        </button>{' '}
-        <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
-          {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
-        </button>
-      </p>
+                value={config.provider}
+                onChange={(e) => {
+                  const provider = e.target.value as ProviderKind
+                  // fastModel '' lets the new provider's preset fast model apply.
+                  update({ provider, apiKey: '', baseUrl: PROVIDER_PRESETS[provider].baseUrl, model: PROVIDER_PRESETS[provider].defaultModel, fastModel: '' })
+                  setShowKey(false)
+                  resetModelList()
+                }}
+              >
+                {PROVIDERS.map((p) => (
+                  <option key={p} value={p}>
+                    {t(`aiSettings.providers.${p}`)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <Field label={t('aiSettings.apiKey')}>
+            {(id) => (
+              <span>
+                <input
+                  id={id}
+                  type={showKey ? 'text' : 'password'}
+                  autoComplete="off"
+                  value={config.apiKey}
+                  onChange={(e) => {
+                    update({ apiKey: e.target.value })
+                    resetModelList()
+                  }}
+                />
+                <button type="button" onClick={() => setShowKey((s) => !s)}>
+                  {showKey ? t('aiSettings.hideKey') : t('aiSettings.showKey')}
+                </button>
+              </span>
+            )}
+          </Field>
+          {compatible && !preset.baseUrl.startsWith('https://') && baseUrlField}
+          {config.provider === 'ollama' && <p>{t('aiSettings.ollamaHint')}</p>}
+          <Field label={t('aiSettings.model')}>
+            {(id) => <input id={id} list={modelListId} value={config.model} onChange={(e) => update({ model: e.target.value })} />}
+          </Field>
+          <datalist id={modelListId}>
+            {(fetchedModels ?? preset.suggestedModels).map((m) => (
+              <option key={m} value={m} />
+            ))}
+          </datalist>
+          <p>
+            <button type="button" onClick={() => void fetchModels()} disabled={modelFetch.kind === 'fetching'}>
+              {modelFetch.kind === 'fetching' ? t('aiSettings.fetchingModels') : t('aiSettings.fetchModels')}
+            </button>
+          </p>
+          {modelFetch.kind === 'ok' && <p role="status">{t('aiSettings.modelsFetched', { count: modelFetch.count })}</p>}
+          {modelFetch.kind === 'failed' && <p role="alert">{t('aiSettings.modelsFetchFailed')}</p>}
+          <details className="settings-advanced" open={status.kind === 'testFastFail' || undefined}>
+            <summary>
+              <ChevronRight />
+              {t('aiSettings.advanced')}
+            </summary>
+            {compatible && preset.baseUrl.startsWith('https://') && baseUrlField}
+            <Field label={t('aiSettings.fastModel')}>
+              {(id) => (
+                <>
+                  <input
+                    id={id}
+                    list={modelListId}
+                    placeholder={fastModelOf(config)}
+                    aria-describedby={`${id}-hint`}
+                    value={config.fastModel}
+                    onChange={(e) => update({ fastModel: e.target.value })}
+                  />
+                  <small id={`${id}-hint`}>{t('aiSettings.fastModelHint')}</small>
+                </>
+              )}
+            </Field>
+          </details>
+          <p>
+            <button type="button" className="primary" onClick={() => void save()}>
+              {t('aiSettings.save')}
+            </button>{' '}
+            <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
+              {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
+            </button>
+          </p>
+        </>
+      )}
       {/* Bukan live region: diumumkan tiap ketikan akan mengganggu pembaca layar. */}
       {unsaved && status.kind !== 'saved' && <p>{t('aiSettings.unsaved')}</p>}
       {status.kind === 'saved' && <p role="status">{t('aiSettings.saved')}</p>}
@@ -328,49 +356,54 @@ export function AiSettingsSection() {
         <small id={tagSuggestHintId}>{t('aiSettings.tagSuggestHint')}</small>
       </p>
 
-      <h3>{t('aiSettings.persona')}</h3>
-      <p>{t('aiSettings.personaAutosave')}</p>
-      <Field label={t('aiSettings.style')}>
-        {(id) => (
-          <select id={id} value={settings.persona.style} onChange={(e) => void savePersona({ style: e.target.value as PersonaStyle })}>
-            {PERSONA_STYLES.map((s) => (
-              <option key={s} value={s}>
-                {t(`aiSettings.styles.${s}`)}
-              </option>
-            ))}
-          </select>
-        )}
-      </Field>
-      <Field label={t('aiSettings.name')}>
-        {(id) => (
-          <input
-            id={id}
-            value={name}
-            onChange={(e) => {
-              const value = e.target.value
-              setName(value)
-              void savePersona({ name: value.trim() })
-            }}
-          />
-        )}
-      </Field>
-      <Field label={t('aiSettings.customInstruction')}>
-        {(id) => (
-          <span>
-            <textarea
+      <details className="settings-advanced">
+        <summary>
+          <ChevronRight />
+          {t('aiSettings.persona')}
+        </summary>
+        <p>{t('aiSettings.personaAutosave')}</p>
+        <Field label={t('aiSettings.style')}>
+          {(id) => (
+            <select id={id} value={settings.persona.style} onChange={(e) => void savePersona({ style: e.target.value as PersonaStyle })}>
+              {PERSONA_STYLES.map((s) => (
+                <option key={s} value={s}>
+                  {t(`aiSettings.styles.${s}`)}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <Field label={t('aiSettings.name')}>
+          {(id) => (
+            <input
               id={id}
-              maxLength={PERSONA_MAX_INSTRUCTION}
-              value={instruction}
+              value={name}
               onChange={(e) => {
                 const value = e.target.value
-                setInstruction(value)
-                void savePersona({ customInstruction: value })
+                setName(value)
+                void savePersona({ name: value.trim() })
               }}
             />
-            <small>{t('aiSettings.charCount', { count: instruction.length, max: PERSONA_MAX_INSTRUCTION })}</small>
-          </span>
-        )}
-      </Field>
+          )}
+        </Field>
+        <Field label={t('aiSettings.customInstruction')}>
+          {(id) => (
+            <span>
+              <textarea
+                id={id}
+                maxLength={PERSONA_MAX_INSTRUCTION}
+                value={instruction}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setInstruction(value)
+                  void savePersona({ customInstruction: value })
+                }}
+              />
+              <small>{t('aiSettings.charCount', { count: instruction.length, max: PERSONA_MAX_INSTRUCTION })}</small>
+            </span>
+          )}
+        </Field>
+      </details>
       {settings.ai && (
         <ConfirmButton
           className="settings-danger"

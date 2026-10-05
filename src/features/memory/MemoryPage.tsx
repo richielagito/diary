@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
-import { ChevronLeft } from '../../app/icons'
+import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { ConfirmButton } from '../../app/ConfirmButton'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { extractMemories, type ExtractResult } from '../../ai/memory/extractMemories'
@@ -123,7 +123,13 @@ export function MemoryPage() {
         <h1>{t('memory.title')}</h1>
       </header>
       <p>{t('memory.intro')}</p>
-      <p>{t('memory.privacy')}</p>
+      <details className="memory-how">
+        <summary>
+          <ChevronRight />
+          {t('memory.how')}
+        </summary>
+        <p>{t('memory.privacy')}</p>
+      </details>
       {storageFailed && <p role="alert">{t('aiError.storage')}</p>}
       <div className="toggles">
         <label>

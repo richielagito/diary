@@ -79,12 +79,12 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
   )
 }
 
-export function TagSection({ stats, showFresh = true, linked = true }: { stats: PeriodStats; showFresh?: boolean; linked?: boolean }) {
+export function TagSection({ stats }: { stats: PeriodStats }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
   const { tags } = stats
-  // A tag opens its days in Archive search; inside Wrapped it stays plain so taps keep moving the story.
-  const tagName = (tag: string) => (linked ? <Link to={`/archive?q=${encodeURIComponent(`#${tag}`)}`}>#{tag}</Link> : <span>#{tag}</span>)
+  // A tag opens its days in Archive search.
+  const tagName = (tag: string) => <Link to={`/archive?q=${encodeURIComponent(`#${tag}`)}`}>#{tag}</Link>
   // "New" only says something when it differs from the top tags right above it.
   const top = new Set(tags.top.map((x) => x.tag))
   const fresh = tags.fresh.filter((tag) => !top.has(tag))
@@ -116,7 +116,7 @@ export function TagSection({ stats, showFresh = true, linked = true }: { stats: 
               </ul>
             </>
           )}
-          {showFresh && fresh.length > 0 && (
+          {fresh.length > 0 && (
             <>
               <h3>{t('stats.freshTags')}</h3>
               <ul className="tag-stats">

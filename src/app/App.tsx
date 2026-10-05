@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useParams } from 'react-router'
+import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, useParams } from 'react-router'
 import { dateKey, isValidDateKey } from '../domain/date'
 import { ArchivePage } from '../features/archive/ArchivePage'
 import { ChatInfoRoute, ChatRoute } from '../features/chat/ChatRoute'
@@ -20,6 +20,10 @@ function Layout() {
   useApplyPreferences()
   const attention = needsAttention(useSyncStatus())
   const keyboard = useKeyboardOpen()
+  // Pages without a tab of their own light the tab they belong to: a past day is the Archive, memory is Curhat's, the guide is Settings'.
+  const { pathname } = useLocation()
+  const parent = pathname.startsWith('/day/') ? '/archive' : pathname === '/memory' ? '/chat' : pathname === '/guide' ? '/settings' : null
+  const tab = (to: string) => ({ isActive }: { isActive: boolean }) => (isActive || parent === to ? 'active' : undefined)
 
   return (
     <div className="shell" data-keyboard={keyboard || undefined}>
@@ -30,10 +34,14 @@ function Layout() {
         <NavLink to="/" end>
           {t('nav.today')}
         </NavLink>
-        <NavLink to="/archive">{t('nav.archive')}</NavLink>
-        <NavLink to="/chat">{t('nav.chat')}</NavLink>
+        <NavLink to="/archive" className={tab('/archive')}>
+          {t('nav.archive')}
+        </NavLink>
+        <NavLink to="/chat" className={tab('/chat')}>
+          {t('nav.chat')}
+        </NavLink>
         <NavLink to="/stats">{t('nav.stats')}</NavLink>
-        <NavLink to="/settings">
+        <NavLink to="/settings" className={tab('/settings')}>
           {t('nav.settings')}
           {attention && (
             <>

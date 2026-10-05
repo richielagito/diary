@@ -102,5 +102,5 @@ test('word levels use the same opacity as the on-screen heatmap', () => {
   drawHeatmap(ctx, data, palette, 0, 0, 920)
   const alphas = calls.filter(([n]) => n === 'set:globalAlpha').map(([, a]) => a[0])
   // Tiap sel: alpha level, lalu kembali ke 1
-  expect(alphas).toEqual([0.35, 1, 0.55, 1, 0.8, 1, 1, 1])
+  expect(alphas).toEqual([0.5, 1, 0.68, 1, 0.84, 1, 1, 1])
 })

@@ -180,6 +180,8 @@ test('swipe that starts on the mini heatmap changes slide', async () => {
   await renderApp('/wrapped/2026', seed)
   const wrapped = (await screen.findByRole('group', { name: '1 dari 4' })).closest('.wrapped') as HTMLElement
   fireEvent.keyDown(window, { key: 'ArrowRight' })
+  // The mood slide mounts after the step; wait for it before touching its heatmap.
+  await screen.findByRole('group', { name: '2 dari 4' })
   const heat = document.querySelector('.slide-heatmap-year') as HTMLElement
   expect(heat).not.toBeNull()
   fireEvent.pointerDown(heat, { clientX: 600, clientY: 300 })

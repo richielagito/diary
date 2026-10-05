@@ -1,7 +1,7 @@
 export type WordLevel = 1 | 2 | 3 | 4
 
 /** Opasitas warna per level; satu sumber untuk heatmap di layar (CSS) dan kartu share (canvas). */
-export const LEVEL_OPACITY: Record<WordLevel, number> = { 1: 0.35, 2: 0.55, 3: 0.8, 4: 1 }
+export const LEVEL_OPACITY: Record<WordLevel, number> = { 1: 0.5, 2: 0.68, 3: 0.84, 4: 1 }
 
 /** Kuartil jumlah kata; null kalau data terlalu sedikit atau datar. */
 export function wordThresholds(counts: number[]): [number, number, number] | null {

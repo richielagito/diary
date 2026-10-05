@@ -76,6 +76,8 @@ test('test connection shows mapped error', async () => {
 test('existing config is loaded and can be cleared', async () => {
   const ai = { provider: 'openai' as const, apiKey: 'sk-x', baseUrl: 'https://api.openai.com/v1', model: 'my-model' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
   await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
@@ -105,6 +107,8 @@ test('switching provider clears the API key so it is never sent to another provi
   const ai = { provider: 'anthropic' as const, apiKey: 'sk-ant-secret', baseUrl: '', model: 'claude-opus-5' }
   const spy = vi.fn(replyWith('OK'))
   const { user } = await renderApp('/settings', { settings: { ai } }, { createProvider: spy })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   expect(await screen.findByLabelText('API key')).toHaveValue('sk-ant-secret')
   await user.click(screen.getByRole('button', { name: 'Tampilkan' }))
   const provider = screen.getByRole('combobox', { name: 'Provider' })
@@ -139,6 +143,8 @@ test('a failure clearing AI settings shows an error and keeps the form', async (
   const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   const ai = { provider: 'openai' as const, apiKey: 'sk-x', baseUrl: 'https://api.openai.com/v1', model: 'my-model' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   expect(await screen.findByLabelText('Model')).toHaveValue('my-model')
   vi.spyOn(settingsStore, 'set').mockRejectedValueOnce(new Error('quota'))
   await user.click(screen.getByRole('button', { name: 'Hapus pengaturan AI' }))
@@ -152,6 +158,8 @@ test('a failure clearing AI settings shows an error and keeps the form', async (
 test('the fast model is saved trimmed; empty shows the provider default as placeholder', async () => {
   const ai = { provider: 'anthropic' as const, apiKey: 'sk-ant', baseUrl: '', model: 'claude-opus-5-5' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   const fast = await screen.findByLabelText('Model cepat (opsional)')
   expect(fast).toHaveValue('')
   expect(fast).toHaveAttribute('placeholder', 'claude-haiku-4-5')
@@ -163,6 +171,8 @@ test('the fast model is saved trimmed; empty shows the provider default as place
 test('re-saving a legacy non-anthropic config without fastModel keeps background work on the main model', async () => {
   const ai = { provider: 'openrouter' as const, apiKey: 'sk-or', baseUrl: 'https://openrouter.ai/api/v1', model: 'x/y' }
   const { settingsStore, user } = await renderApp('/settings', { settings: { ai } })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   expect(await screen.findByLabelText('Model cepat (opsional)')).toHaveValue('x/y')
   await user.click(screen.getByRole('button', { name: 'Simpan' }))
   await waitFor(async () => expect((await settingsStore.getAll()).ai).toEqual({ ...ai, fastModel: 'x/y' }))
@@ -171,6 +181,8 @@ test('re-saving a legacy non-anthropic config without fastModel keeps background
 test('switching provider clears the fast model so the preset default applies', async () => {
   const ai = { provider: 'anthropic' as const, apiKey: 'sk-ant', baseUrl: '', model: 'claude-opus-5-5', fastModel: 'claude-sonnet-5-5' }
   const { user } = await renderApp('/settings', { settings: { ai } })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   const fast = await screen.findByLabelText('Model cepat (opsional)')
   expect(fast).toHaveValue('claude-sonnet-5-5')
   await user.selectOptions(screen.getByRole('combobox', { name: 'Provider' }), 'openai')
@@ -237,6 +249,8 @@ const openaiAi = { provider: 'openai' as const, apiKey: 'sk-x', baseUrl: 'https:
 test('a model list that arrives after the base URL changed is ignored', async () => {
   const deferred = deferredListModels()
   const { user } = await renderApp('/settings', { settings: { ai: openaiAi } }, { listModels: deferred.listModels })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   await user.click(await screen.findByRole('button', { name: 'Ambil daftar model' }))
   expect(await screen.findByRole('button', { name: 'Mengambil…' })).toBeDisabled()
   await user.type(screen.getByLabelText('Base URL'), 'x')
@@ -250,6 +264,8 @@ test('a model list that arrives after the base URL changed is ignored', async ()
 test('a model list that arrives after a provider switch is ignored', async () => {
   const deferred = deferredListModels()
   const { user } = await renderApp('/settings', { settings: { ai: openaiAi } }, { listModels: deferred.listModels })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   await user.click(await screen.findByRole('button', { name: 'Ambil daftar model' }))
   await user.selectOptions(screen.getByRole('combobox', { name: 'Provider' }), 'anthropic')
   deferred.resolve(['stale-model'])
@@ -260,6 +276,8 @@ test('a model list that arrives after a provider switch is ignored', async () =>
 
 test('changing the API key drops a fetched model list', async () => {
   const { user } = await renderApp('/settings', { settings: { ai: openaiAi } }, { listModels: async () => ['fetched-model'] })
+  // A saved connection is folded to one line; its fields open on "Ubah".
+  await user.click(await screen.findByRole('button', { name: 'Ubah' }))
   await user.click(await screen.findByRole('button', { name: 'Ambil daftar model' }))
   expect(await screen.findByRole('status')).toHaveTextContent('1 model ditemukan.')
   expect(optionsOf(screen.getByLabelText('Model'))).toEqual(['fetched-model'])
@@ -346,4 +364,13 @@ test('an unknown provider error shows the provider message so the cause is visib
   expect(alert).toHaveTextContent('Terjadi kesalahan')
   expect(alert).toHaveTextContent('503 The model is overloaded')
   vi.restoreAllMocks()
+})
+test('a saved connection folds to one line until "Ubah", and saving folds it again', async () => {
+  const { user } = await renderApp('/settings', { settings: { ai: { provider: 'anthropic', apiKey: 'k', baseUrl: '', model: 'claude-opus-5' } } })
+  expect(await screen.findByText('Tersambung: Anthropic (Claude) · claude-opus-5')).toBeInTheDocument()
+  expect(screen.queryByLabelText('API key')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Ubah' }))
+  expect(screen.getByLabelText('API key')).toHaveValue('k')
+  await user.click(screen.getByRole('button', { name: 'Simpan' }))
+  expect(await screen.findByText('Tersambung: Anthropic (Claude) · claude-opus-5')).toBeInTheDocument()
 })

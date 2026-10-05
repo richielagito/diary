@@ -233,7 +233,7 @@ export function DayPage({ date }: { date: DateKey }) {
           />
         </div>
         <div className="day-step">
-          <Link className="icon-btn" to={prev} state={stepped} aria-label={t('day.prevDay')}>
+          <Link className="icon-btn" to={prev} state={stepped} aria-label={t('day.prevDay')} title={`${t('day.prevDay')} (←)`} aria-keyshortcuts="ArrowLeft">
             <ChevronLeft />
           </Link>
           {isToday ? (
@@ -241,7 +241,7 @@ export function DayPage({ date }: { date: DateKey }) {
               <ChevronRight />
             </a>
           ) : (
-            <Link className="icon-btn" to={next} state={stepped} aria-label={t('day.nextDay')}>
+            <Link className="icon-btn" to={next} state={stepped} aria-label={t('day.nextDay')} title={`${t('day.nextDay')} (→)`} aria-keyshortcuts="ArrowRight">
               <ChevronRight />
             </Link>
           )}

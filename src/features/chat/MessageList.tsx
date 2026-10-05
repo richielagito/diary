@@ -63,7 +63,8 @@ export function MessageList({ messages, state, onRetry }: Props) {
         ))}
       </ul>
       {state.phase === 'error' && (
-        <div className="banner error" role="alert">
+        // In the reply's own place, shaped like the bubble that did not arrive, not a page banner below it.
+        <div className="chat-error" role="alert">
           <span>{t(`aiError.${state.kind}`)}</span>
           {/* Errors that only a settings change can fix lead straight there. */}
           {(state.kind === 'auth' || state.kind === 'notFound' || state.kind === 'badRequest') && (
