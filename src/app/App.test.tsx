@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import { renderApp } from '../test/renderApp'
 
 afterEach(() => {
@@ -37,4 +37,13 @@ test('theme setting applied to html element', async () => {
   await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'))
   await settingsStore.set('theme', 'system')
   await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBeUndefined())
+})
+
+test('a page change sets the title and moves focus to the content', async () => {
+  const { user } = await renderApp('/')
+  await screen.findByRole('textbox', { name: 'Tulis diary' })
+  expect(document.title).toBe('Hari ini · Diary')
+  await user.click(screen.getByRole('link', { name: 'Arsip' }))
+  await waitFor(() => expect(document.title).toBe('Arsip · Diary'))
+  expect(document.activeElement).toBe(document.getElementById('main'))
 })

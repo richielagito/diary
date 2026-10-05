@@ -109,6 +109,9 @@ export const id = {
       custom: 'Lainnya (OpenAI-compatible)',
     },
     apiKey: 'API key',
+    keyHelpTitle: 'Belum punya API key?',
+    keyHelpWhat: 'API key adalah kunci pribadi dari layanan AI, supaya Curhat bisa memakai AI atas namamu. Layanannya menagih sesuai pemakaian, biasanya beberapa rupiah per obrolan. Buat key di situs layanan:',
+    keyHelpFree: 'Tanpa biaya dan tanpa key: pasang Ollama di komputermu lalu pilih "Ollama (lokal)" sebagai provider.',
     showKey: 'Tampilkan',
     hideKey: 'Sembunyikan',
     baseUrl: 'Base URL',
@@ -175,7 +178,16 @@ export const id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Selamat datang. Ini panduan singkat; ia tidak disimpan dan hilang begitu kamu mulai menulis. Panduan ini selalu ada di Pengaturan.',
+    welcome: [
+      'Selamat datang. Catatan ini tidak disimpan dan hilang begitu kamu mulai menulis.',
+      [
+        '- Tulis di sini. Semua tersimpan otomatis di perangkat ini.',
+        '- Pilih wajah di atas untuk mencatat mood hari ini.',
+        '- Ketik # lalu satu kata untuk memberi tag.',
+        '- **Arsip**, **Curhat**, dan **Statistik** ada di menu.',
+      ].join('\n'),
+      'Panduan lengkapnya ada di Pengaturan → Panduan singkat.',
+    ].join('\n\n'),
     startWriting: 'Mulai menulis',
     editorLabel: 'Tulis diary',
     placeholder: 'Apa yang terjadi hari ini?',

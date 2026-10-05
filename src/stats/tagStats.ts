@@ -1,7 +1,8 @@
 import type { DateKey, DayEntry } from '../domain/types'
 
 // Lift ditampilkan 1 desimal; di bawah ini tampil sebagai "+0,0"
-const MIN_LIFT = 0.05
+// A tag is called "brighter" only from a third of a mood step up: smaller gaps are noise, not something to tell a person.
+const MIN_LIFT = 0.3
 
 export function topTags(entries: DayEntry[], limit = 5): { tag: string; days: number }[] {
   const counts = new Map<string, number>()

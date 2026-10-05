@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, useParams } from 'react-router'
 import { dateKey, isValidDateKey } from '../domain/date'
@@ -25,6 +26,34 @@ function Layout() {
   const parent = pathname.startsWith('/day/') ? '/archive' : pathname === '/memory' ? '/chat' : pathname === '/guide' ? '/settings' : null
   const tab = (to: string) => ({ isActive }: { isActive: boolean }) => (isActive || parent === to ? 'active' : undefined)
 
+  // A page change is announced like a page load: its name in the title, and focus at the start of the content.
+  const { state } = useLocation()
+  const main = useRef<HTMLElement>(null)
+  const first = useRef(true)
+  const name =
+    pathname === '/' ? t('nav.today')
+    : pathname.startsWith('/day/') ? t('nav.archive')
+    : pathname.endsWith('/info') ? t('chat.infoTitle')
+    : pathname.startsWith('/chat') ? t('nav.chat')
+    : pathname === '/archive' ? t('nav.archive')
+    : pathname === '/stats' ? t('nav.stats')
+    : pathname === '/settings' ? t('nav.settings')
+    : pathname === '/memory' ? t('memory.title')
+    : pathname === '/guide' ? t('guide.title')
+    : null
+  useEffect(() => {
+    document.title = name ? `${name} · Diary` : 'Diary'
+  }, [name])
+  useEffect(() => {
+    if (first.current) {
+      first.current = false
+      return
+    }
+    // A day reached with the arrows puts focus on its own date heading instead.
+    if ((state as { stepped?: boolean } | null)?.stepped) return
+    main.current?.focus({ preventScroll: true })
+  }, [pathname, state])
+
   return (
     <div className="shell" data-keyboard={keyboard || undefined}>
       <a className="skip-link" href="#main">
@@ -51,7 +80,7 @@ function Layout() {
           )}
         </NavLink>
       </nav>
-      <main className="page" id="main" tabIndex={-1}>
+      <main className="page" id="main" tabIndex={-1} ref={main}>
         <Outlet />
       </main>
     </div>

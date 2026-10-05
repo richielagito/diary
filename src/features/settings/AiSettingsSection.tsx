@@ -8,6 +8,7 @@ import { PERSONA_MAX_INSTRUCTION, PERSONA_STYLES, type PersonaStyle } from '../.
 import { fastConfig, fastModelOf } from '../../ai/provider/fastConfig'
 import { testConnection, type ConnectionResult } from '../../ai/provider/testConnection'
 import { isOpenAICompatible, PROVIDER_PRESETS, type AiConfig, type ProviderErrorKind, type ProviderKind } from '../../ai/provider/types'
+import { ApiKeyHelp } from './ApiKeyHelp'
 import { Field } from './Field'
 import { SharingChoices } from './SharingChoices'
 
@@ -265,6 +266,7 @@ export function AiSettingsSection() {
               </select>
             )}
           </Field>
+          {preset.needsKey && <ApiKeyHelp />}
           <Field label={t('aiSettings.apiKey')}>
             {(id) => (
               <span>

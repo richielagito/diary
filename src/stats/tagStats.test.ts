@@ -33,16 +33,15 @@ describe('moodLiftTags', () => {
     expect(r[0].days).toBe(3)
     expect(r[0].lift).toBeGreaterThan(0)
   })
-  it('excludes a lift that would be shown as +0.0', () => {
-    const tagged = (n: number) => Array.from({ length: n }, (_, i) => e(`2026-01-${String(i + 1).padStart(2, '0')}`, ['a'], 4))
-    // 29 hari bertag mood 4 + 1 hari mood 3: lift 0,033
-    expect(moodLiftTags([...tagged(29), e('2026-02-01', [], 3)])).toEqual([])
-    // 19 + 1: lift 0,04999… (di bawah 0,05 karena floating point), tampil sebagai 0,0
-    expect(moodLiftTags([...tagged(19), e('2026-02-01', [], 3)])).toEqual([])
-    // 9 + 1: lift 0,1
-    const r = moodLiftTags([...tagged(9), e('2026-02-01', [], 3)])
+  it('names a tag only when its days are clearly brighter (a third of a mood step or more)', () => {
+    const tagged = (n: number, mood: Mood) => Array.from({ length: n }, (_, i) => e(`2026-01-${String(i + 1).padStart(2, '0')}`, ['a'], mood))
+    // 9 + 1: lift 0,1; 3 + 1 at mood 4: lift 0,25. Too small to claim anything.
+    expect(moodLiftTags([...tagged(9, 4), e('2026-02-01', [], 3)])).toEqual([])
+    expect(moodLiftTags([...tagged(3, 4), e('2026-02-01', [], 3)])).toEqual([])
+    // 3 + 1 at mood 5: lift 0,5
+    const r = moodLiftTags([...tagged(3, 5), e('2026-02-01', [], 3)])
     expect(r.map((x) => x.tag)).toEqual(['a'])
-    expect(r[0].lift).toBeCloseTo(0.1)
+    expect(r[0].lift).toBeCloseTo(0.5)
   })
   it('excludes zero lift', () => {
     const entries = [e('2026-01-01', ['a'], 3), e('2026-01-02', ['a'], 3), e('2026-01-03', ['a'], 3)]

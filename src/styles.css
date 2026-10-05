@@ -505,8 +505,10 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .settings-jump { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 1.25rem; }
 .ai-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .ai-summary > span { flex-basis: 100%; color: var(--text); }
-.settings-jump a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.9rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.875rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
-.settings-jump a:hover { color: var(--text); border-color: var(--border-strong); }
+.settings-jump { column-gap: 1.25rem; }
+/* In-page jumps are plain links: pills are kept for tags. */
+.settings-jump a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--muted); font-size: 0.9375rem; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.settings-jump a:hover { color: var(--text); text-decoration-color: currentColor; }
 
 .guide h2 { margin: 2rem 0 0.5rem; font-size: 1.0625rem; }
 .guide ul { margin: 0; padding-left: 1.25rem; font-family: var(--font-text); font-size: 1.0625rem; line-height: 1.7; }
@@ -559,6 +561,10 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 0.5rem; padding: 2rem 0; text-align: center; }
 .chat-empty h2 { margin: 0; font-family: var(--font-text); font-size: 1.125rem; font-weight: 500; }
 .chat-empty p { margin: 0; max-width: 30ch; color: var(--muted); font-size: 0.9375rem; }
+.api-key-help { max-width: 34rem; text-align: left; }
+.api-key-help ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+.api-key-help li a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+.api-key-help p { max-width: none; }
 .chat-empty .button { margin-top: 0.75rem; }
 .messages { list-style: none; padding: 0; margin: auto 0 0; display: flex; flex-direction: column; gap: 0.625rem; }
 .bubble-msg { max-width: 85%; padding: 0.625rem 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
@@ -596,9 +602,10 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 .chat-info h2 { justify-self: stretch; margin: 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
 .chat-info p { margin: 0; }
 .chat-info .save-to-diary { justify-self: stretch; }
-.chat-history { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.chat-history a { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.8125rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
-.chat-history a:hover { color: var(--text); border-color: var(--border-strong); }
+/* Earlier conversations: a hairline list, like the Archive's days. */
+.chat-history { display: flex; flex-direction: column; align-self: stretch; justify-self: stretch; }
+.chat-history a { display: flex; align-items: center; min-height: 2.75rem; padding: 0 0.25rem; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; transition: background-color 150ms ease-out; }
+.chat-history a:hover { background: var(--sunken); }
 .context-preview > summary { min-height: 2.75rem; }
 /* Phones: the chat ends on the bottom nav, and the composer sits right on it. */
 @media (max-width: 640px) {
@@ -622,7 +629,9 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 .memory .toggles { display: grid; gap: 0.5rem; margin: 1.25rem 0; }
 .memory-list, .summary-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; }
 .memory-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
-.memory-list textarea { flex: 1 1 100%; width: 100%; min-height: 2.75rem; field-sizing: content; }
+.memory-list textarea { flex: 1 1 100%; width: 100%; min-height: 2.75rem; field-sizing: content; resize: none; font-family: var(--font-text); font-size: 1rem; line-height: 1.55; }
+/* A fact reads as a line of text; its field shows only while it is being edited. */
+.memory-list textarea:not(:focus) { border-color: transparent; background: transparent; padding-inline: 0; }
 .memory-list small { margin-right: auto; color: var(--muted); font-size: 0.8125rem; }
 .summary-list li { padding: 0.875rem 0; border-bottom: 1px solid var(--border); }
 .memory-list li > p:last-child, .summary-list li > p:last-child { margin: 0; }
@@ -817,7 +826,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .slide-quiet { color: var(--muted); }
 .mood-strip { display: flex; gap: 3px; width: 100%; height: 4.5rem; }
 .mood-strip span, .heatmap-compact .heat-cell[style*='--mood'] { box-shadow: inset 0 0 0 0.5px color-mix(in oklab, var(--text) 30%, transparent); }
-.mood-bars rect + rect { stroke: color-mix(in oklab, var(--text) 30%, transparent); stroke-width: 1; }
+.mood-bars rect + rect { stroke: color-mix(in oklab, var(--text) 50%, transparent); stroke-width: 1; }
 .mood-strip span { flex-basis: 0; min-width: 6px; border-radius: 4px; display: grid; place-items: center; overflow: hidden; font-size: 1.375rem; }
 .letter-envelope {
   position: relative;

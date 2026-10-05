@@ -111,6 +111,9 @@ export const en: typeof id = {
       custom: 'Other (OpenAI-compatible)',
     },
     apiKey: 'API key',
+    keyHelpTitle: 'No API key yet?',
+    keyHelpWhat: 'An API key is your own key to an AI service, so Talk can use the AI on your behalf. The service bills by use, usually a few cents per conversation. Create one on the service’s site:',
+    keyHelpFree: 'Free and keyless: install Ollama on your computer and choose "Ollama (local)" as the provider.',
     showKey: 'Show',
     hideKey: 'Hide',
     baseUrl: 'Base URL',
@@ -177,7 +180,16 @@ export const en: typeof id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Welcome. This is a short guide; it is not saved and gives way as soon as you start writing. It is always in Settings too.',
+    welcome: [
+      'Welcome. This note is not saved and gives way as soon as you start writing.',
+      [
+        '- Write here. Everything saves on this device by itself.',
+        '- Pick a face above to note how today went.',
+        '- Type # and a word to tag the day.',
+        '- **Archive**, **Talk** and **Stats** are in the menu.',
+      ].join('\n'),
+      'The full guide is in Settings → Quick guide.',
+    ].join('\n\n'),
     startWriting: 'Start writing',
     editorLabel: 'Write diary',
     placeholder: 'What happened today?',

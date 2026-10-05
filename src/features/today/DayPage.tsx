@@ -137,7 +137,7 @@ export function DayPage({ date }: { date: DateKey }) {
       const stored = entry?.markdown ?? ''
       base.current = stored
       // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
-      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? `${t('day.welcome')}\n\n${t('guide.body')}` : stored
+      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? t('day.welcome') : stored
       setWelcome(firstRun && !draft)
       setLoaded({ markdown })
       setStored(!!entry)
