@@ -1,6 +1,6 @@
 import { weekStart } from '../ai/summary/periods'
 import { addDays, dateKey } from '../domain/date'
-import { MOODS, type DateKey, type DayEntry, type Mood } from '../domain/types'
+import { MOODS, MOODS_SHOWN, type DateKey, type DayEntry, type Mood } from '../domain/types'
 import { periodRange, type PeriodRange, type StatsPeriod } from './range'
 import { currentStreak, longestStreak } from './streaks'
 import { moodLiftTags, newTags, topTags } from './tagStats'
@@ -153,5 +153,5 @@ export function computeStats(allEntries: DayEntry[], period: StatsPeriod, today:
  */
 export function mostFrequentMoods(distribution: Record<Mood, number>): { moods: Mood[]; days: number } {
   const days = Math.max(...MOODS.map((m) => distribution[m]))
-  return { moods: days === 0 ? [] : MOODS.filter((m) => distribution[m] === days), days }
+  return { moods: days === 0 ? [] : MOODS_SHOWN.filter((m) => distribution[m] === days), days }
 }

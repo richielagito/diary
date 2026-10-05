@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import type { ChatMessage } from '../../storage/ChatRepository'
 import type { ChatPhase } from './useChat'
 
@@ -64,6 +65,12 @@ export function MessageList({ messages, state, onRetry }: Props) {
       {state.phase === 'error' && (
         <div className="banner error" role="alert">
           <span>{t(`aiError.${state.kind}`)}</span>
+          {/* Errors that only a settings change can fix lead straight there. */}
+          {(state.kind === 'auth' || state.kind === 'notFound' || state.kind === 'badRequest') && (
+            <Link className="button" to="/settings#ai">
+              {t('chat.openSettings')}
+            </Link>
+          )}
           {showRetry && (
             <button type="button" onClick={onRetry}>
               {t('chat.retry')}

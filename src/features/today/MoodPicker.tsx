@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MOOD_EMOJI, MOODS, type Mood } from '../../domain/types'
+import { MOOD_EMOJI, MOODS_SHOWN, type Mood } from '../../domain/types'
 
 export function MoodPicker({ value, onChange, past = false }: { value: Mood | null; onChange: (m: Mood | null) => void; past?: boolean }) {
   const { t } = useTranslation()
@@ -18,8 +18,7 @@ export function MoodPicker({ value, onChange, past = false }: { value: Mood | nu
         <p className="mood-caption">{t(past ? 'day.moodPromptPast' : 'day.moodPrompt')}</p>
       )}
       <div className="mood-picker" role="group" aria-label={t(past ? 'day.moodLabelPast' : 'day.moodLabel')}>
-        {/* Happiest first: the row reads from a good day to a heavy one. */}
-        {[...MOODS].reverse().map((m) => (
+        {MOODS_SHOWN.map((m) => (
           <button
             key={m}
             type="button"

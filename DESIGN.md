@@ -53,6 +53,20 @@ typography:
     fontSize: "clamp(1.6rem, 1.2rem + 1.6vw, 2.1rem)"
     fontWeight: 500
     lineHeight: 1.2
+  figure:
+    fontFamily: "Literata, Georgia, 'Times New Roman', serif"
+    fontSize: "1.5rem"
+    fontWeight: 500
+    lineHeight: 1
+  lead:
+    fontFamily: "Literata, Georgia, 'Times New Roman', serif"
+    fontSize: "1.25rem"
+    fontWeight: 500
+    lineHeight: 1.4
+  glyph:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
+    fontSize: "1.375rem"
+    lineHeight: 1
   title:
     fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
     fontSize: "1.0625rem"
@@ -78,12 +92,20 @@ typography:
     fontSize: "0.8125rem"
     fontWeight: 400
     lineHeight: 1.55
+  micro:
+    fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 400
+    lineHeight: 1.4
   mono:
     fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
     fontSize: "0.875em"
 rounded:
+  mark-xs: "2px"
+  mark: "3px"
   xs: "4px"
   sm: "6px"
+  segment: "7px"
   md: "8px"
   lg: "10px"
   xl: "12px"
@@ -105,14 +127,14 @@ components:
     typography: "{typography.control}"
     rounded: "{rounded.md}"
     padding: "0.5rem 0.95rem"
-    height: "2.5rem"
+    height: "2.75rem"
   button-primary:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.paper}"
     typography: "{typography.control}"
     rounded: "{rounded.md}"
     padding: "0.5rem 0.95rem"
-    height: "2.5rem"
+    height: "2.75rem"
   button-quiet:
     backgroundColor: "transparent"
     textColor: "{colors.muted-ink}"
@@ -129,14 +151,14 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.muted-ink}"
     rounded: "{rounded.pill}"
-    size: "2.5rem"
+    size: "2.75rem"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     typography: "{typography.control}"
     rounded: "{rounded.md}"
     padding: "0.5rem 0.75rem"
-    height: "2.5rem"
+    height: "2.75rem"
   nav-link:
     textColor: "{colors.muted-ink}"
     typography: "{typography.control}"
@@ -240,7 +262,11 @@ Cool (heavy) to warm (bright) through a neutral middle; each theme has its own s
 - **Title** (sans 600, 1.0625rem, 1.3): section h2. h3 is sans 600 at 0.875rem in faded ink.
 - **Body** (sans 400, 1rem, 1.55): interface prose.
 - **Control** (sans, 0.9375rem, 1.3): buttons, inputs, nav links, banners.
+- **Lead** (Literata 500, 1.25rem): the one figure or sentence that leads a section: stat values, "Paling sering", Wrapped leads, empty-state lines, entry h2.
+- **Figure** (Literata 500, 1.5rem, line-height 1): day numbers in the Archive day list and entry h1.
+- **Glyph** (1.375rem): the emoji on the mood picker.
 - **Label** (sans, 0.8125rem): small print, legends, save status, chat history chips. Sentence case; no tracking.
+- **Micro** (sans, 0.75rem): calendar and heatmap axis labels, message meta, the context-preview prompt. Never for sentences a person must read to act.
 
 ### Named Rules
 **The Serif Means Page Rule.** Literata is for things the user writes or reads as a page (entry, titles, excerpts, letters, stat figures). Controls, labels and navigation stay in the system sans.
@@ -265,7 +291,7 @@ Flat by default. Depth comes from tone (paper, white surface, sunken linen) and 
 
 ## Shapes
 
-Gently rounded, never pill-heavy. Controls and code blocks use 8px; banners, fieldsets and calendar days 10px; dialogs, the composer field and the crisis card 12px. Circles and pills (999px) are reserved for icon buttons, the mood picker, tag and history chips, and dots. Chat bubbles are 18px with one 6px tail corner on the speaker's side. The Wrapped letter is nearly square (4px) and its envelope 6px, with a clipped triangular flap. Borders are 1px; the only 1.5px strokes are the today ring and the no-mood ring.
+Gently rounded, never pill-heavy. Heat cells and swatches are tiny marks at 2 to 3px; the selected segment of a segmented control is 7px inside its 10px track. Controls and code blocks use 8px; banners, fieldsets and calendar days 10px; dialogs, the composer field and the crisis card 12px. Circles and pills (999px) are reserved for icon buttons, the mood picker, tag and history chips, and dots. Chat bubbles are 18px with one 6px tail corner on the speaker's side. The Wrapped letter is nearly square (4px) and its envelope 6px, with a clipped triangular flap. Borders are 1px; the only 1.5px strokes are the today ring and the no-mood ring.
 
 Icons are line icons on a 20px grid, one 1.75 stroke, round caps and joins, `currentColor`, inline SVG (`src/app/icons.tsx`), and always decorative beside a labelled control.
 
@@ -273,12 +299,12 @@ Icons are line icons on a 20px grid, one 1.75 stroke, round caps and joins, `cur
 
 ### Buttons
 Quiet outline by default; one ink action per group.
-- **Shape:** gently curved (8px), minimum 2.5rem tall.
+- **Shape:** gently curved (8px), minimum 2.75rem (44px) tall.
 - **Default:** surface fill, strong-hairline border, ink text; hover darkens the border to ink; press nudges down 1px.
 - **Primary:** solid ink fill, paper text, weight 500; hover mixes ink 86% toward paper. The Wrapped entry link uses the same treatment and carries a two-tone swatch of the period's two leading moods.
 - **Danger:** danger text with a 40% danger border.
 - **Quiet:** no border or fill, faded ink; hover shows a sunken fill and ink text.
-- **Icon:** 2.5rem circle, transparent, faded ink, sunken on hover.
+- **Icon:** 2.75rem circle, transparent, faded ink, sunken on hover.
 - **Focus:** 2px ink outline at 2px offset everywhere.
 
 ### Chips
@@ -293,7 +319,7 @@ Quiet outline by default; one ink action per group.
 - **Internal Padding:** 0.875rem 1rem (banner) to 1rem 1.25rem (crisis, import).
 
 ### Inputs / Fields
-- **Style:** surface fill, 1px strong hairline, 8px radius, 2.5rem minimum height; selects draw their own two-triangle chevron in faded ink.
+- **Style:** surface fill, 1px strong hairline, 8px radius, 2.75rem minimum height; selects draw their own two-triangle chevron in faded ink.
 - **Focus:** border turns ink plus a 3px ink halo at 12%.
 - **Disabled:** 55% opacity. Errors are announced as `role="alert"` text in danger.
 

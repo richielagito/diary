@@ -22,7 +22,7 @@ test('nav has a Statistik link that opens the page', async () => {
   expect(await screen.findByRole('heading', { name: 'Oktober 2026' })).toBeInTheDocument()
 })
 
-test('month view shows consistency, tags and the Wrapped link', async () => {
+test('month view shows consistency and tags; Wrapped waits for a week of recorded days', async () => {
   await renderApp('/stats', seed)
   expect(await screen.findByRole('heading', { name: 'Oktober 2026' })).toBeInTheDocument()
   expect(await screen.findByText('3 dari 10 hari (30%)')).toBeInTheDocument()
@@ -30,12 +30,20 @@ test('month view shows consistency, tags and the Wrapped link', async () => {
   expect(screen.getByText('3 hari', { selector: 'strong' })).toBeInTheDocument()
   const topList = screen.getByText('Tag teratas').nextElementSibling as HTMLElement
   expect(within(topList).getByText('#olahraga')).toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Lihat Wrapped Oktober 2026' })).toHaveAttribute('href', '/wrapped/2026-10')
+  expect(screen.queryByRole('link', { name: /Lihat Wrapped/ })).not.toBeInTheDocument()
+  expect(screen.getByText('Wrapped terbuka setelah 7 hari tercatat di periode ini. Sejauh ini: 3 hari.')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Berikutnya' })).toBeDisabled()
 })
 
+const week = { entries: Array.from({ length: 7 }, (_, i) => ({ date: `2026-10-0${i + 1}`, markdown: 'Lari #olahraga', mood: 4 as const })) }
+
+test('with a week of recorded days the Wrapped link opens', async () => {
+  await renderApp('/stats', week)
+  expect(await screen.findByRole('link', { name: 'Lihat Wrapped Oktober 2026' })).toHaveAttribute('href', '/wrapped/2026-10')
+})
+
 test('switching to year', async () => {
-  const { user } = await renderApp('/stats', seed)
+  const { user } = await renderApp('/stats', week)
   await user.click(await screen.findByRole('button', { name: 'Tahun' }))
   expect(await screen.findByRole('heading', { name: '2026' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Lihat Wrapped 2026' })).toHaveAttribute('href', '/wrapped/2026')
@@ -62,7 +70,7 @@ test('period without entries shows only the empty heatmap and one sentence', asy
   expect(screen.queryByRole('link', { name: /Lihat Wrapped/ })).not.toBeInTheDocument()
   // Tanpa kartu konsistensi, ajakan mood, maupun ajakan tag
   expect(screen.queryByText('Hari menulis')).not.toBeInTheDocument()
-  expect(screen.queryByText('Streak sekarang')).not.toBeInTheDocument()
+  expect(screen.queryByText('Menulis beruntun')).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Mood' })).not.toBeInTheDocument()
   expect(screen.queryByRole('heading', { name: 'Tag' })).not.toBeInTheDocument()
   expect(screen.queryByText(/Belum ada mood yang dipilih/)).not.toBeInTheDocument()

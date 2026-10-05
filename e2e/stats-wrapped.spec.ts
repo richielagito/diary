@@ -24,6 +24,9 @@ const editor = (page: Page) => page.getByRole('textbox', { name: 'Tulis diary' }
 const todayLabel = () =>
   new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date())
 
+/** This month as a Wrapped period id, e.g. "2026-10". */
+const thisMonth = () => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date())
+
 async function writeToday(page: Page, text: string) {
   await page.goto('/')
   await editor(page).click()
@@ -46,7 +49,9 @@ test('stats heatmap, Wrapped and saving the share image', async ({ page }) => {
   await page.getByRole('link', { name: 'Statistik' }).click()
   await expect(page.getByRole('link', { name: new RegExp(`${todayLabel()}.*Senang`) })).toBeVisible()
 
-  await page.getByRole('link', { name: /^Lihat Wrapped/ }).click()
+  // Stats links to Wrapped only after a week of recorded days; with one day it still opens by its address.
+  await expect(page.getByText(/^Wrapped terbuka setelah 7 hari/)).toBeVisible()
+  await page.goto(`/wrapped/${thisMonth()}`)
   const save = page.getByRole('button', { name: 'Simpan gambar' })
   // Slide: pembuka, mood, tag, penutup (tanpa surat karena AI belum diatur)
   await expect(page.getByRole('group', { name: /^1 dari \d+$/ })).toBeVisible()
@@ -101,7 +106,9 @@ test('Wrapped letter from the persona, without entry text in the request', async
 
   await writeToday(page, 'RAHASIA-e2e hari ini ')
   await page.getByRole('link', { name: 'Statistik' }).click()
-  await page.getByRole('link', { name: /^Lihat Wrapped/ }).click()
+  // Stats links to Wrapped only after a week of recorded days; with one day it still opens by its address.
+  await expect(page.getByText(/^Wrapped terbuka setelah 7 hari/)).toBeVisible()
+  await page.goto(`/wrapped/${thisMonth()}`)
   // Slide: pembuka, mood, surat (tanpa tag), penutup
   await expect(page.getByRole('group', { name: '1 dari 4' })).toBeVisible()
   await page.keyboard.press('ArrowRight')

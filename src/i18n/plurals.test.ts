@@ -44,5 +44,5 @@ test('Indonesian stats and Wrapped counts keep the same text for every count', (
   expect(t('stats.daysWrittenValue', { count: 1, days: '1', total: '1', percent: '100' })).toBe('1 dari 1 hari (100%)')
   expect(t('wrapped.openingYear', { count: 1, period: '2026', days: '1' })).toBe('2026, kamu menulis 1 hari')
   expect(t('wrapped.totalWords', { count: 1, words: '1' })).toBe('1 kata tertulis')
-  expect(t('wrapped.longestStreak', { count: 1 })).toBe('Streak terpanjang 1 hari')
+  expect(t('wrapped.longestStreak', { count: 1 })).toBe('Rekor menulis beruntun 1 hari')
 })

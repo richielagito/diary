@@ -112,7 +112,7 @@ describe('computeStats year mood', () => {
 describe('mostFrequentMoods', () => {
   it('names the mood set on the most days, every one of them on a tie, and nothing without moods', () => {
     expect(mostFrequentMoods({ 1: 0, 2: 1, 3: 4, 4: 6, 5: 2 })).toEqual({ moods: [4], days: 6 })
-    expect(mostFrequentMoods({ 1: 3, 2: 0, 3: 0, 4: 0, 5: 3 })).toEqual({ moods: [1, 5], days: 3 })
+    expect(mostFrequentMoods({ 1: 3, 2: 0, 3: 0, 4: 0, 5: 3 })).toEqual({ moods: [5, 1], days: 3 })
     expect(mostFrequentMoods({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 })).toEqual({ moods: [], days: 0 })
   })
 })

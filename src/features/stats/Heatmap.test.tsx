@@ -112,7 +112,7 @@ describe('year auto-scroll', () => {
 
 test('compact year grid sizes its columns to the container instead of scrolling', () => {
   const { container } = renderHeat([], { kind: 'year', year: 2026 }, 'year', true)
-  const grid = container.querySelector('.heat-grid') as HTMLElement
-  expect(grid.style.gridTemplateColumns).toBe('repeat(53, minmax(0, 1fr))')
+  // The week count reaches CSS as --weeks; the compact grid spreads that many columns across its width.
+  expect((container.querySelector('.heatmap') as HTMLElement).style.getPropertyValue('--weeks')).toBe('53')
   expect(screen.queryAllByRole('link')).toHaveLength(0)
 })

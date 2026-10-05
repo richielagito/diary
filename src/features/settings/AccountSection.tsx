@@ -71,7 +71,7 @@ function AccountPanel({ sync, status, navigate }: { sync: SyncController; status
   const signedIn = status.phase !== 'signed-out' && status.problem !== 'needs-login'
 
   return (
-    <section>
+    <section id="account">
       <h2>{t('account.title')}</h2>
       {!signedIn && <SignIn sync={sync} run={run} busy={busy} expired={status.problem === 'needs-login'} knownEmail={status.email} navigate={navigate} />}
       {signedIn && status.phase === 'needs-passphrase' && status.problem === 'plan' && (

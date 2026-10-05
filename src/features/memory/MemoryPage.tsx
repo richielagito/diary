@@ -41,9 +41,13 @@ function MemoryItem({ memory, index, save }: { memory: Memory; index: number; sa
         }}
       />{' '}
       <small>{memory.source === 'user' ? t('memory.byYou') : t('memory.byAi')}</small>{' '}
-      <button type="button" className="quiet danger" onClick={() => void save(() => memories.remove(memory.id))}>
-        {t('memory.delete')}
-      </button>
+      <ConfirmButton
+        label={t('memory.delete')}
+        name={memory.text}
+        question={t('memory.deleteOne')}
+        confirmLabel={t('common.yesDelete')}
+        onConfirm={() => void save(() => memories.remove(memory.id))}
+      />
     </li>
   )
 }
@@ -192,9 +196,13 @@ export function MemoryPage() {
               <li key={s.id}>
                 <strong>{summaryLabel(s)}</strong>
                 <p>{s.text}</p>
-                <button type="button" className="quiet danger" aria-label={`${t('memory.delete')} ${summaryLabel(s)}`} onClick={() => void save(() => summaries.remove(s.id))}>
-                  {t('memory.delete')}
-                </button>
+                <ConfirmButton
+                  label={t('memory.delete')}
+                  name={summaryLabel(s)}
+                  question={t('memory.deleteSummary')}
+                  confirmLabel={t('common.yesDelete')}
+                  onConfirm={() => void save(() => summaries.remove(s.id))}
+                />
               </li>
             ))}
         </ul>

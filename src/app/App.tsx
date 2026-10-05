@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useParams } fr
 import { dateKey, isValidDateKey } from '../domain/date'
 import { ArchivePage } from '../features/archive/ArchivePage'
 import { ChatInfoRoute, ChatRoute } from '../features/chat/ChatRoute'
+import { GuidePage } from '../features/guide/GuidePage'
 import { MemoryPage } from '../features/memory/MemoryPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { StatsPage } from '../features/stats/StatsPage'
@@ -79,6 +80,7 @@ export function AppRoutes() {
         <Route path="stats" element={<StatsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="memory" element={<MemoryPage />} />
+        <Route path="guide" element={<GuidePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

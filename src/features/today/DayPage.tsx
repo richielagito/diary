@@ -32,6 +32,8 @@ export function DayPage({ date }: { date: DateKey }) {
   const [loaded, setLoaded] = useState<{ markdown: string } | null>(null)
   const [mood, setMood] = useState<Mood | null>(null)
   const [moodError, setMoodError] = useState(false)
+  /** The day already had an entry when it opened: before any new edit, its status reads as saved, not blank. */
+  const [stored, setStored] = useState(false)
   /** True sejak mood diklik sampai tersimpan; selama itu watch tidak menimpa mood di layar. */
   const moodPending = useRef(false)
 
@@ -135,9 +137,10 @@ export function DayPage({ date }: { date: DateKey }) {
       const stored = entry?.markdown ?? ''
       base.current = stored
       // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
-      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? t('day.welcome') : stored
+      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? `${t('day.welcome')}\n\n${t('guide.body')}` : stored
       welcome.current = firstRun && !draft
       setLoaded({ markdown })
+      setStored(!!entry)
       if (draft) schedule(markdown)
       setMood(entry?.mood ?? null)
     })()
@@ -224,7 +227,10 @@ export function DayPage({ date }: { date: DateKey }) {
           <h1 ref={headingRef} tabIndex={-1}>
             {heading}
           </h1>
-          <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
+          <SaveStatusText
+            status={moodError ? 'error' : autosave.status === 'idle' && stored ? 'saved' : autosave.status}
+            onExport={() => void exportNow()}
+          />
         </div>
         <div className="day-step">
           <Link className="icon-btn" to={prev} state={stepped} aria-label={t('day.prevDay')}>

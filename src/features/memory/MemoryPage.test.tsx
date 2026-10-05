@@ -21,7 +21,10 @@ test('clearing a memory textbox never deletes it; the Hapus button does', async 
   const first = await screen.findByRole('textbox', { name: 'Memori 1' })
   await user.clear(first)
   expect(await memories.list()).toHaveLength(2)
-  await user.click(screen.getAllByRole('button', { name: 'Hapus' })[1])
+  await user.click(screen.getByRole('button', { name: 'Hapus: b' }))
+  // One memory asks first; nothing is gone until the user says yes.
+  expect(await memories.list()).toHaveLength(2)
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect((await memories.list()).map((m) => m.text)).toEqual(['a']))
 })
 
@@ -107,6 +110,7 @@ test('summaries are listed newest first and can be deleted', async () => {
   expect(items[0]).toHaveTextContent('minggu sibuk')
   expect(items[1]).toHaveTextContent('agustus tenang')
   await user.click(within(items[0]).getByRole('button', { name: /Hapus/ }))
+  await user.click(within(items[0]).getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect((await summaries.list()).map((s) => s.id)).toEqual(['month:2026-08']))
 })
 
@@ -189,7 +193,8 @@ test('failing deletes, edits, clear all and toggles also show the storage alert'
   const expectNoAlert = () => waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
 
   vi.spyOn(memories, 'remove').mockRejectedValueOnce(new Error('x'))
-  await user.click(await screen.findByRole('button', { name: 'Hapus' }))
+  await user.click(await screen.findByRole('button', { name: 'Hapus: a' }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await expectAlert()
 
   const edit = vi.spyOn(memories, 'edit').mockResolvedValueOnce()
@@ -200,7 +205,8 @@ test('failing deletes, edits, clear all and toggles also show the storage alert'
   await expectAlert()
 
   vi.spyOn(summaries, 'remove').mockResolvedValueOnce()
-  await user.click(screen.getByRole('button', { name: /^Hapus Agustus/ }))
+  await user.click(screen.getByRole('button', { name: /^Hapus: Agustus/ }))
+  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await expectNoAlert()
   vi.spyOn(memories, 'clear').mockRejectedValueOnce(new Error('x'))
   await user.click(screen.getByRole('button', { name: 'Hapus semua memori' }))

@@ -12,6 +12,8 @@ import { Heatmap } from './Heatmap'
 import { moodWash } from '../wrapped/WrappedPage'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 
+const WRAPPED_MIN_DAYS = 7
+
 export function StatsPage() {
   const { t, i18n } = useTranslation()
   const { diary } = useRepos()
@@ -93,9 +95,14 @@ export function StatsPage() {
           <ConsistencyCards stats={stats} />
           <MoodSection stats={stats} />
           <TagSection stats={stats} />
-          <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
-            {t('stats.openWrapped', { period: label })}
-          </Link>
+          {/* A celebration needs something to celebrate: Wrapped opens once a week's worth of days is recorded. */}
+          {stats.daysWritten >= WRAPPED_MIN_DAYS ? (
+            <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
+              {t('stats.openWrapped', { period: label })}
+            </Link>
+          ) : (
+            <p className="muted">{t('stats.wrappedLater', { min: WRAPPED_MIN_DAYS, count: stats.daysWritten })}</p>
+          )}
         </>
       ) : (
         <p className="muted">{t('stats.emptyPeriod')}</p>

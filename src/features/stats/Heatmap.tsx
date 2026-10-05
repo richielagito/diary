@@ -3,11 +3,9 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { parseDateKey } from '../../domain/date'
-import { MOOD_EMOJI, type Mood } from '../../domain/types'
+import { MOOD_EMOJI, MOODS_SHOWN } from '../../domain/types'
 import type { HeatCell } from '../../stats/computeStats'
 import { LEVEL_OPACITY } from '../../stats/wordLevels'
-
-const MOODS: Mood[] = [1, 2, 3, 4, 5]
 
 /** Label sel (dipakai untuk title dan aria-label). */
 export function heatCellLabel(cell: HeatCell, t: TFunction, language: string): string {
@@ -80,7 +78,12 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
   const weekday = new Intl.DateTimeFormat(language, { weekday: 'short' })
 
   return (
-    <div className={`heatmap heatmap-${mode}${compact ? ' heatmap-compact' : ''}`} role="group" aria-label={t('stats.heatmapLabel')}>
+    <div
+      className={`heatmap heatmap-${mode}${compact ? ' heatmap-compact' : ''}`}
+      role="group"
+      aria-label={t('stats.heatmapLabel')}
+      style={{ '--weeks': weeks } as CSSProperties}
+    >
       {mode === 'year' ? (
         <div
           className="heat-scroll"
@@ -91,7 +94,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
         >
           <div className="heat-inner">
             {!compact && (
-              <div className="heat-months" style={{ gridTemplateColumns: `repeat(${weeks}, var(--cell))` }} aria-hidden="true">
+              <div className="heat-months" aria-hidden="true">
                 {cells.map((c, i) =>
                   c.inRange && c.date.endsWith('-01') ? (
                     <span key={c.date} className="heat-month" style={{ gridColumn: Math.floor(i / 7) + 1 }}>
@@ -102,7 +105,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
               </div>
             )}
             {/* Ringkas (Wrapped): kolom mengisi lebar slide, tanpa scroll */}
-            <div className="heat-grid" style={compact ? { gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))` } : undefined}>
+            <div className="heat-grid">
               {cells.map(renderCell)}
             </div>
           </div>
@@ -119,7 +122,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
       )}
       {!compact && (
         <div className="heat-legend">
-          {MOODS.map((m) => (
+          {MOODS_SHOWN.map((m) => (
             <span key={m}>
               <span className="swatch" style={{ background: `var(--mood-${m})` }} />
               {t(`mood.${m}`)}

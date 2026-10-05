@@ -1,4 +1,4 @@
-import { MOOD_EMOJI, type Mood } from '../../domain/types'
+import { MOOD_EMOJI, MOODS_SHOWN, type Mood } from '../../domain/types'
 import type { HeatCell } from '../../stats/computeStats'
 import { LEVEL_OPACITY } from '../../stats/wordLevels'
 
@@ -47,7 +47,6 @@ const CONTENT_WIDTH = CARD_WIDTH - MARGIN * 2
 const FONT = 'system-ui, sans-serif'
 /** Huruf tulisan aplikasi (dimuat dulu di renderShareCard); judul dan angka memakainya. */
 const FONT_TEXT = 'Literata, Georgia, serif'
-const MOODS: Mood[] = [5, 4, 3, 2, 1]
 
 /** maxWidth: teks dipersempit supaya tidak keluar dari kartu. */
 function text(ctx: Ctx2D, s: string, x: number, y: number, size: number, color: string, bold = false, maxWidth?: number, family = FONT) {
@@ -117,10 +116,10 @@ export function drawShareCard(ctx: Ctx2D, data: ShareCardData, palette: SharePal
     text(ctx, s.label, MARGIN, y + 44, 36, palette.muted)
   })
 
-  const max = Math.max(1, ...MOODS.map((m) => data.distribution[m]))
+  const max = Math.max(1, ...MOODS_SHOWN.map((m) => data.distribution[m]))
   const barX = MARGIN + 80
   const barMax = CONTENT_WIDTH - 80 - 120
-  MOODS.forEach((m, i) => {
+  MOODS_SHOWN.forEach((m, i) => {
     const y = 930 + i * 62
     text(ctx, MOOD_EMOJI[m], MARGIN, y + 36, 40, palette.text)
     const count = data.distribution[m]

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
+import { useSync } from '../../app/SyncContext'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { readImportFiles, type ParsedImport } from '../../backup/importFiles'
 import { useExport } from '../../backup/useExport'
@@ -20,6 +21,7 @@ export function SettingsPage() {
   const settings = useSettings()
   const exportNow = useExport()
   const { hash } = useLocation()
+  const sync = useSync()
   // "Atur AI" elsewhere links to #ai; the router does not scroll to fragments by itself.
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView?.()
@@ -52,6 +54,13 @@ export function SettingsPage() {
   return (
     <div className="settings">
       <h1>{t('nav.settings')}</h1>
+      {/* A long page on a phone: its sections are one tap away from the top. */}
+      <nav className="settings-jump" aria-label={t('settings.jumpLabel')}>
+        <Link to="#backup">{t('settings.backup')}</Link>
+        {sync && <Link to="#account">{t('account.title')}</Link>}
+        <Link to="#ai">{t('aiSettings.title')}</Link>
+        <Link to="/guide">{t('guide.title')}</Link>
+      </nav>
       <section>
         <Field label={t('settings.language')}>
           {(id) => (
@@ -80,7 +89,7 @@ export function SettingsPage() {
         </Field>
       </section>
 
-      <section>
+      <section id="backup">
         <h2>{t('settings.backup')}</h2>
         <p>{lastExport}</p>
         <StorageUsage />

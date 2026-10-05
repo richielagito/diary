@@ -36,6 +36,7 @@ export function ContextPreview({ date, latestUserText }: { date: DateKey; latest
       {preview && (
         <>
           <p>{t('chat.contextCounts', { ...preview.counts })}</p>
+          <p>{t('chat.contextLanguage')}</p>
           <pre>{[preview.system, preview.context].filter(Boolean).join('\n\n')}</pre>
         </>
       )}

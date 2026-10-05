@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { MOOD_EMOJI, MOODS } from '../../domain/types'
+import { MOOD_EMOJI, MOODS_SHOWN } from '../../domain/types'
 import type { PeriodStats } from '../../stats/computeStats'
 import { formatMood, formatNumber, monthKeyLabel, trendLabel } from './format'
 import { MoodBars } from './MoodBars'
@@ -54,7 +54,7 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
           )}
           <h3>{t('stats.moodDistribution')}</h3>
           <ul className="mood-dist">
-            {MOODS.map((m) => (
+            {MOODS_SHOWN.map((m) => (
               <li key={m}>
                 <span aria-hidden="true">{MOOD_EMOJI[m]}</span>
                 <span className="dist-label">{t(`mood.${m}`)}</span>
@@ -69,6 +69,7 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
           {mood.trend.filter((p) => p.average !== null).length >= 2 && (
             <>
               <h3>{t('stats.moodTrend')}</h3>
+              <p className="muted">{t('stats.moodTrendNote')}</p>
               <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, stats.period.kind, lang), average: p.average }))} />
             </>
           )}
@@ -105,6 +106,7 @@ export function TagSection({ stats, showFresh = true, linked = true }: { stats: 
           {tags.moodLift.length > 0 && (
             <>
               <h3>{t('stats.moodLift')}</h3>
+              <p className="muted">{t('stats.moodLiftNote')}</p>
               <ul className="tag-stats">
                 {tags.moodLift.map((x) => (
                   <li key={x.tag}>
