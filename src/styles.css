@@ -354,7 +354,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 }
 /* The chosen face carries an ink mark under it, so the choice reads without colour too. */
 .mood-picker button { position: relative; }
-.mood-picker button[aria-pressed='true']::after { content: ''; position: absolute; bottom: -0.5rem; left: 50%; width: 1.25rem; height: 2px; margin-left: -0.625rem; border-radius: 1px; background: var(--text); }
+.mood-picker button[aria-pressed='true']::after { content: ''; position: absolute; bottom: -0.5rem; left: 50%; width: 1.25rem; height: 2px; margin-left: -0.625rem; border-radius: 2px; background: var(--text); }
 .mood-picker button:active { transform: scale(0.94); }
 
 .editor {
