@@ -65,12 +65,21 @@ test('first run: today on an empty diary opens on the welcome text, stored only 
   expect((await diary.get(dateKey()))?.markdown).toContain('Selamat datang')
 })
 
-test('first run: picking a mood keeps the welcome text in the entry', async () => {
+test('first run: picking a mood stores only the mood, never the guide', async () => {
   const { diary, user } = await renderApp('/')
   expect(await screen.findByRole('textbox', { name: 'Tulis diary' })).toHaveTextContent('Selamat datang')
   await user.click(screen.getByRole('button', { name: 'Senang' }))
-  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toContain('Selamat datang'), { timeout: 3000 })
-  expect((await diary.get(dateKey()))?.mood).toBe(5)
+  await waitFor(async () => expect((await diary.get(dateKey()))?.mood).toBe(5))
+  expect((await diary.get(dateKey()))?.markdown ?? '').toBe('')
+})
+
+test('first run: one tap clears the guide and leaves an empty entry to write in', async () => {
+  const { diary, user } = await renderApp('/')
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(await screen.findByRole('button', { name: 'Hapus panduan, mulai menulis' }))
+  expect(box).not.toHaveTextContent('Selamat datang')
+  expect(screen.queryByRole('button', { name: 'Hapus panduan, mulai menulis' })).not.toBeInTheDocument()
+  expect(await diary.isEmpty()).toBe(true)
 })
 
 test('no welcome text once the diary has any entry', async () => {
@@ -510,4 +519,15 @@ test('day arrows step between days and focus the new date; arrows on a mood butt
   await user.keyboard('{ArrowLeft}')
   expect(screen.getByRole('heading', { level: 1, name: /19\sSep/ })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Hari berikutnya' })).toHaveAttribute('href', '/day/2026-09-20')
+})
+
+test('opening a day saves nothing until the user edits it', async () => {
+  const { diary } = await open('2026-09-20', { markdown: 'Isi lama\n\n- satu\n- dua', mood: 3 })
+  const before = (await diary.get('2026-09-20'))!.updatedAt
+  const save = vi.spyOn(diary, 'save')
+  await screen.findByRole('textbox', { name: 'Tulis diary' })
+  // Longer than the autosave pause: a load-time editor update must not turn into a write.
+  await new Promise((r) => setTimeout(r, 1200))
+  expect(save).not.toHaveBeenCalled()
+  expect((await diary.get('2026-09-20'))!.updatedAt).toBe(before)
 })

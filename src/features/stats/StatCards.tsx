@@ -15,9 +15,9 @@ export function ConsistencyCards({ stats }: { stats: PeriodStats }) {
         <span>{t('stats.daysWritten')}</span>
         <strong>
           {t('stats.daysWrittenValue', {
-            count: stats.range.elapsedDays,
+            count: stats.trackedDays,
             days: formatNumber(stats.daysWritten, lang),
-            total: formatNumber(stats.range.elapsedDays, lang),
+            total: formatNumber(stats.trackedDays, lang),
             percent: formatNumber(Math.round(stats.writtenRatio * 100), lang),
           })}
         </strong>

@@ -173,7 +173,8 @@ export const id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Selamat datang. Ini entri pertamamu, isinya panduan singkat. Hapus saja kalau sudah dibaca, lalu mulai menulis.',
+    welcome: 'Selamat datang. Ini panduan singkat; tidak akan tersimpan kecuali kamu mengubahnya. Kalau sudah dibaca, tekan "Hapus panduan, mulai menulis".',
+    startWriting: 'Hapus panduan, mulai menulis',
     editorLabel: 'Tulis diary',
     placeholder: 'Apa yang terjadi hari ini?',
     moodLabel: 'Mood hari ini',

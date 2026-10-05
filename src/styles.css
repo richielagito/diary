@@ -192,7 +192,8 @@ p > button.quiet:first-child { margin-left: -0.5rem; }
   transition: border-color 150ms ease-out;
 }
 :where(input, select, textarea):hover:not(:disabled, :focus) { border-color: color-mix(in oklab, var(--text) 45%, var(--border-strong)); }
-:where(input, select, textarea):focus { border-color: var(--text); outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--text) 12%, transparent); }
+/* Text fields mark focus with their border; checkboxes and radios keep the global 2px focus outline. */
+:where(input:not([type='checkbox'], [type='radio'], [type='file']), select, textarea):focus { border-color: var(--text); outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--text) 12%, transparent); }
 :where(input, select, textarea):disabled { opacity: 0.55; }
 :where(input, textarea)::placeholder { color: var(--muted); opacity: 1; }
 :where(textarea) { line-height: 1.5; resize: vertical; }
@@ -324,6 +325,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .save-status[data-state='saving']::before { animation: pulse 1s ease-in-out infinite alternate; }
 @keyframes pulse { from { opacity: 0.2; } to { opacity: 0.8; } }
 
+.day-welcome { margin: -1rem 0 0.75rem; }
 .mood-row { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; margin: 0.5rem 0 1.75rem; }
 .mood-picker { display: flex; gap: 0.375rem; }
 .mood-caption { order: -1; display: flex; align-items: center; gap: 0.25rem; margin: 0; min-height: 2.75rem; color: var(--muted); font-size: 0.9375rem; }
@@ -608,7 +610,7 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 
 /* ---------- Memory ---------- */
 
-.memory > p { color: var(--muted); }
+.memory > p, .memory details p { color: var(--muted); max-width: 65ch; }
 .memory > .back-header { margin-bottom: 1rem; }
 .memory .toggles { display: grid; gap: 0.5rem; margin: 1.25rem 0; }
 .memory-list, .summary-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; }
@@ -665,6 +667,8 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .heat-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1rem; margin-top: 0.75rem; font-size: 0.8125rem; color: var(--muted); }
 .heat-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
 .heat-legend .swatch-none { box-shadow: inset 0 0 0 1.5px var(--mood-none); }
+/* Pale moods (sky, ochre) need an edge to stand off the paper: a hairline of ink mixed into every filled mood mark. */
+.calendar .dot[style], .heat-cell[style*='--mood'], .heat-legend .swatch:not(.swatch-none), .mood-dist .dist-bar span { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--text) 30%, transparent); }
 
 /* ---------- Stats ---------- */
 

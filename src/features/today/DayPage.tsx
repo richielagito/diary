@@ -43,8 +43,8 @@ export function DayPage({ date }: { date: DateKey }) {
   const sending = useRef<string | null>(null)
   const alive = useRef(true)
   const absorbRef = useRef<(incoming: string) => void>(() => {})
-  /** True while the page shows the first-run welcome text that is not stored yet. */
-  const welcome = useRef(false)
+  /** True while the page shows the first-run welcome text, which is never stored unless the user edits it. */
+  const [welcome, setWelcome] = useState(false)
 
   /** Dinaikkan tiap kali `base` diisi teks yang bukan tulisan editor ini sendiri (gabungan dari luar). */
   const foreign = useRef(0)
@@ -128,7 +128,7 @@ export function DayPage({ date }: { date: DateKey }) {
     let cancelled = false
     void (async () => {
       const entry = await diary.get(date)
-      // First run: today's page of an empty diary opens on a welcome text. It is stored only once the user edits it or picks a mood,
+      // First run: today's page of an empty diary opens on a welcome text. It is stored only once the user edits it,
       // so a new device that later signs in does not push it into an account that already has a diary.
       const firstRun = !entry && date === dateKey() && (await diary.isEmpty())
       if (cancelled) return
@@ -138,7 +138,7 @@ export function DayPage({ date }: { date: DateKey }) {
       base.current = stored
       // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
       const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? `${t('day.welcome')}\n\n${t('guide.body')}` : stored
-      welcome.current = firstRun && !draft
+      setWelcome(firstRun && !draft)
       setLoaded({ markdown })
       setStored(!!entry)
       if (draft) schedule(markdown)
@@ -159,11 +159,6 @@ export function DayPage({ date }: { date: DateKey }) {
   }, [diary, date, loaded])
 
   const onMood = (m: Mood | null) => {
-    // A mood keeps the welcome text with it, so the entry shows the same on the next visit.
-    if (welcome.current) {
-      welcome.current = false
-      schedule(editorRef.current?.getMarkdown() ?? '')
-    }
     moodPending.current = true
     setMood(m)
     // Mood tetap tampil walau gagal tersimpan; banner error muncul seperti pada teks.
@@ -175,7 +170,6 @@ export function DayPage({ date }: { date: DateKey }) {
       () => setMoodError(true),
     )
   }
-
 
   const today = dateKey()
   // "Minggu, 4 Okt": the year shows only for another year. Day, month and year stay on one line: a narrow screen breaks after the weekday.
@@ -248,6 +242,22 @@ export function DayPage({ date }: { date: DateKey }) {
         </div>
       </header>
       <MoodPicker value={mood} onChange={onMood} past={!isToday} />
+      {/* One tap clears the guide and starts the entry; the guide stays in Settings. */}
+      {welcome && (
+        <p className="day-welcome">
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => {
+              editorRef.current?.setMarkdown('')
+              setWelcome(false)
+              editorRef.current?.focus()
+            }}
+          >
+            {t('day.startWriting')}
+          </button>
+        </p>
+      )}
       {loaded && (
         <DiaryEditor
           ref={editorRef}
@@ -255,7 +265,7 @@ export function DayPage({ date }: { date: DateKey }) {
           placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
           label={t('day.editorLabel')}
           onChange={(markdown) => {
-            welcome.current = false
+            setWelcome(false)
             autosave.schedule(markdown)
           }}
           onBlur={() => void autosave.flush()}

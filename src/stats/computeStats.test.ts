@@ -116,3 +116,16 @@ describe('mostFrequentMoods', () => {
     expect(mostFrequentMoods({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 })).toEqual({ moods: [], days: 0 })
   })
 })
+
+describe('trackedDays', () => {
+  it('a new diary is measured from its first entry, not from the start of the period', () => {
+    const s = computeStats([entry('2026-10-06')], { kind: 'year', year: 2026 }, '2026-10-06')
+    expect(s.trackedDays).toBe(1)
+    expect(s.writtenRatio).toBe(1)
+  })
+
+  it('a diary older than the period counts the whole elapsed period', () => {
+    const s = computeStats([entry('2025-12-30'), entry('2026-01-02')], { kind: 'month', year: 2026, month: 1 }, '2026-01-10')
+    expect(s.trackedDays).toBe(10)
+  })
+})

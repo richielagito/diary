@@ -175,7 +175,8 @@ export const en: typeof id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Welcome. This is your first entry, a short guide. Delete it once you have read it, then start writing.',
+    welcome: 'Welcome. This is a short guide; it is not saved unless you change it. Once read, press "Clear the guide and start writing".',
+    startWriting: 'Clear the guide and start writing',
     editorLabel: 'Write diary',
     placeholder: 'What happened today?',
     moodLabel: "Today's mood",

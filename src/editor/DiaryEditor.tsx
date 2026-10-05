@@ -32,6 +32,7 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
   const onBlurRef = useRef(onBlur)
   const tagSuggestRef = useRef(tagSuggest)
   const tRef = useRef(t)
+  const lastMarkdown = useRef<string | null>(null)
   onChangeRef.current = onChange
   onBlurRef.current = onBlur
   tagSuggestRef.current = tagSuggest
@@ -58,7 +59,21 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
     editorProps: {
       attributes: { role: 'textbox', 'aria-multiline': 'true', 'aria-label': label, class: 'editor' },
     },
-    onUpdate: ({ editor }) => onChangeRef.current(editor.getMarkdown()),
+    // A plugin adds a trailing paragraph while the document loads, before onCreate. That is not an edit: opening a page
+    // must never schedule a save (it would move the entry's updatedAt and wake sync). Only a different Markdown is an edit.
+    onCreate: ({ editor }) => {
+      lastMarkdown.current = editor.getMarkdown()
+    },
+    onUpdate: ({ editor }) => {
+      const md = editor.getMarkdown()
+      const loading = lastMarkdown.current === null
+      if (loading || md === lastMarkdown.current) {
+        lastMarkdown.current = md
+        return
+      }
+      lastMarkdown.current = md
+      onChangeRef.current(md)
+    },
     onBlur: () => onBlurRef.current(),
   })
 
@@ -72,6 +87,7 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
         const wasFocused = editor.isFocused
         // Bukan langkah undo: satu Ctrl+Z tidak boleh mengembalikan teks lama dan menghapus tulisan dari perangkat lain.
         editor.chain().setMeta('addToHistory', false).setContent(md, { contentType: 'markdown', emitUpdate: false }).run()
+        lastMarkdown.current = editor.getMarkdown()
         // Tanpa fokus tidak ada caret yang perlu dijaga (dan menggeser seleksi memicu saran tag).
         if (!wasFocused) return
         const max = editor.state.doc.content.size

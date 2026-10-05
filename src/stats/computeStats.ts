@@ -1,7 +1,7 @@
 import { weekStart } from '../ai/summary/periods'
 import { addDays, dateKey } from '../domain/date'
 import { MOODS, MOODS_SHOWN, type DateKey, type DayEntry, type Mood } from '../domain/types'
-import { periodRange, type PeriodRange, type StatsPeriod } from './range'
+import { daysBetween, periodRange, type PeriodRange, type StatsPeriod } from './range'
 import { currentStreak, longestStreak } from './streaks'
 import { moodLiftTags, newTags, topTags } from './tagStats'
 import { wordLevel, wordThresholds, type WordLevel } from './wordLevels'
@@ -23,7 +23,9 @@ export interface PeriodStats {
   period: StatsPeriod
   range: PeriodRange
   daysWritten: number
-  writtenRatio: number // elapsedDays === 0 ? 0 : daysWritten / elapsedDays
+  /** Days of the period since the diary began: a new diary is not measured against the weeks before its first entry. */
+  trackedDays: number
+  writtenRatio: number // trackedDays === 0 ? 0 : daysWritten / trackedDays
   totalWords: number
   currentStreak: number // atas SEMUA entri sampai hari ini
   longestStreak: number // runtun yang menyentuh [from, elapsedTo], panjangnya dihitung utuh
@@ -121,11 +123,15 @@ export function computeStats(allEntries: DayEntry[], period: StatsPeriod, today:
   }
 
   const daysWritten = inPeriod.length
+  const begun = sorted[0]?.date
+  const trackedFrom = begun && begun > range.from ? begun : range.from
+  const trackedDays = trackedFrom > range.elapsedTo ? 0 : daysBetween(trackedFrom, range.elapsedTo)
   return {
     period,
     range,
     daysWritten,
-    writtenRatio: range.elapsedDays === 0 ? 0 : daysWritten / range.elapsedDays,
+    trackedDays,
+    writtenRatio: trackedDays === 0 ? 0 : daysWritten / trackedDays,
     totalWords: inPeriod.reduce((s, e) => s + e.wordCount, 0),
     currentStreak: currentStreak(upToToday.map((e) => e.date), today),
     longestStreak: longestStreak(upToToday.map((e) => e.date), { from: range.from, to: range.elapsedTo }),
