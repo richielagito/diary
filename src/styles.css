@@ -129,7 +129,8 @@ body {
 :where(button),
 ::file-selector-button {
   font: inherit;
-  font-size: 0.9375rem;
+  /* 16px: below it, iOS zooms the page into the field on focus. */
+  font-size: 1rem;
   line-height: 1.3;
   color: var(--text);
   background: var(--surface);
@@ -442,6 +443,21 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .calendar a[aria-current='date'] { box-shadow: inset 0 0 0 1.5px var(--text); font-weight: 600; }
 .calendar .dot { width: 7px; height: 7px; border-radius: 50%; }
 .calendar .dot-none { box-shadow: inset 0 0 0 1.5px var(--mood-none); }
+
+.month-entries { margin-top: 2.25rem; }
+.month-entries h2 { margin: 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.month-entries ol { list-style: none; margin: 0; padding: 0; }
+.month-entries li { border-bottom: 1px solid var(--border); }
+.month-entries a { display: grid; grid-template-columns: 2.5rem 1fr 1.5rem; gap: 0 0.875rem; align-items: start; padding: 0.875rem 0.25rem; color: var(--text); text-decoration: none; border-radius: 6px; transition: background-color 150ms ease-out; }
+.month-entries a:hover { background: var(--sunken); }
+.entry-date { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.entry-day { font-family: var(--font-text); font-size: 1.5rem; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
+.entry-weekday { margin-top: 0.35rem; color: var(--muted); font-size: 0.75rem; }
+.entry-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: var(--font-text); font-size: 0.9375rem; line-height: 1.55; }
+.entry-text--none { color: var(--muted); font-style: italic; }
+.entry-mood { display: grid; place-items: center; height: 1.5rem; font-size: 1.125rem; }
+.entry-mood .dot { width: 7px; height: 7px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--mood-none); }
+.month-empty { margin: 2rem 0 0; color: var(--muted); font-size: 0.9375rem; text-align: center; }
 
 .results { list-style: none; padding: 0; margin: 0; }
 .results li { border-bottom: 1px solid var(--border); }

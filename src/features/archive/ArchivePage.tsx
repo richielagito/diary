@@ -8,6 +8,7 @@ import { excerptAround, searchEntries } from '../../domain/filter'
 import { MOOD_EMOJI, type DateKey, type DayEntry } from '../../domain/types'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { MonthCalendar } from './MonthCalendar'
+import { MonthEntries } from './MonthEntries'
 
 export function ArchivePage() {
   const { t, i18n } = useTranslation()
@@ -98,6 +99,7 @@ export function ArchivePage() {
             </button>
           </div>
           <MonthCalendar ym={ym} entries={monthEntries} />
+          <MonthEntries entries={monthEntries} />
         </>
       )}
     </section>

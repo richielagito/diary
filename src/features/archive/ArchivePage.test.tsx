@@ -39,6 +39,29 @@ test('previous month navigation', async () => {
   expect(await screen.findByRole('link', { name: /15 Agustus 2026.*Tanpa mood/ })).toBeInTheDocument()
 })
 
+test('under the calendar, each recorded day of the month shows a snippet in date order', async () => {
+  await renderApp('/archive', {
+    entries: [
+      ...seed.entries,
+      { date: '2026-09-02', markdown: 'Pagi\n\nMalam', mood: null },
+      { date: '2026-09-05', mood: 3 },
+    ],
+  })
+  const list = await screen.findByRole('region', { name: '4 hari tercatat' })
+  const links = within(list).getAllByRole('link')
+  expect(links.map((a) => a.getAttribute('href'))).toEqual(['/day/2026-09-01', '/day/2026-09-02', '/day/2026-09-03', '/day/2026-09-05'])
+  expect(links[0]).toHaveTextContent('Ujian Kalkulus #kuliah')
+  expect(links[1]).toHaveTextContent('Pagi · Malam')
+  expect(links[3]).toHaveTextContent('Hanya mood, tanpa tulisan.')
+})
+
+test('a month with nothing recorded says so under the calendar', async () => {
+  const { user } = await renderApp('/archive', seed)
+  await user.click(await screen.findByRole('button', { name: 'Bulan sebelumnya' }))
+  await user.click(await screen.findByRole('button', { name: 'Bulan sebelumnya' }))
+  expect(await screen.findByText('Belum ada catatan di bulan ini.')).toBeInTheDocument()
+})
+
 test('search by #tag lists matching entries across months, newest first', async () => {
   const { user } = await renderApp('/archive', seed)
   await user.type(await screen.findByRole('searchbox', { name: 'Cari' }), '#kuliah')

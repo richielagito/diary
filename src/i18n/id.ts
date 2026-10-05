@@ -156,7 +156,7 @@ export const id = {
       ].join('\n'),
       '## Menu lain',
       [
-        '- **Arsip**: kalender tiap bulan dan pencarian di semua tulisanmu.',
+        '- **Arsip**: kalender dan cuplikan tulisan tiap bulan, serta pencarian di semua tulisanmu.',
         '- **Curhat**: ngobrol dengan AI tentang harimu. Atur dulu di Pengaturan; kamu yang memilih apa yang boleh dibaca AI.',
         '- **Statistik**: mood, kebiasaan menulis, dan tag yang paling sering muncul.',
         '- **Pengaturan**: bahasa, tema, dan cadangan. Unduh cadangan sesekali supaya tulisanmu aman.',
@@ -191,6 +191,10 @@ export const id = {
     results_one: '{{count}} hasil',
     results_other: '{{count}} hasil',
     noMood: 'Tanpa mood',
+    monthEntries_one: '{{count}} hari tercatat',
+    monthEntries_other: '{{count}} hari tercatat',
+    monthEmpty: 'Belum ada catatan di bulan ini.',
+    moodOnly: 'Hanya mood, tanpa tulisan.',
   },
   settings: {
     language: 'Bahasa',

@@ -158,7 +158,7 @@ export const en: typeof id = {
       ].join('\n'),
       '## Elsewhere',
       [
-        '- **Archive**: a calendar for every month and search across everything you wrote.',
+        '- **Archive**: a calendar and snippets of what you wrote for every month, and search across all of it.',
         '- **Talk**: chat with an AI about your day. Set it up in Settings first; you choose what the AI may read.',
         '- **Stats**: moods, writing habits and your most used tags.',
         '- **Settings**: language, theme and backups. Download a backup now and then to keep your writing safe.',
@@ -193,6 +193,10 @@ export const en: typeof id = {
     results_one: '{{count}} result',
     results_other: '{{count}} results',
     noMood: 'No mood',
+    monthEntries_one: '{{count}} day recorded',
+    monthEntries_other: '{{count}} days recorded',
+    monthEmpty: 'Nothing recorded this month yet.',
+    moodOnly: 'Mood only, nothing written.',
   },
   settings: {
     language: 'Language',
