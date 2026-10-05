@@ -7,6 +7,7 @@ import { useExport } from '../../backup/useExport'
 import type { DateKey } from '../../domain/types'
 import type { Language, Theme } from '../../storage/SettingsStore'
 import { AccountSection } from './AccountSection'
+import { StorageUsage } from './StorageUsage'
 import { AiSettingsSection } from './AiSettingsSection'
 import { Field } from './Field'
 import { ImportDialog } from './ImportDialog'
@@ -82,6 +83,7 @@ export function SettingsPage() {
       <section>
         <h2>{t('settings.backup')}</h2>
         <p>{lastExport}</p>
+        <StorageUsage />
         <button type="button" className="primary" onClick={() => void exportNow()}>
           {t('settings.export')}
         </button>

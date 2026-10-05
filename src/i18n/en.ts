@@ -1,7 +1,7 @@
 import type { id } from './id'
 
 export const en: typeof id = {
-  common: { cancel: 'Cancel', yesDelete: 'Yes, delete' },
+  common: { cancel: 'Cancel', yesDelete: 'Yes, delete', back: 'Back' },
   nav: { skip: 'Skip to content', label: 'Main navigation', today: 'Today', chat: 'Talk', archive: 'Archive', stats: 'Stats', settings: 'Settings' },
   stats: {
     heatmapLabel: 'Mood heatmap',
@@ -210,6 +210,10 @@ export const en: typeof id = {
     chooseFile: 'Choose a ZIP or Markdown file',
     lastExport: 'Last export: {{date}}',
     never: 'Never exported',
+    changedSinceExport_one: '{{count}} day changed since the last export.',
+    changedSinceExport_other: '{{count}} days changed since the last export.',
+    storageUsed: 'Used in this browser: {{used}} of {{quota}}',
+    storageNearlyFull: 'Storage is nearly full. Export now to keep your writing safe.',
     reminder: 'Backup reminder',
     reminderOff: 'Off',
     reminderDays_one: 'Every {{count}} day',

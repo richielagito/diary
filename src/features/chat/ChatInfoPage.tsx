@@ -30,7 +30,7 @@ export function ChatInfoPage({ date }: { date: DateKey }) {
 
   return (
     <section className="chat-info">
-      <header>
+      <header className="back-header">
         <Link className="icon-btn" to={back} aria-label={t('chat.back')}>
           <ChevronLeft />
         </Link>
@@ -76,7 +76,9 @@ export function ChatInfoPage({ date }: { date: DateKey }) {
           </label>
           <ContextPreview date={date} latestUserText={latestUserText} />
           <p>
-            <Link to="/memory">{t('chat.memoryLink')}</Link>
+            <Link to="/memory" state={{ from: `/chat/${date}/info` }}>
+              {t('chat.memoryLink')}
+            </Link>
           </p>
         </section>
       ) : (

@@ -491,6 +491,11 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .settings section:first-of-type { border-top: 0; padding-top: 0.5rem; }
 .settings section > h2:first-child { margin-top: 0; }
 .settings section > p { color: var(--muted); font-size: 0.9375rem; max-width: 65ch; }
+.storage-usage { display: grid; gap: 0.4rem; }
+/* Ink on a sunken track, the same quiet weight as a hairline: storage is a fact here, not an alarm. */
+.storage-bar { display: block; width: min(100%, 24rem); height: 4px; border-radius: 999px; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
+.storage-bar > span { display: block; height: 100%; background: var(--text); }
+.storage-usage strong { color: var(--danger); font-weight: 500; }
 .settings details > summary { min-height: 2.75rem; }
 .settings details[open] > summary { margin-bottom: 0.25rem; }
 .settings details { margin: 0.5rem 0; }
@@ -555,8 +560,9 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 .composer .icon-btn { flex: none; color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
 .composer .icon-btn.primary { color: var(--bg); box-shadow: none; }
 
-.chat-info > header { display: flex; align-items: center; gap: 0.25rem; margin-left: -0.75rem; }
-.chat-info > header h1 { margin: 0; }
+/* A sub-page title with a way back: chat details, memory. */
+.back-header { display: flex; align-items: center; gap: 0.25rem; margin-left: -0.75rem; }
+.back-header h1 { margin: 0; }
 .chat-info > section { display: grid; justify-items: start; gap: 0.75rem; margin-top: 2rem; }
 .chat-info h2 { justify-self: stretch; margin: 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
 .chat-info p { margin: 0; }
@@ -583,6 +589,7 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 /* ---------- Memory ---------- */
 
 .memory > p { color: var(--muted); }
+.memory > .back-header { margin-bottom: 1rem; }
 .memory .toggles { display: grid; gap: 0.5rem; margin: 1.25rem 0; }
 .memory-list, .summary-list { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-direction: column; }
 .memory-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }

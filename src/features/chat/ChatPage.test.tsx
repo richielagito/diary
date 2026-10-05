@@ -109,7 +109,10 @@ test('the settings icon opens the chat details, which link back', async () => {
   await user.click(await screen.findByRole('link', { name: 'Detail curhat' }))
   expect(await screen.findByRole('heading', { name: 'Detail curhat' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Kembali ke curhat' })).toHaveAttribute('href', `/chat/${DATE}`)
-  expect(screen.getByRole('link', { name: 'Yang AI tahu tentang kamu' })).toHaveAttribute('href', '/memory')
+  await user.click(screen.getByRole('link', { name: 'Yang AI tahu tentang kamu' }))
+  expect(await screen.findByRole('heading', { name: 'Yang AI tahu tentang kamu' })).toBeInTheDocument()
+  // Memory leads back to the details it was opened from.
+  expect(screen.getByRole('link', { name: 'Kembali' })).toHaveAttribute('href', `/chat/${DATE}/info`)
 })
 
 test('an empty conversation invites the user to start, centred above the composer', async () => {

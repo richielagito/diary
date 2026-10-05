@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link, useLocation } from 'react-router'
+import { ChevronLeft } from '../../app/icons'
 import { ConfirmButton } from '../../app/ConfirmButton'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { extractMemories, type ExtractResult } from '../../ai/memory/extractMemories'
@@ -106,9 +108,16 @@ export function MemoryPage() {
       ? t('memory.weekOf', { date: dayFormat.format(parseDateKey(s.periodStart)) })
       : t('memory.monthOf', { date: monthFormat.format(parseDateKey(s.periodStart)) })
 
+  // Back goes where the page was opened from: the chat details or the AI settings.
+  const back = (useLocation().state as { from?: string } | null)?.from ?? '/chat'
   return (
     <section className="memory">
-      <h1>{t('memory.title')}</h1>
+      <header className="back-header">
+        <Link className="icon-btn" to={back} aria-label={t('common.back')}>
+          <ChevronLeft />
+        </Link>
+        <h1>{t('memory.title')}</h1>
+      </header>
       <p>{t('memory.intro')}</p>
       <p>{t('memory.privacy')}</p>
       {storageFailed && <p role="alert">{t('aiError.storage')}</p>}

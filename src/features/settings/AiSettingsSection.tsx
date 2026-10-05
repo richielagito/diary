@@ -216,7 +216,7 @@ export function AiSettingsSection() {
       <h2>{t('aiSettings.title')}</h2>
       <p>{t('aiSettings.privacy')}</p>
       <p>
-        <Link to="/memory">{t('aiSettings.memoryLink')}</Link>
+        <Link to="/memory" state={{ from: '/settings#ai' }}>{t('aiSettings.memoryLink')}</Link>
       </p>
       <Field label={t('aiSettings.provider')}>
         {(id) => (

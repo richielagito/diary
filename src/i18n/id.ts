@@ -1,5 +1,5 @@
 export const id = {
-  common: { cancel: 'Batal', yesDelete: 'Ya, hapus' },
+  common: { cancel: 'Batal', yesDelete: 'Ya, hapus', back: 'Kembali' },
   nav: { skip: 'Langsung ke isi', label: 'Navigasi utama', today: 'Hari ini', chat: 'Curhat', archive: 'Arsip', stats: 'Statistik', settings: 'Pengaturan' },
   stats: {
     heatmapLabel: 'Heatmap mood',
@@ -208,6 +208,10 @@ export const id = {
     chooseFile: 'Pilih file ZIP atau Markdown',
     lastExport: 'Export terakhir: {{date}}',
     never: 'Belum pernah export',
+    changedSinceExport_one: '{{count}} hari berubah sejak export terakhir.',
+    changedSinceExport_other: '{{count}} hari berubah sejak export terakhir.',
+    storageUsed: 'Terpakai di browser ini: {{used}} dari {{quota}}',
+    storageNearlyFull: 'Ruang hampir penuh. Export sekarang supaya tulisanmu aman.',
     reminder: 'Pengingat backup',
     reminderOff: 'Mati',
     reminderDays_one: 'Setiap {{count}} hari',
