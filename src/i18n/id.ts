@@ -150,7 +150,8 @@ export const id = {
         '- Tulis langsung di sini. Semua tersimpan otomatis di perangkat ini, tanpa tombol simpan.',
         '- Pilih salah satu wajah di atas untuk mencatat mood hari ini.',
         '- Ketik # lalu satu kata tanpa spasi untuk memberi tag. Tag bisa dicari di Arsip.',
-        '- Blok teks untuk menebalkan, memiringkan, atau mencoretnya.',
+        '- Blok teks untuk menebalkan, memiringkan, atau mencoretnya, atau menjadikannya judul (H) dan daftar (• atau 1.).',
+        '- Bisa juga sambil mengetik: awali baris dengan ## untuk judul, - untuk daftar, atau 1. untuk daftar bernomor.',
         '- Panah di samping tanggal membuka hari sebelum dan sesudahnya.',
       ].join('\n'),
       '## Menu lain',
@@ -179,7 +180,7 @@ export const id = {
     error: 'Gagal menyimpan. Tulisanmu masih aman di layar.',
     exportNow: 'Export sekarang',
   },
-  editor: { bold: 'Tebal', italic: 'Miring', strike: 'Coret', code: 'Kode' },
+  editor: { bold: 'Tebal', italic: 'Miring', strike: 'Coret', code: 'Kode', heading: 'Judul', bulletList: 'Daftar', orderedList: 'Daftar bernomor' },
   backup: { reminder: 'Sudah lama tidak backup. Export diary-mu supaya aman.', action: 'Export', exportFailed: 'Export gagal. Coba lagi.' },
   archive: {
     searchLabel: 'Cari',

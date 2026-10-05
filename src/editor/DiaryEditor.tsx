@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { createExtensions } from './extensions'
 import { TagSuggest } from './tagSuggest'
 
+/** On a phone the wide menu keeps clear of the screen edge. Module-level so the menu is not re-registered on every render. */
+const bubbleOptions = { shift: { padding: 8 } }
+
 export interface DiaryEditorHandle {
   getMarkdown(): string
   setMarkdown(md: string): void
@@ -94,6 +97,9 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
       italic: e?.isActive('italic') ?? false,
       strike: e?.isActive('strike') ?? false,
       code: e?.isActive('code') ?? false,
+      heading: e?.isActive('heading', { level: 2 }) ?? false,
+      bulletList: e?.isActive('bulletList') ?? false,
+      orderedList: e?.isActive('orderedList') ?? false,
     }),
   })
 
@@ -124,15 +130,32 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
     { key: 'strike', label: 'S', run: format((c) => c.toggleStrike()) },
     { key: 'code', label: '</>', run: format((c) => c.toggleCode()) },
   ] as const
+  // Line formats act on the whole paragraph the selection sits in. Typing "## ", "- " or "1. " at a line start does the same.
+  const blocks = [
+    { key: 'heading', label: 'H', run: format((c) => c.toggleHeading({ level: 2 })) },
+    { key: 'bulletList', label: '•', run: format((c) => c.toggleBulletList()) },
+    { key: 'orderedList', label: '1.', run: format((c) => c.toggleOrderedList()) },
+  ] as const
+  const button = (b: (typeof buttons)[number] | (typeof blocks)[number]) => (
+    <button
+      key={b.key}
+      type="button"
+      data-format={b.key}
+      aria-label={t(`editor.${b.key}`)}
+      title={t(`editor.${b.key}`)}
+      aria-pressed={active?.[b.key]}
+      onClick={b.run}
+    >
+      {b.label}
+    </button>
+  )
 
   return (
     <>
-      <BubbleMenu editor={editor} className="bubble" getReferencedVirtualElement={pinnedAnchor}>
-        {buttons.map((b) => (
-          <button key={b.key} type="button" aria-label={t(`editor.${b.key}`)} aria-pressed={active?.[b.key]} onClick={b.run}>
-            {b.label}
-          </button>
-        ))}
+      <BubbleMenu editor={editor} className="bubble" getReferencedVirtualElement={pinnedAnchor} options={bubbleOptions}>
+        {buttons.map(button)}
+        <hr />
+        {blocks.map(button)}
       </BubbleMenu>
       {/* The host positions the tag chip overlay shown while an IME composes. */}
       <EditorContent editor={editor} className="editor-host" />

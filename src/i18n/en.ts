@@ -152,7 +152,8 @@ export const en: typeof id = {
         '- Write right here. Everything saves on this device by itself, no save button.',
         '- Pick one of the faces above to note how today went.',
         '- Type # and a word with no spaces to tag the day. Tags can be searched in Archive.',
-        '- Select text to make it bold, italic or struck through.',
+        '- Select text to make it bold, italic or struck through, or to turn it into a heading (H) or a list (• or 1.).',
+        '- Or as you type: start a line with ## for a heading, - for a list, or 1. for a numbered list.',
         '- The arrows beside the date open the day before and after.',
       ].join('\n'),
       '## Elsewhere',
@@ -181,7 +182,7 @@ export const en: typeof id = {
     error: 'Could not save. Your writing is still safe on screen.',
     exportNow: 'Export now',
   },
-  editor: { bold: 'Bold', italic: 'Italic', strike: 'Strikethrough', code: 'Code' },
+  editor: { bold: 'Bold', italic: 'Italic', strike: 'Strikethrough', code: 'Code', heading: 'Heading', bulletList: 'List', orderedList: 'Numbered list' },
   backup: { reminder: "You haven't backed up in a while. Export your diary to keep it safe.", action: 'Export', exportFailed: 'Export failed. Please try again.' },
   archive: {
     searchLabel: 'Search',

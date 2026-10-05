@@ -27,6 +27,8 @@ const todayLabel = () =>
 async function writeToday(page: Page, text: string) {
   await page.goto('/')
   await editor(page).click()
+  // An empty diary opens on the welcome text; the entry should hold only this text.
+  await page.keyboard.press('ControlOrMeta+A')
   await page.keyboard.type(text)
   await expect(page.getByRole('status')).toHaveText('Tersimpan')
   await page.getByRole('button', { name: 'Senang' }).click()

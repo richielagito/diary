@@ -220,9 +220,12 @@ export function DayPage({ date }: { date: DateKey }) {
     <article>
       <BackupBanner />
       <header className="day-header">
-        <h1 ref={headingRef} tabIndex={-1}>
-          {heading}
-        </h1>
+        <div className="day-title">
+          <h1 ref={headingRef} tabIndex={-1}>
+            {heading}
+          </h1>
+          <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
+        </div>
         <div className="day-step">
           <Link className="icon-btn" to={prev} state={stepped} aria-label={t('day.prevDay')}>
             <ChevronLeft />
@@ -236,9 +239,6 @@ export function DayPage({ date }: { date: DateKey }) {
               <ChevronRight />
             </Link>
           )}
-        </div>
-        <div className="day-meta">
-          <SaveStatusText status={moodError ? 'error' : autosave.status} onExport={() => void exportNow()} />
         </div>
       </header>
       <MoodPicker value={mood} onChange={onMood} past={!isToday} />

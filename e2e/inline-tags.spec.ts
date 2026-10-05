@@ -53,6 +53,8 @@ test('typing # offers an AI tag chip that Tab accepts and autosave keeps', async
   await page.goto('/')
   const editor = page.getByRole('textbox', { name: 'Tulis diary' })
   await editor.click()
+  // An empty diary opens on the welcome text; replace it so the caret position is known.
+  await page.keyboard.press('ControlOrMeta+A')
   await page.keyboard.type('Hari ini presentasi di #ka')
 
   await expect(page.getByRole('button', { name: 'Tambah tag #kantor' })).toBeVisible()
