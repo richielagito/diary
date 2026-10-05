@@ -4,7 +4,7 @@ import type { AiConfig } from '../../ai/provider/types'
 import { dateKey } from '../../domain/date'
 import type { Mood } from '../../domain/types'
 import type { NewChatMessage } from '../../storage/ChatRepository'
-import { controllable, failWith, replyWith } from '../../test/fakeProvider'
+import { failWith, replyWith } from '../../test/fakeProvider'
 import { renderApp } from '../../test/renderApp'
 
 const ai: AiConfig = { provider: 'anthropic', apiKey: 'k', baseUrl: '', model: 'claude-opus-5' }
@@ -24,7 +24,7 @@ function forDraft(draft: CreateProvider): CreateProvider {
 }
 
 const open = (draft: CreateProvider, entry: { markdown: string; mood: Mood | null } = { markdown: 'Pagi.', mood: null }) =>
-  renderApp(`/chat/${DATE}`, { settings: { ai }, chats: CHATS, entries: [{ date: DATE, ...entry }] }, { createProvider: forDraft(draft) })
+  renderApp(`/chat/${DATE}/info`, { settings: { ai }, chats: CHATS, entries: [{ date: DATE, ...entry }] }, { createProvider: forDraft(draft) })
 
 const draftBox = () => screen.findByRole('textbox', { name: 'Tulisan untuk diary' })
 
@@ -33,14 +33,16 @@ afterEach(() => {
 })
 
 test('hidden without AI config', async () => {
-  await renderApp(`/chat/${DATE}`, { chats: CHATS })
-  expect(await screen.findByText('Mochi sakit')).toBeInTheDocument()
+  await renderApp(`/chat/${DATE}/info`, { chats: CHATS })
+  // The conversation has loaded once its delete action shows.
+  expect(await screen.findByRole('button', { name: 'Hapus percakapan ini' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Simpan jadi diary' })).not.toBeInTheDocument()
 })
 
 test('hidden when the day has no user message', async () => {
-  await renderApp(`/chat/${DATE}`, { settings: { ai }, chats: [CHATS[1]] }, { createProvider: forDraft(replyWith(REPLY)) })
-  expect(await screen.findByText('Semoga cepat sembuh.')).toBeInTheDocument()
+  await renderApp(`/chat/${DATE}/info`, { settings: { ai }, chats: [CHATS[1]] }, { createProvider: forDraft(replyWith(REPLY)) })
+  // The conversation has loaded once its delete action shows.
+  expect(await screen.findByRole('button', { name: 'Hapus percakapan ini' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Simpan jadi diary' })).not.toBeInTheDocument()
 })
 
@@ -133,7 +135,7 @@ test('an open draft locks the button; cancel discards the draft, unlocks it and 
 test("today's conversation links to the home page after appending", async () => {
   const today = dateKey()
   const { user } = await renderApp(
-    `/chat/${today}`,
+    `/chat/${today}/info`,
     { settings: { ai }, chats: CHATS.map((m) => ({ ...m, date: today })) },
     { createProvider: forDraft(replyWith(REPLY)) },
   )
@@ -153,7 +155,7 @@ test('knownTags are not sent when the diary is not shared with the AI', async ()
     },
   })
   const { user } = await renderApp(
-    `/chat/${DATE}`,
+    `/chat/${DATE}/info`,
     {
       settings: { ai, aiIncludeDiary: false },
       chats: CHATS,
@@ -180,36 +182,11 @@ test('the draft uses the main model, uncached, even when a fast model is set', a
     },
   })
   const { user } = await renderApp(
-    `/chat/${DATE}`,
+    `/chat/${DATE}/info`,
     { settings: { ai: { ...ai, fastModel: 'claude-haiku-4-5' } }, chats: CHATS, entries: [{ date: DATE, markdown: 'Pagi.', mood: null }] },
     { createProvider: forDraft(draft) },
   )
   await user.click(await screen.findByRole('button', { name: 'Simpan jadi diary' }))
   await draftBox()
   expect(drafts).toEqual([{ model: 'claude-opus-5', cache: undefined }])
-})
-
-test('an old draft does not come back after the conversation is deleted', async () => {
-  const { user } = await open(replyWith(REPLY))
-  await user.click(await screen.findByRole('button', { name: 'Simpan jadi diary' }))
-  await draftBox()
-  await user.click(screen.getByRole('button', { name: 'Hapus percakapan ini' }))
-  await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
-  await waitFor(() => expect(screen.queryByRole('button', { name: 'Simpan jadi diary' })).not.toBeInTheDocument())
-  await user.type(screen.getByRole('textbox', { name: 'Pesan' }), 'halo baru{Enter}')
-  await screen.findByRole('button', { name: 'Simpan jadi diary' })
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Simpan jadi diary' })).toBeEnabled())
-  expect(screen.queryByRole('textbox', { name: 'Tulisan untuk diary' })).not.toBeInTheDocument()
-})
-
-test('the button is disabled while a reply is streaming', async () => {
-  const c = controllable()
-  const { user } = await renderApp(`/chat/${DATE}`, { settings: { ai }, chats: CHATS }, { createProvider: c.createProvider })
-  expect(await screen.findByRole('button', { name: 'Simpan jadi diary' })).toBeEnabled()
-  await user.type(screen.getByRole('textbox', { name: 'Pesan' }), 'lanjut{Enter}')
-  await waitFor(() => expect(c.requests.length).toBeGreaterThan(0))
-  expect(screen.getByRole('button', { name: 'Simpan jadi diary' })).toBeDisabled()
-  c.push('oke')
-  c.finish()
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Simpan jadi diary' })).toBeEnabled())
 })

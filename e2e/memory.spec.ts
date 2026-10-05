@@ -41,6 +41,7 @@ test('after a few messages the AI remembers a fact, shown on the memory page', a
     await expect(page.getByText('Cerita lagi, aku dengerin.')).toHaveCount(i + 1)
   }
 
+  await page.getByRole('link', { name: 'Detail curhat' }).click()
   await page.getByRole('link', { name: 'Yang AI tahu tentang kamu' }).click()
   await expect(page.getByRole('textbox', { name: 'Memori 1' })).toHaveValue('Punya kucing bernama Mochi')
 })

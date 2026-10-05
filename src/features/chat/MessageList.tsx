@@ -18,7 +18,6 @@ interface Row {
 
 export function MessageList({ messages, state, onRetry }: Props) {
   const { t } = useTranslation()
-  if (messages.length === 0 && state.phase === 'idle') return <p className="chat-empty">{t('chat.empty')}</p>
   // Retry cannot help a storage error that has nothing unsaved to resend (the composer already kept the draft).
   const showRetry = state.phase === 'error' && !(state.kind === 'storage' && !state.unsaved)
 
@@ -32,7 +31,7 @@ export function MessageList({ messages, state, onRetry }: Props) {
   const last = messages.at(-1)
   const settled = state.phase === 'streaming' && last?.role === 'assistant' && last.content === state.partial
   if (state.phase === 'streaming' && !settled) {
-    rows.push({ key: messages.length, role: 'assistant', content: state.partial || t('chat.typing'), stopped: false, live: true })
+    rows.push({ key: messages.length, role: 'assistant', content: state.partial, stopped: false, live: true })
   } else if (state.phase === 'error' && state.unsaved) {
     rows.push({
       key: messages.length,
@@ -49,6 +48,15 @@ export function MessageList({ messages, state, onRetry }: Props) {
         {rows.map((r) => (
           <li key={r.key} className={`bubble-msg ${r.role}`} aria-live={r.live ? 'polite' : undefined}>
             {r.content}
+            {r.live && !r.content && (
+              // Before the first words arrive: three dots, like a chat app shows the other side typing.
+              <span className="typing">
+                <span />
+                <span />
+                <span />
+                <span className="visually-hidden">{t('chat.typing')}</span>
+              </span>
+            )}
             {r.stopped && <span className="meta">{t('chat.stopped')}</span>}
           </li>
         ))}

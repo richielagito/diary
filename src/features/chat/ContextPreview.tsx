@@ -8,7 +8,7 @@ import { loadChatPrompt } from './systemPromptSource'
 
 export function ContextPreview({ date, latestUserText }: { date: DateKey; latestUserText: string }) {
   const { t } = useTranslation()
-  const { diary, memories, summaries, settingsStore } = useRepos()
+  const { diary, memories, summaries } = useRepos()
   const settings = useSettings()
   const [open, setOpen] = useState(false)
   const [preview, setPreview] = useState<{ system: string; context: string; counts: ContextCounts } | null>(null)
@@ -31,16 +31,8 @@ export function ContextPreview({ date, latestUserText }: { date: DateKey; latest
     <details className="context-preview" onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>
         <ChevronRight />
-        {t('chat.contextTitle')}
+        {t('chat.contextShow')}
       </summary>
-      <label>
-        <input
-          type="checkbox"
-          checked={settings.aiIncludeDiary}
-          onChange={(e) => void settingsStore.set('aiIncludeDiary', e.target.checked)}
-        />{' '}
-        {t('chat.includeDiary')}
-      </label>
       {preview && (
         <>
           <p>{t('chat.contextCounts', { ...preview.counts })}</p>

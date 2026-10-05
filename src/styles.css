@@ -524,32 +524,53 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 
 /* ---------- Chat ---------- */
 
-.chat { display: flex; flex-direction: column; gap: 1rem; }
-.chat > header { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 1rem; }
+.chat { --chat-top: 5.5rem; display: flex; flex-direction: column; gap: 1rem; min-height: calc(100dvh - var(--chat-top)); }
+/* The chat fills the screen down to the nav, so the conversation sits on the bottom edge as in a chat app. */
+.shell:has(.chat) { padding-bottom: 0; }
+.chat > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .chat > header h1 { margin: 0; }
-.chat > header p { grid-column: 1 / -1; margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
-.chat > header > a { grid-column: 2; grid-row: 1; font-size: 0.875rem; text-align: right; }
-.chat > header > a { min-height: 2.75rem; display: inline-flex; align-items: center; justify-content: flex-end; }
-.chat-history { grid-column: 1 / -1; margin-top: 0.25rem; }
-.chat-history > summary { min-height: 2.75rem; }
-.chat-history[open] > summary { margin-bottom: 0.25rem; }
-.chat-history nav { display: flex; flex-wrap: wrap; gap: 0.375rem; }
-.chat-history a { padding: 0.2rem 0.65rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.8125rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
-.chat-history a:hover { color: var(--text); border-color: var(--border-strong); }
-.chat-empty { margin: 1.5rem 0; font-family: var(--font-text); font-size: 1.125rem; font-style: italic; color: var(--muted); }
-.messages { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.625rem; }
+.chat > header p { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
+.chat > header .icon-btn { margin-right: -0.5rem; }
+.chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 0.5rem; padding: 2rem 0; text-align: center; }
+.chat-empty h2 { margin: 0; font-family: var(--font-text); font-size: 1.125rem; font-weight: 500; }
+.chat-empty p { margin: 0; max-width: 30ch; color: var(--muted); font-size: 0.9375rem; }
+.chat-empty .button { margin-top: 0.75rem; }
+.messages { list-style: none; padding: 0; margin: auto 0 0; display: flex; flex-direction: column; gap: 0.625rem; }
 .bubble-msg { max-width: 85%; padding: 0.625rem 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .bubble-msg.user { align-self: flex-end; background: var(--text); color: var(--bg); border-radius: 18px 18px 6px 18px; }
 .bubble-msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 18px 18px 18px 6px; }
 .bubble-msg .meta { display: block; font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem; }
-.chat-sharing { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.25rem; margin: 0 0 -0.75rem; color: var(--muted); font-size: 0.8125rem; }
-.chat-sharing button { min-height: 2.75rem; font-size: 0.8125rem; }
-.context-preview > summary { min-height: 2.75rem; }
+/* The newest bubble rises into place from the composer. */
+.bubble-msg:last-child { animation: bubble-in 260ms cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(0.5rem); } }
+.typing { display: inline-flex; gap: 0.25rem; padding: 0.45rem 0.1rem; vertical-align: middle; }
+.typing > span:not(.visually-hidden) { width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--muted); animation: typing 1.2s ease-in-out infinite; }
+.typing > span:nth-child(2) { animation-delay: 0.15s; }
+.typing > span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing { 0%, 60%, 100% { opacity: 0.35; transform: none; } 30% { opacity: 1; transform: translateY(-0.2rem); } }
 /* Focus moved by Tab never lands behind the sticky composer. */
 html:has(.composer) { scroll-padding-bottom: 6rem; }
-.composer { position: sticky; bottom: var(--nav-h, 0px); z-index: 5; display: flex; gap: 0.5rem; align-items: flex-end; padding: 0.75rem 0 max(0.75rem, env(safe-area-inset-bottom)); background: var(--bg); }
-.composer textarea { flex: 1; min-height: 2.75rem; max-height: 12rem; padding: 0.6rem 0.9rem; border-radius: 12px; }
-.composer button { min-height: 2.75rem; }
+.composer { position: sticky; bottom: var(--nav-h, 0px); z-index: 5; display: flex; gap: 0.5rem; align-items: flex-end; padding: 0.5rem 0 1.25rem; background: var(--bg); }
+.composer textarea { flex: 1; min-height: 2.75rem; max-height: min(12rem, 35dvh); padding: 0.6rem 0.9rem; border-radius: 12px; resize: none; overflow-y: auto; }
+.composer .icon-btn { flex: none; color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.composer .icon-btn.primary { color: var(--bg); box-shadow: none; }
+
+.chat-info > header { display: flex; align-items: center; gap: 0.25rem; margin-left: -0.75rem; }
+.chat-info > header h1 { margin: 0; }
+.chat-info > section { display: grid; justify-items: start; gap: 0.75rem; margin-top: 2rem; }
+.chat-info h2 { justify-self: stretch; margin: 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
+.chat-info p { margin: 0; }
+.chat-info .save-to-diary { justify-self: stretch; }
+.chat-history { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.chat-history a { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.8125rem; text-decoration: none; transition: color 150ms ease-out, border-color 150ms ease-out; }
+.chat-history a:hover { color: var(--text); border-color: var(--border-strong); }
+.context-preview > summary { min-height: 2.75rem; }
+/* Phones: the chat ends on the bottom nav, and the composer sits right on it. */
+@media (max-width: 640px) {
+  .shell:has(.chat) { padding-bottom: var(--nav-h); }
+  .chat { --chat-top: calc(var(--nav-h) + 1.25rem + env(safe-area-inset-top)); }
+  .composer { padding-bottom: 0.5rem; }
+}
 .crisis { border: 1px solid color-mix(in oklab, var(--danger) 45%, transparent); border-radius: 12px; padding: 1rem 1.25rem; background: color-mix(in oklab, var(--danger) 6%, var(--surface)); }
 .crisis h2 { margin: 0 0 0.25rem; font-size: 1rem; color: var(--danger); }
 .crisis ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
@@ -777,7 +798,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .slide-in { animation: slide-in 520ms cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes slide-in { from { opacity: 0; transform: translateY(16px) scale(0.985); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .slide-in, .wrapped::before, .save-status[data-state='saving']::before { animation: none; }
+  .slide-in, .wrapped::before, .save-status[data-state='saving']::before, .bubble-msg, .typing > span { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
 }
 .sr-only-focusable { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

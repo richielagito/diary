@@ -12,8 +12,6 @@ import type { ChatMessage } from '../../storage/ChatRepository'
 interface Props {
   date: DateKey
   messages: ChatMessage[]
-  /** true selama balasan sedang dialirkan */
-  disabled: boolean
 }
 
 interface Draft {
@@ -27,7 +25,7 @@ interface Draft {
 type ErrorKind = ProviderErrorKind | 'format' | 'storage'
 
 /** Menyusun tulisan diary dari percakapan hari itu; user mengedit lalu menambahkannya ke entri tanggal itu. */
-export function SaveToDiary({ date, messages, disabled }: Props) {
+export function SaveToDiary({ date, messages }: Props) {
   const { t } = useTranslation()
   const { diary, createProvider } = useRepos()
   const settings = useSettings()
@@ -38,14 +36,7 @@ export function SaveToDiary({ date, messages, disabled }: Props) {
   const [appended, setAppended] = useState(false)
   const textId = useId()
 
-  const hasUserMessage = messages.some((m) => m.role === 'user')
-  // Conversation gone (deleted): drop any draft or notice so it cannot reappear with the next conversation.
-  if (!hasUserMessage && (draft || appended || error)) {
-    setDraft(null)
-    setAppended(false)
-    setError(null)
-  }
-  if (!settings.ai || !hasUserMessage) return null
+  if (!settings.ai || !messages.some((m) => m.role === 'user')) return null
   const ai = settings.ai
 
   const run = async () => {
@@ -101,7 +92,7 @@ export function SaveToDiary({ date, messages, disabled }: Props) {
   return (
     <section className="save-to-diary">
       <p>
-        <button type="button" onClick={() => void run()} disabled={disabled || drafting || saving || draft !== null}>
+        <button type="button" onClick={() => void run()} disabled={drafting || saving || draft !== null}>
           {drafting ? t('suggest.drafting') : t('suggest.saveToDiary')}
         </button>
       </p>

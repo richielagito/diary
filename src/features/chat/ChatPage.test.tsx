@@ -102,9 +102,26 @@ test('stop keeps the partial reply marked as stopped', async () => {
   expect(await screen.findByText('(dihentikan)')).toBeInTheDocument()
 })
 
+const openInfo = (seed: Parameters<typeof renderApp>[1] = {}) => renderApp(`/chat/${DATE}/info`, { settings: { ai }, ...seed })
+
+test('the settings icon opens the chat details, which link back', async () => {
+  const { user } = await open(replyWith('x'))
+  await user.click(await screen.findByRole('link', { name: 'Detail curhat' }))
+  expect(await screen.findByRole('heading', { name: 'Detail curhat' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Kembali ke curhat' })).toHaveAttribute('href', `/chat/${DATE}`)
+  expect(screen.getByRole('link', { name: 'Yang AI tahu tentang kamu' })).toHaveAttribute('href', '/memory')
+})
+
+test('an empty conversation invites the user to start, centred above the composer', async () => {
+  await open(replyWith('x'))
+  expect(await screen.findByRole('heading', { name: 'Mau cerita apa?' })).toBeInTheDocument()
+  expect(screen.getByText('Teman siap mendengarkan. Ketik di bawah untuk mulai.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Kirim' })).toBeDisabled()
+})
+
 test('context preview shows what is sent and the diary toggle updates settings', async () => {
-  const { settingsStore, user } = await open(replyWith('x'), { entries: [{ date: '2026-09-18', markdown: 'isi diary' }] })
-  await user.click(await screen.findByText('Yang dikirim ke AI'))
+  const { settingsStore, user } = await openInfo({ entries: [{ date: '2026-09-18', markdown: 'isi diary' }] })
+  await user.click(await screen.findByText('Lihat isi yang dikirim'))
   expect(await screen.findByText('Memori: 0 · Ringkasan: 0 · Entri terbaru: 1 · Entri relevan: 0')).toBeInTheDocument()
   expect(screen.getByText(/isi diary/)).toBeInTheDocument()
   await user.click(screen.getByRole('checkbox', { name: 'Sertakan diary (hari-hari terakhir, ringkasan, dan catatan lama yang terkait)' }))
@@ -114,17 +131,17 @@ test('context preview shows what is sent and the diary toggle updates settings',
 
 test('a context preview that fails to load is logged and stays hidden', async () => {
   const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-  const { memories, user } = await open(replyWith('x'))
+  const { memories, user } = await openInfo()
   const boom = new Error('storage gone')
   vi.spyOn(memories, 'list').mockRejectedValueOnce(boom)
-  await user.click(await screen.findByText('Yang dikirim ke AI'))
+  await user.click(await screen.findByText('Lihat isi yang dikirim'))
   await waitFor(() => expect(errorSpy).toHaveBeenCalledWith(boom))
   expect(screen.queryByText(/^Memori: /)).not.toBeInTheDocument()
   vi.restoreAllMocks()
 })
 
-test('history links to other days and deleting the conversation', async () => {
-  const { chats, user } = await open(replyWith('x'), {
+test('history links to other days and deleting the conversation returns to the chat', async () => {
+  const { chats, user } = await openInfo({
     chats: [
       { date: DATE, role: 'user', content: 'hari ini', createdAt: 2, status: 'complete' },
       { date: '2026-09-15', role: 'user', content: 'dulu', createdAt: 1, status: 'complete' },
@@ -136,21 +153,8 @@ test('history links to other days and deleting the conversation', async () => {
   await user.click(screen.getByRole('button', { name: 'Ya, hapus' }))
   await waitFor(async () => expect(await chats.listByDate(DATE)).toEqual([]))
   expect(await chats.listByDate('2026-09-15')).toHaveLength(1)
+  expect(await screen.findByRole('heading', { name: 'Curhat' })).toBeInTheDocument()
   vi.restoreAllMocks()
-})
-
-test('the delete button is hidden while a reply is streaming', async () => {
-  const c = controllable()
-  const { user } = await open(c.createProvider, {
-    chats: [{ date: DATE, role: 'user', content: 'sebelumnya', createdAt: 1, status: 'complete' }],
-  })
-  expect(await screen.findByRole('button', { name: 'Hapus percakapan ini' })).toBeInTheDocument()
-  await user.type(screen.getByRole('textbox', { name: 'Pesan' }), 'cerita{Enter}')
-  await waitFor(() => expect(c.requests).toHaveLength(1))
-  expect(screen.queryByRole('button', { name: 'Hapus percakapan ini' })).not.toBeInTheDocument()
-  c.push('selesai')
-  c.finish()
-  expect(await screen.findByRole('button', { name: 'Hapus percakapan ini' })).toBeInTheDocument()
 })
 
 test('invalid date redirects to today chat', async () => {

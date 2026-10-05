@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useParams } from 'react-router'
 import { dateKey, isValidDateKey } from '../domain/date'
 import { ArchivePage } from '../features/archive/ArchivePage'
-import { ChatRoute } from '../features/chat/ChatRoute'
+import { ChatInfoRoute, ChatRoute } from '../features/chat/ChatRoute'
 import { MemoryPage } from '../features/memory/MemoryPage'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { StatsPage } from '../features/stats/StatsPage'
@@ -74,6 +74,7 @@ export function AppRoutes() {
         <Route path="day/:date" element={<DayRoute />} />
         <Route path="chat" element={<ChatRoute />} />
         <Route path="chat/:date" element={<ChatRoute />} />
+        <Route path="chat/:date/info" element={<ChatInfoRoute />} />
         <Route path="archive" element={<ArchivePage />} />
         <Route path="stats" element={<StatsPage />} />
         <Route path="settings" element={<SettingsPage />} />

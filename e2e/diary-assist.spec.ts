@@ -39,6 +39,7 @@ test('a conversation becomes diary text with a suggested mood and tag', async ({
   await input.press('Enter')
   await expect(page.getByText('Aku dengerin.')).toBeVisible()
 
+  await page.getByRole('link', { name: 'Detail curhat' }).click()
   await page.getByRole('button', { name: 'Simpan jadi diary' }).click()
   await page.getByRole('button', { name: 'Tambahkan ke diary' }).click()
   await page.getByRole('link', { name: 'Buka diary tanggal ini' }).click()

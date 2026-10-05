@@ -1,5 +1,6 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Send, Stop } from '../../app/icons'
 
 interface Props {
   streaming: boolean
@@ -12,6 +13,14 @@ export function Composer({ streaming, onSend, onStop }: Props) {
   const [text, setText] = useState('')
   // Locked while onSend is pending, so text typed in the meantime cannot be wiped when it succeeds.
   const [sending, setSending] = useState(false)
+  // The field grows with what is typed, up to its CSS max-height, so a long message stays readable before it is sent.
+  const field = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = field.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`
+  }, [text])
 
   const submit = async () => {
     if (sending) return
@@ -35,6 +44,8 @@ export function Composer({ streaming, onSend, onStop }: Props) {
   return (
     <div className="composer">
       <textarea
+        ref={field}
+        rows={1}
         aria-label={t('chat.inputLabel')}
         placeholder={t('chat.placeholder')}
         value={text}
@@ -45,12 +56,19 @@ export function Composer({ streaming, onSend, onStop }: Props) {
         onKeyDown={onKeyDown}
       />
       {streaming ? (
-        <button type="button" onClick={onStop}>
-          {t('chat.stop')}
+        <button type="button" className="icon-btn" aria-label={t('chat.stop')} title={t('chat.stop')} onClick={onStop}>
+          <Stop />
         </button>
       ) : (
-        <button type="button" className="primary" onClick={() => void submit()} disabled={sending || !text.trim()}>
-          {t('chat.send')}
+        <button
+          type="button"
+          className="icon-btn primary"
+          aria-label={t('chat.send')}
+          title={t('chat.send')}
+          onClick={() => void submit()}
+          disabled={sending || !text.trim()}
+        >
+          <Send />
         </button>
       )}
     </div>

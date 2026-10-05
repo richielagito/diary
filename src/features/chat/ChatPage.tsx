@@ -1,35 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ConfirmButton } from '../../app/ConfirmButton'
-import { ChevronRight } from '../../app/icons'
+import { Settings } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { detectCrisis } from '../../ai/safety/crisis'
-import { parseDateKey } from '../../domain/date'
 import type { DateKey, Mood } from '../../domain/types'
 import type { ChatMessage } from '../../storage/ChatRepository'
+import { chatDate } from './chatDate'
 import { Composer } from './Composer'
-import { ContextPreview } from './ContextPreview'
 import { CrisisCard } from './CrisisCard'
 import { MessageList } from './MessageList'
-import { SaveToDiary } from './SaveToDiary'
 import { loadChatPrompt } from './systemPromptSource'
 import { useAiMaintenance } from './useAiMaintenance'
 import { useChat } from './useChat'
 
-const HISTORY_LINKS = 14
-
 export function ChatPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
-  const { diary, chats, memories, summaries, settingsStore } = useRepos()
+  const { diary, chats, memories, summaries } = useRepos()
   const settings = useSettings()
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [dates, setDates] = useState<DateKey[]>([])
 
   useEffect(() => chats.watchByDate(date, setMessages), [chats, date])
-  useEffect(() => {
-    void chats.datesWithChats().then(setDates)
-  }, [chats, messages.length])
 
   const loadPrompt = useCallback(
     async (latestUserText: string) => {
@@ -72,47 +63,39 @@ export function ChatPage({ date }: { date: DateKey }) {
     if (following.current) window.scrollTo?.({ top: document.documentElement.scrollHeight })
   }, [messages.length, partial, showCrisis, chat.state.phase])
 
-  const dayFormat = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' })
-  const fullFormat = new Intl.DateTimeFormat(i18n.language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const otherDates = dates.filter((d) => d !== date).slice(-HISTORY_LINKS).reverse()
+  const empty = messages.length === 0 && chat.state.phase === 'idle'
 
   return (
     <section className="chat">
       <header>
-        <h1>{t('chat.title')}</h1>
-        <p>{fullFormat.format(parseDateKey(date))}</p>
-        {settings.ai && <Link to="/memory">{t('chat.memoryLink')}</Link>}
-        {otherDates.length > 0 && (
-          <details className="chat-history">
-            <summary>
-              <ChevronRight />
-              {t('chat.history')}
-            </summary>
-            <nav aria-label={t('chat.history')}>
-              {otherDates.map((d) => (
-                <Link key={d} to={`/chat/${d}`}>
-                  {dayFormat.format(parseDateKey(d))}
-                </Link>
-              ))}
-            </nav>
-          </details>
-        )}
+        <div>
+          <h1>{t('chat.title')}</h1>
+          <p>{chatDate(date, i18n.language)}</p>
+        </div>
+        <Link className="icon-btn" to={`/chat/${date}/info`} aria-label={t('chat.infoTitle')} title={t('chat.infoTitle')}>
+          <Settings />
+        </Link>
       </header>
 
-      {!settings.ai && (
-        <div className="banner">
-          <div>
-            <h2>{t('chat.noConfigTitle')}</h2>
-            <p>{t('chat.noConfigBody')}</p>
-          </div>
+      {!settings.ai ? (
+        <div className="chat-empty">
+          <h2>{t('chat.noConfigTitle')}</h2>
+          <p>{t('chat.noConfigBody')}</p>
           <Link className="button primary" to="/settings#ai">
             {t('chat.openSettings')}
           </Link>
         </div>
+      ) : (
+        empty && (
+          <div className="chat-empty">
+            <h2>{t('chat.emptyTitle')}</h2>
+            <p>{t('chat.emptyBody', { name: settings.persona.name.trim() || t('chat.title') })}</p>
+          </div>
+        )
       )}
 
-      {/* Without AI, "I'm listening" would be a promise the page cannot keep. */}
-      {(settings.ai || messages.length > 0) && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
+      {/* Without AI, "I'm listening" would be a promise the page cannot keep; earlier messages still show. */}
+      {!empty && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
 
       {showCrisis && <CrisisCard />}
       {/* The card appears inside the flow; this tells a screen reader it arrived. */}
@@ -120,30 +103,7 @@ export function ChatPage({ date }: { date: DateKey }) {
         {showCrisis ? t('crisis.title') : ''}
       </p>
 
-      <SaveToDiary date={date} messages={messages} disabled={chat.state.phase === 'streaming'} />
-
-      {settings.ai && (
-        <>
-          {/* What goes out with each message is stated where the message is written, not only in a fold below. */}
-          <p className="chat-sharing">
-            {t(settings.aiIncludeDiary ? 'chat.diaryShared' : 'chat.diaryNotShared')}
-            <button type="button" className="quiet" onClick={() => void settingsStore.set('aiIncludeDiary', !settings.aiIncludeDiary)}>
-              {t(settings.aiIncludeDiary ? 'chat.stopSharing' : 'chat.startSharing')}
-            </button>
-          </p>
-          <Composer streaming={chat.state.phase === 'streaming'} onSend={chat.send} onStop={chat.stop} />
-          <ContextPreview date={date} latestUserText={[...messages].reverse().find((m) => m.role === 'user')?.content ?? ''} />
-        </>
-      )}
-
-      {messages.length > 0 && chat.state.phase !== 'streaming' && (
-        <ConfirmButton
-          label={t('chat.deleteDay')}
-          question={t('chat.deleteConfirm')}
-          confirmLabel={t('common.yesDelete')}
-          onConfirm={() => void chats.deleteByDate(date)}
-        />
-      )}
+      {settings.ai && <Composer streaming={chat.state.phase === 'streaming'} onSend={chat.send} onStop={chat.stop} />}
     </section>
   )
 }
