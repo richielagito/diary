@@ -10,7 +10,7 @@ export function OpeningSlide({ stats }: { stats: PeriodStats }) {
   return (
     <div className="slide-body">
       {/* "So far" qualifies the title, so it is said quietly beside it rather than in display size. */}
-      <h1 className="slide-title">
+      <h2 className="slide-title">
         {title}
         {stats.range.isCurrent && (
           <>
@@ -18,7 +18,7 @@ export function OpeningSlide({ stats }: { stats: PeriodStats }) {
             <span className="slide-title-note">{t('wrapped.soFar')}</span>
           </>
         )}
-      </h1>
+      </h2>
       <p className="slide-lead">{t('wrapped.totalWords', { count: stats.totalWords, words: formatNumber(stats.totalWords, lang) })}</p>
       <p className="slide-lead">{t('wrapped.longestStreak', { count: stats.longestStreak })}</p>
     </div>

@@ -12,6 +12,9 @@ export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<Dat
   const weekday = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })
   const today = dateKey()
   const full = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long', year: 'numeric' })
+  // One tab stop for the whole month (today, else its first day); the arrow keys move between days.
+  const days = buildMonthGrid(ym).flat().filter((d): d is DateKey => !!d && d <= today)
+  const focusDate = days.includes(today) ? today : days[0]
 
   // A grid moves by arrows: left and right by a day, up and down by a week (only between days that can be opened).
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -50,7 +53,12 @@ export function MonthCalendar({ ym, entries }: { ym: YearMonth; entries: Map<Dat
                     {day.getDate()}
                   </span>
                 ) : (
-                  <Link to={date === today ? '/' : `/day/${date}`} aria-label={label} aria-current={date === today ? 'date' : undefined}>
+                  <Link
+                    to={date === today ? '/' : `/day/${date}`}
+                    aria-label={label}
+                    aria-current={date === today ? 'date' : undefined}
+                    tabIndex={date === focusDate ? 0 : -1}
+                  >
                     {day.getDate()}
                     <span
                       className={entry && entry.mood === null ? 'dot dot-none' : 'dot'}

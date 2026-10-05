@@ -58,7 +58,8 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
           >
             {moods.map((m) => (
               <span key={m} style={{ flexGrow: dist[m], background: `var(--mood-${m})` }}>
-                {MOOD_EMOJI[m]}
+                {/* A thin band has no room for its face; the strip's label still names it. */}
+                {dist[m] / stats.mood.count >= 0.1 && MOOD_EMOJI[m]}
               </span>
             ))}
           </div>
@@ -69,7 +70,7 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
         {t('wrapped.saveImage')}
       </button>
       {failed && <p role="alert">{t('wrapped.saveFailed')}</p>}
-      <Link className="slide-close" to="/stats" replace>
+      <Link className="slide-close" to={`/stats?p=${periodId(stats.period)}`} replace>
         {t('wrapped.close')}
       </Link>
     </div>

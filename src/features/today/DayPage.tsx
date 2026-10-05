@@ -171,6 +171,13 @@ export function DayPage({ date }: { date: DateKey }) {
     )
   }
 
+  /** The guide was never stored, so clearing it only empties the editor. */
+  const clearWelcome = () => {
+    if (!welcome) return
+    setWelcome(false)
+    editorRef.current?.setMarkdown('')
+  }
+
   const today = dateKey()
   // "Minggu, 4 Okt": the year shows only for another year. Day, month and year stay on one line: a narrow screen breaks after the weekday.
   let afterWeekday = 0
@@ -246,15 +253,13 @@ export function DayPage({ date }: { date: DateKey }) {
         </div>
       </header>
       <MoodPicker value={mood} onChange={onMood} past={!isToday} />
-      {/* One tap clears the guide and starts the entry; the guide stays in Settings. */}
+      {/* The guide gives way as soon as the user goes to write: this button or a tap in the editor clears it. It stays in Settings. */}
       {welcome && (
         <p className="day-welcome">
           <button
             type="button"
-            className="quiet"
             onClick={() => {
-              editorRef.current?.setMarkdown('')
-              setWelcome(false)
+              clearWelcome()
               editorRef.current?.focus()
             }}
           >
@@ -273,6 +278,7 @@ export function DayPage({ date }: { date: DateKey }) {
             autosave.schedule(markdown)
           }}
           onBlur={() => void autosave.flush()}
+          onFocus={clearWelcome}
           tagSuggest={tagSuggest}
         />
       )}

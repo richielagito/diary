@@ -3,9 +3,10 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { dateKey, parseDateKey } from '../../domain/date'
-import { MOOD_EMOJI, MOODS_SHOWN } from '../../domain/types'
+import { MOOD_EMOJI } from '../../domain/types'
 import type { HeatCell } from '../../stats/computeStats'
 import { LEVEL_OPACITY } from '../../stats/wordLevels'
+import { MoodLegend } from './MoodLegend'
 
 /** Label sel (dipakai untuk title dan aria-label). */
 export function heatCellLabel(cell: HeatCell, t: TFunction, language: string): string {
@@ -130,21 +131,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
           <div className="heat-grid">{cells.map(renderCell)}</div>
         </>
       )}
-      {!compact && (
-        <div className="heat-legend">
-          {MOODS_SHOWN.map((m) => (
-            <span key={m}>
-              <span className="swatch" style={{ background: `var(--mood-${m})` }} />
-              {t(`mood.${m}`)}
-            </span>
-          ))}
-          <span>
-            <span className="swatch swatch-none" />
-            {t('stats.noMood')}
-          </span>
-          <span>{t('stats.legendWords')}</span>
-        </div>
-      )}
+      {!compact && <MoodLegend note={t('stats.legendWords')} />}
     </div>
   )
 }

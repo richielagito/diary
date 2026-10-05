@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
 import { dateKey } from '../../domain/date'
 import type { DayEntry } from '../../domain/types'
 import { computeStats } from '../../stats/computeStats'
-import { comparePeriods, periodContaining, periodId, shiftPeriod, type StatsPeriod } from '../../stats/range'
+import { comparePeriods, parsePeriodId, periodContaining, periodId, shiftPeriod, type StatsPeriod } from '../../stats/range'
 import { ConsistencyCards, MoodSection, TagSection } from './StatCards'
 import { periodLabel } from './format'
 import { Heatmap } from './Heatmap'
@@ -20,7 +20,17 @@ export function StatsPage() {
   const [today] = useState(() => dateKey())
   const [entries, setEntries] = useState<DayEntry[] | null>(null)
   const [failed, setFailed] = useState(false)
-  const [period, setPeriod] = useState<StatsPeriod>(() => periodContaining('month', today))
+  /** Raised by "Coba lagi" after a failed load, to read the diary again. */
+  const [attempt, setAttempt] = useState(0)
+  // The period lives in the URL (?p=2026-10 or ?p=2026): Back from a day or from Wrapped returns to it.
+  const [params, setParams] = useSearchParams()
+  const periodParam = params.get('p')
+  const period = useMemo(() => {
+    const p = periodParam ? parsePeriodId(periodParam) : null
+    return p && comparePeriods(p, periodContaining(p.kind, today)) <= 0 ? p : periodContaining('month', today)
+  }, [periodParam, today])
+  const setPeriod = (next: StatsPeriod | ((p: StatsPeriod) => StatsPeriod)) =>
+    setParams({ p: periodId(typeof next === 'function' ? next(period) : next) }, { replace: true })
 
   useEffect(() => {
     let cancelled = false
@@ -36,10 +46,25 @@ export function StatsPage() {
     return () => {
       cancelled = true
     }
-  }, [diary])
+  }, [diary, attempt])
 
   const stats = useMemo(() => (entries && entries.length > 0 ? computeStats(entries, period, today) : null), [entries, period, today])
-  if (failed) return <p role="alert">{t('stats.loadFailed')}</p>
+  if (failed) {
+    return (
+      <div className="banner error" role="alert">
+        <span>{t('stats.loadFailed')}</span>
+        <button
+          type="button"
+          onClick={() => {
+            setFailed(false)
+            setAttempt((n) => n + 1)
+          }}
+        >
+          {t('common.retry')}
+        </button>
+      </div>
+    )
+  }
   if (entries === null) return null
 
   const language = i18n.language

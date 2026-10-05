@@ -53,16 +53,16 @@ test('date heading is short and names the year only for another year', async () 
   expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(new RegExp(`^\\S+, 1\\sMar\\s${year - 1}$`))
 })
 
-test('first run: today on an empty diary opens on the welcome text, stored only once the user writes', async () => {
+test('first run: today on an empty diary opens on the guide, which gives way when the user goes to write', async () => {
   stubLayout()
   const { diary, user } = await renderApp('/')
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
   expect(box).toHaveTextContent('Selamat datang')
   expect(await diary.isEmpty()).toBe(true)
   await user.click(box)
+  expect(box).not.toHaveTextContent('Selamat datang')
   await user.keyboard('halo')
-  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toContain('halo'), { timeout: 3000 })
-  expect((await diary.get(dateKey()))?.markdown).toContain('Selamat datang')
+  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toBe('halo'), { timeout: 3000 })
 })
 
 test('first run: picking a mood stores only the mood, never the guide', async () => {
@@ -73,12 +73,12 @@ test('first run: picking a mood stores only the mood, never the guide', async ()
   expect((await diary.get(dateKey()))?.markdown ?? '').toBe('')
 })
 
-test('first run: one tap clears the guide and leaves an empty entry to write in', async () => {
+test('first run: "Mulai menulis" clears the guide and leaves an empty entry to write in', async () => {
   const { diary, user } = await renderApp('/')
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
-  await user.click(await screen.findByRole('button', { name: 'Hapus panduan, mulai menulis' }))
+  await user.click(await screen.findByRole('button', { name: 'Mulai menulis' }))
   expect(box).not.toHaveTextContent('Selamat datang')
-  expect(screen.queryByRole('button', { name: 'Hapus panduan, mulai menulis' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Mulai menulis' })).not.toBeInTheDocument()
   expect(await diary.isEmpty()).toBe(true)
 })
 

@@ -9,7 +9,8 @@ import { Close } from '../../app/icons'
 import type { Memory } from '../../storage/MemoryRepository'
 import type { Summary } from '../../storage/SummaryRepository'
 import { computeStats, type PeriodStats } from '../../stats/computeStats'
-import type { StatsPeriod } from '../../stats/range'
+import { periodId, type StatsPeriod } from '../../stats/range'
+import { periodLabel } from '../stats/format'
 import { ClosingSlide } from './slides/ClosingSlide'
 import { EmptySlide } from './slides/EmptySlide'
 import { LetterSlide } from './slides/LetterSlide'
@@ -41,7 +42,7 @@ export function moodWash(distribution: Record<Mood, number>): CSSProperties {
 }
 
 export function WrappedPage({ period }: { period: StatsPeriod }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { diary, memories, summaries } = useRepos()
   const settings = useSettings()
   const navigate = useNavigate()
@@ -102,7 +103,9 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
   )
   const slides = useMemo(() => (stats ? buildSlides(stats, letterAvailable) : []), [stats, letterAvailable])
   // Tutup memakai replace supaya tombol Back tidak membuka Wrapped lagi
-  const { index, next, prev, bind } = useSlideNav(slides.length, () => navigate('/stats', { replace: true }))
+  // Closing returns to the period Wrapped was opened for, not to the current month.
+  const back = `/stats?p=${periodId(period)}`
+  const { index, next, prev, bind } = useSlideNav(slides.length, () => navigate(back, { replace: true }))
 
   if (failed) {
     return (
@@ -112,7 +115,7 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
             <p role="alert" className="slide-lead">
               {t('wrapped.loadFailed')}
             </p>
-            <Link className="slide-close" to="/stats" replace>
+            <Link className="slide-close" to={back} replace>
               {t('wrapped.close')}
             </Link>
           </div>
@@ -125,12 +128,14 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
 
   return (
     <div className="wrapped" style={moodWash(stats.mood.distribution)} {...bind}>
+      {/* One page title for every slide; each slide's own title is an h2 under it. */}
+      <h1 className="visually-hidden">{t('wrapped.title', { period: periodLabel(period, i18n.language) })}</h1>
       <div className="wrapped-progress" aria-hidden="true">
         {slides.map((id, i) => (
           <span key={id} className={i <= index ? 'filled' : undefined} />
         ))}
       </div>
-      <Link className="wrapped-x icon-btn" to="/stats" replace aria-label={t('wrapped.close')}>
+      <Link className="wrapped-x icon-btn" to={back} replace aria-label={t('wrapped.close')}>
         <Close />
       </Link>
       <button type="button" className="sr-only-focusable" onClick={prev}>

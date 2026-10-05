@@ -92,3 +92,14 @@ test('arrow keys move between days in the calendar', async () => {
   await user.keyboard('{ArrowUp}')
   expect(within(cal).getByRole('link', { name: '4 September 2026' })).toHaveFocus()
 })
+
+test('the month comes from the URL, so Back from a day returns to it', async () => {
+  await renderApp('/archive?m=2026-08', seed)
+  expect(await screen.findByRole('heading', { name: /Agustus 2026/ })).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: /15 Agustus 2026/ })).toHaveAttribute('href', '/day/2026-08-15')
+})
+
+test('a future or malformed month in the URL falls back to the current month', async () => {
+  await renderApp('/archive?m=2099-01', seed)
+  expect(await screen.findByRole('heading', { name: /September 2026/ })).toBeInTheDocument()
+})

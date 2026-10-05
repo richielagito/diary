@@ -1,7 +1,7 @@
 import type { id } from './id'
 
 export const en: typeof id = {
-  common: { cancel: 'Cancel', yesDelete: 'Yes, delete', back: 'Back' },
+  common: { cancel: 'Cancel', yesDelete: 'Yes, delete', back: 'Back', retry: 'Try again' },
   nav: { skip: 'Skip to content', label: 'Main navigation', today: 'Today', chat: 'Talk', archive: 'Archive', stats: 'Stats', settings: 'Settings' },
   stats: {
     heatmapLabel: 'Mood heatmap',
@@ -33,7 +33,8 @@ export const en: typeof id = {
     eachDays_other: '{{count}} days each',
     moodDistribution: 'Mood distribution',
     moodTrend: 'Mood trend',
-    moodTrendNote: 'The taller the bar, the brighter the average mood.',
+    moodTrendNoteMonth: 'One bar per week, with its dates below. The taller the bar, the brighter the average mood.',
+    moodTrendNoteYear: 'One bar per month. The taller the bar, the brighter the average mood.',
     moodDays_one: '{{count}} day',
     moodDays_other: '{{count}} days',
     brightest: 'Brightest: {{month}}',
@@ -68,6 +69,7 @@ export const en: typeof id = {
     history: 'Earlier conversations',
     deleteDay: 'Delete this conversation',
     deleteConfirm: 'Delete all messages in this conversation?',
+    thisChat: 'This conversation · {{date}}',
     noConfigTitle: 'AI is not set up',
     noConfigBody:
       'Your companion uses your own API key. Your messages go directly from this browser to the provider you choose.',
@@ -175,8 +177,8 @@ export const en: typeof id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Welcome. This is a short guide; it is not saved unless you change it. Once read, press "Clear the guide and start writing".',
-    startWriting: 'Clear the guide and start writing',
+    welcome: 'Welcome. This is a short guide; it is not saved and gives way as soon as you start writing. It is always in Settings too.',
+    startWriting: 'Start writing',
     editorLabel: 'Write diary',
     placeholder: 'What happened today?',
     moodLabel: "Today's mood",
@@ -197,7 +199,7 @@ export const en: typeof id = {
     retry: 'Try saving again',
   },
   editor: { bold: 'Bold', italic: 'Italic', strike: 'Strikethrough', code: 'Code', heading: 'Heading', bulletList: 'List', orderedList: 'Numbered list' },
-  backup: { reminder: "You haven't made a backup in a while. Export one to keep your writing safe.", action: 'Export a backup', exportFailed: 'Export failed. Please try again.' },
+  backup: { reminder: "You haven't made a backup in a while. Export one to keep your writing safe.", action: 'Export a backup', later: 'Later', exportFailed: 'Export failed. Please try again.' },
   archive: {
     searchLabel: 'Search',
     searchPlaceholder: 'Search text or #tag',
@@ -416,6 +418,7 @@ export const en: typeof id = {
     brighterWith: 'Days with {{tag}} tend to be brighter.',
     newTags: 'New this year: {{tags}}.',
     colour: 'The colour of your {{period}}',
+    title: 'Wrapped {{period}}',
     brightDays_one: 'There was also {{count}} bright day.',
     brightDays_other: 'There were also {{count}} bright days.',
     thanks: 'Thanks for writing. See you in the next story.',

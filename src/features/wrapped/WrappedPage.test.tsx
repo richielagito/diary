@@ -39,7 +39,7 @@ test('opening slide, progress bar and no main nav', async () => {
   expect(screen.getByRole('heading', { name: 'Oktober 2026, kamu menulis 3 hari (sejauh ini)' })).toBeInTheDocument()
   expect(segments()).toBe(4)
   expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats')
+  expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats?p=2026-10')
 })
 
 test('keyboard navigation and clamping', async () => {
@@ -171,7 +171,7 @@ test('load failure shows an alert instead of the empty slide', async () => {
   await renderApp('/wrapped/2026-10', seed)
   expect(await screen.findByRole('alert')).toHaveTextContent('Gagal memuat Wrapped.')
   expect(screen.queryByText('Belum ada tulisan di periode ini.')).not.toBeInTheDocument()
-  expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats')
+  expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats?p=2026-10')
   spy.mockRestore()
   vi.restoreAllMocks()
 })

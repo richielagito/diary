@@ -69,7 +69,7 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
           {mood.trend.filter((p) => p.average !== null).length >= 2 && (
             <>
               <h3>{t('stats.moodTrend')}</h3>
-              <p className="muted">{t('stats.moodTrendNote')}</p>
+              <p className="muted">{t(stats.period.kind === 'year' ? 'stats.moodTrendNoteYear' : 'stats.moodTrendNoteMonth')}</p>
               <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, stats.period.kind, lang), average: p.average }))} />
             </>
           )}

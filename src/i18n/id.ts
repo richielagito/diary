@@ -1,5 +1,5 @@
 export const id = {
-  common: { cancel: 'Batal', yesDelete: 'Ya, hapus', back: 'Kembali' },
+  common: { cancel: 'Batal', yesDelete: 'Ya, hapus', back: 'Kembali', retry: 'Coba lagi' },
   nav: { skip: 'Langsung ke isi', label: 'Navigasi utama', today: 'Hari ini', chat: 'Curhat', archive: 'Arsip', stats: 'Statistik', settings: 'Pengaturan' },
   stats: {
     heatmapLabel: 'Heatmap mood',
@@ -31,7 +31,8 @@ export const id = {
     eachDays_other: 'masing-masing {{count}} hari',
     moodDistribution: 'Sebaran mood',
     moodTrend: 'Tren mood',
-    moodTrendNote: 'Makin tinggi batangnya, makin cerah rata-rata mood-nya.',
+    moodTrendNoteMonth: 'Satu batang per minggu, dengan tanggalnya di bawah. Makin tinggi, makin cerah rata-rata mood-nya.',
+    moodTrendNoteYear: 'Satu batang per bulan. Makin tinggi, makin cerah rata-rata mood-nya.',
     moodDays_one: '{{count}} hari',
     moodDays_other: '{{count}} hari',
     brightest: 'Paling cerah: {{month}}',
@@ -66,6 +67,7 @@ export const id = {
     history: 'Percakapan sebelumnya',
     deleteDay: 'Hapus percakapan ini',
     deleteConfirm: 'Hapus semua pesan di percakapan ini?',
+    thisChat: 'Percakapan ini · {{date}}',
     noConfigTitle: 'AI belum diatur',
     noConfigBody:
       'Teman curhat memakai API key milikmu sendiri. Pesanmu dikirim langsung dari browser ini ke provider yang kamu pilih.',
@@ -173,8 +175,8 @@ export const id = {
     ].join('\n\n'),
   },
   day: {
-    welcome: 'Selamat datang. Ini panduan singkat; tidak akan tersimpan kecuali kamu mengubahnya. Kalau sudah dibaca, tekan "Hapus panduan, mulai menulis".',
-    startWriting: 'Hapus panduan, mulai menulis',
+    welcome: 'Selamat datang. Ini panduan singkat; ia tidak disimpan dan hilang begitu kamu mulai menulis. Panduan ini selalu ada di Pengaturan.',
+    startWriting: 'Mulai menulis',
     editorLabel: 'Tulis diary',
     placeholder: 'Apa yang terjadi hari ini?',
     moodLabel: 'Mood hari ini',
@@ -195,7 +197,7 @@ export const id = {
     retry: 'Coba simpan lagi',
   },
   editor: { bold: 'Tebal', italic: 'Miring', strike: 'Coret', code: 'Kode', heading: 'Judul', bulletList: 'Daftar', orderedList: 'Daftar bernomor' },
-  backup: { reminder: 'Sudah lama belum membuat cadangan. Export cadangan supaya tulisanmu aman.', action: 'Export cadangan', exportFailed: 'Export gagal. Coba lagi.' },
+  backup: { reminder: 'Sudah lama belum membuat cadangan. Export cadangan supaya tulisanmu aman.', action: 'Export cadangan', later: 'Nanti', exportFailed: 'Export gagal. Coba lagi.' },
   archive: {
     searchLabel: 'Cari',
     searchPlaceholder: 'Cari teks atau #tag',
@@ -414,6 +416,7 @@ export const id = {
     brighterWith: 'Hari-hari dengan {{tag}} biasanya lebih cerah.',
     newTags: 'Baru muncul tahun ini: {{tags}}.',
     colour: 'Warna {{period}}-mu',
+    title: 'Wrapped {{period}}',
     brightDays_one: 'Ada juga {{count}} hari yang cerah.',
     brightDays_other: 'Ada juga {{count}} hari yang cerah.',
     thanks: 'Terima kasih sudah menulis. Sampai jumpa di cerita berikutnya.',

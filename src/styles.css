@@ -156,7 +156,8 @@ button.danger { color: var(--danger); border-color: color-mix(in oklab, var(--da
 button.danger:hover:not(:disabled) { border-color: var(--danger); }
 button.quiet { background: none; border-color: transparent; color: var(--muted); padding-inline: 0.5rem; }
 button.quiet:hover:not(:disabled) { color: var(--text); border-color: transparent; background: var(--sunken); }
-button.quiet.danger:hover:not(:disabled) { color: var(--danger); }
+/* Destructive quiet buttons read as destructive at rest, not only on hover (touch has no hover). */
+button.quiet.danger { color: var(--danger); }
 /* Icon-only buttons and links (month arrows, close). */
 /* A bare button that starts a row lines up with the text above it. */
 p > button.quiet:first-child { margin-left: -0.5rem; }
@@ -443,6 +444,10 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
   transition: background-color 150ms ease-out;
 }
 .calendar a:hover { background: var(--sunken); }
+/* Wide screens: square day cells would make the month a whole screen tall and push the day list below the fold. */
+@media (min-width: 641px) {
+  .calendar a, .calendar span.empty, .calendar span.future { aspect-ratio: auto; height: 3.5rem; }
+}
 .calendar span.future { color: var(--muted); }
 .calendar a[aria-current='date'] { box-shadow: inset 0 0 0 1.5px var(--text); font-weight: 600; }
 .calendar .dot { width: 7px; height: 7px; border-radius: 50%; }
@@ -698,6 +703,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .stat-section h2 { margin-top: 2.25rem; }
 .mood-average strong { font-family: var(--font-text); font-weight: 500; font-size: 1.25rem; white-space: nowrap; }
 .mood-average span { color: var(--muted); }
+.mood-average > span:last-child { white-space: nowrap; }
 .mood-extremes { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; color: var(--muted); font-size: 0.9375rem; }
 .mood-dist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .mood-dist li { display: grid; grid-template-columns: 1.5em 5.5em 1fr 4.5em; align-items: center; gap: 0.6rem; font-size: 0.875rem; }
@@ -798,7 +804,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
   text-wrap: balance;
   margin: 0;
 }
-.slide-lead { font-family: var(--font-text); font-size: 1.25rem; line-height: 1.45; text-wrap: balance; margin: 0; }
+.slide-lead { font-family: var(--font-text); font-size: 1.25rem; font-weight: 400; line-height: 1.45; text-wrap: balance; margin: 0; }
 .slide-body .mood-bars { max-width: 100%; }
 .slide-heatmap { width: 100%; }
 .slide-heatmap-month { max-width: 240px; }
@@ -806,15 +812,16 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 /* The serif slide title is the heading; the section's own h2 would repeat it. */
 .slide-body .stat-section > h2 { display: none; }
 .slide-body .tag-stats li { background: color-mix(in oklab, var(--surface) 70%, transparent); }
-.slide-close { color: var(--muted); font-size: 0.9375rem; }
+.slide-close { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.75rem; color: var(--muted); font-size: 0.9375rem; }
 /* Quieter lines after a slide's one fact. */
 .slide-quiet { color: var(--muted); }
 .mood-strip { display: flex; gap: 3px; width: 100%; height: 4.5rem; }
+.mood-strip span, .heatmap-compact .heat-cell[style*='--mood'] { box-shadow: inset 0 0 0 0.5px color-mix(in oklab, var(--text) 30%, transparent); }
+.mood-bars rect + rect { stroke: color-mix(in oklab, var(--text) 30%, transparent); stroke-width: 1; }
 .mood-strip span { flex-basis: 0; min-width: 6px; border-radius: 4px; display: grid; place-items: center; overflow: hidden; font-size: 1.375rem; }
 .letter-envelope {
   position: relative;
   padding: 3.5rem 1.5rem 2rem;
-  border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);
   box-shadow: var(--shadow-pop);

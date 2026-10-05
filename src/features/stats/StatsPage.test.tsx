@@ -124,3 +124,8 @@ test('a failing load shows an error line', async () => {
   list.mockRestore()
   spy.mockRestore()
 })
+
+test('the period comes from the URL', async () => {
+  await renderApp('/stats?p=2026', seed)
+  expect(await screen.findByRole('heading', { name: '2026' })).toBeInTheDocument()
+})

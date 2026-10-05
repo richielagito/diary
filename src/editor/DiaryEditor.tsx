@@ -21,12 +21,13 @@ interface Props {
   label: string
   onChange: (md: string) => void
   onBlur: () => void
+  onFocus?: () => void
   /** Inline tag chips while typing `#`. Only read at mount; bump `version` when suggestions change. */
   tagSuggest?: { getSuggestions(prefix: string): string[]; onTrigger(): void; version: number }
   ref?: Ref<DiaryEditorHandle>
 }
 
-export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onBlur, tagSuggest, ref }: Props) {
+export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onBlur, onFocus, tagSuggest, ref }: Props) {
   const { t, i18n } = useTranslation()
   const onChangeRef = useRef(onChange)
   const onBlurRef = useRef(onBlur)
@@ -35,6 +36,8 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
   const lastMarkdown = useRef<string | null>(null)
   onChangeRef.current = onChange
   onBlurRef.current = onBlur
+  const onFocusRef = useRef(onFocus)
+  onFocusRef.current = onFocus
   tagSuggestRef.current = tagSuggest
   tRef.current = t
 
@@ -75,6 +78,7 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
       onChangeRef.current(md)
     },
     onBlur: () => onBlurRef.current(),
+    onFocus: () => onFocusRef.current?.(),
   })
 
   useImperativeHandle(

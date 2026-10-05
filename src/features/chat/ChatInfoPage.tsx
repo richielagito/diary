@@ -39,7 +39,7 @@ export function ChatInfoPage({ date }: { date: DateKey }) {
 
       {messages.length > 0 && (
         <section>
-          <h2>{chatDate(date, i18n.language)}</h2>
+          <h2>{t('chat.thisChat', { date: chatDate(date, i18n.language) })}</h2>
           <SaveToDiary date={date} messages={messages} />
           <ConfirmButton
             className="chat-delete"

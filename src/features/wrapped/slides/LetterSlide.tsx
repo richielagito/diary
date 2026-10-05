@@ -74,7 +74,7 @@ export function LetterSlide({ input, ai }: { input: LetterInput; ai: AiConfig })
     const { cached } = state
     return (
       <div className="slide-body letter-envelope" data-no-nav>
-        <p className="slide-lead">{t('wrapped.letterFrom', { name })}</p>
+        <h2 className="slide-lead">{t('wrapped.letterFrom', { name })}</h2>
         <p className="muted">{cached?.fresh ? t('wrapped.letterOpened') : t('wrapped.letterNew')}</p>
         <button type="button" className="wrapped-link" onClick={() => void open(cached)}>
           {t('wrapped.openLetter')}
