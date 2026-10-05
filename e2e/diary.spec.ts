@@ -32,7 +32,7 @@ test('export then import into a fresh profile restores entries', async ({ page, 
   await page.getByRole('link', { name: 'Pengaturan' }).click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export ZIP' }).click(),
+    page.getByRole('button', { name: 'Export cadangan (ZIP)' }).click(),
   ])
   expect(download.suggestedFilename()).toMatch(/^diary-export-\d{4}-\d{2}-\d{2}\.zip$/)
   const zipPath = await download.path()

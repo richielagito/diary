@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { parseDateKey } from '../../domain/date'
+import { dateKey, parseDateKey } from '../../domain/date'
 import { MOOD_EMOJI, MOODS_SHOWN } from '../../domain/types'
 import type { HeatCell } from '../../stats/computeStats'
 import { LEVEL_OPACITY } from '../../stats/wordLevels'
@@ -53,6 +53,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
     setEdges((e) => (e.start === start && e.end === end ? e : { start, end }))
   }
 
+  const today = dateKey()
   // Sel terakhir yang sudah lewat = hari ini di periode berjalan
   const current = mode === 'year' && scrollToToday ? (cells.filter((c) => c.inRange && !c.future).at(-1)?.date ?? null) : null
   useEffect(() => {
@@ -70,7 +71,16 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
     if (cell.future) return <span key={cell.date} className="heat-cell heat-future" role="img" aria-label={label} title={label} />
     if (compact) return <span key={cell.date} className={cellClass(cell)} role="img" aria-label={label} style={cellStyle(cell)} data-current={mark} />
     return (
-      <Link key={cell.date} to={`/day/${cell.date}`} className={cellClass(cell)} aria-label={label} title={label} style={cellStyle(cell)} data-current={mark} />
+      <Link
+        key={cell.date}
+        to={`/day/${cell.date}`}
+        className={cellClass(cell)}
+        aria-label={label}
+        title={label}
+        style={cellStyle(cell)}
+        data-current={mark}
+        data-today={cell.date === today ? '' : undefined}
+      />
     )
   }
 

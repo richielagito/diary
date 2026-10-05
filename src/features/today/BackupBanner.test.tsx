@@ -7,7 +7,7 @@ const DAY = 86_400_000
 test('hidden with no entries', async () => {
   await renderWithRepos(<BackupBanner />)
   await new Promise((r) => setTimeout(r, 50))
-  expect(screen.queryByText(/Sudah lama tidak backup/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Sudah lama belum membuat cadangan/)).not.toBeInTheDocument()
 })
 
 test('shown when first entry is older than interval and never exported', async () => {
@@ -17,8 +17,8 @@ test('shown when first entry is older than interval and never exported', async (
     [{ date: '2026-01-01', markdown: 'lama', mood: null, createdAt: Date.now() - 30 * DAY, updatedAt: 0 }],
     'skip',
   )
-  expect(await screen.findByText(/Sudah lama tidak backup/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument()
+  expect(await screen.findByText(/Sudah lama belum membuat cadangan/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Export cadangan' })).toBeInTheDocument()
 })
 
 test('hidden right after recent export', async () => {
@@ -29,5 +29,5 @@ test('hidden right after recent export', async () => {
     'skip',
   )
   await new Promise((r) => setTimeout(r, 50))
-  expect(screen.queryByText(/Sudah lama tidak backup/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Sudah lama belum membuat cadangan/)).not.toBeInTheDocument()
 })

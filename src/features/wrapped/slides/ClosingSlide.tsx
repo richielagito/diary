@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { MOODS_SHOWN } from '../../../domain/types'
+import { MOOD_EMOJI, MOODS_SHOWN } from '../../../domain/types'
 import type { PeriodStats } from '../../../stats/computeStats'
 import { periodId } from '../../../stats/range'
 import { formatNumber, periodLabel } from '../../stats/format'
@@ -57,7 +57,9 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
             aria-label={moods.map((m) => `${t(`mood.${m}`)} ${t('stats.moodDays', { count: dist[m] })}`).join(', ')}
           >
             {moods.map((m) => (
-              <span key={m} style={{ flexGrow: dist[m], background: `var(--mood-${m})` }} />
+              <span key={m} style={{ flexGrow: dist[m], background: `var(--mood-${m})` }}>
+                {MOOD_EMOJI[m]}
+              </span>
             ))}
           </div>
         </>

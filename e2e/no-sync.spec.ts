@@ -12,7 +12,7 @@ test('a build without a sync server has no account section and talks to no other
   })
 
   await page.goto('/settings')
-  await expect(page.getByRole('button', { name: 'Export ZIP' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Export cadangan (ZIP)' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Akun & sinkronisasi' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Pengaturan', exact: true })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Perlu perhatian' })).toHaveCount(0)

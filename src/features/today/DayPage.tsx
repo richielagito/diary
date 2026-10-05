@@ -224,6 +224,10 @@ export function DayPage({ date }: { date: DateKey }) {
           <SaveStatusText
             status={moodError ? 'error' : autosave.status === 'idle' && stored ? 'saved' : autosave.status}
             onExport={() => void exportNow()}
+            onRetry={() => {
+              if (moodError) onMood(mood)
+              void autosave.flush()
+            }}
           />
         </div>
         <div className="day-step">

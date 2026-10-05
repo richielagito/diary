@@ -3,12 +3,13 @@ import { formatMood } from './format'
 
 const H = 80
 const LABEL_H = 16
+const MIN_H = 6
 // Lebih dari seminggu titik (tren 12 bulan): batang lebih ramping supaya viewBox sempit
 // dan label bulan tetap terbaca (~10px) saat SVG diskalakan ke lebar ponsel.
 const WIDE = { bar: 32, gap: 8, font: 10 }
 const DENSE = { bar: 20, gap: 6, font: 11 }
 
-/** Tren mood: tinggi batang = rata-rata/5; null = slot kosong. */
+/** Tren mood: tinggi batang dari skala 1 (Sedih, batang terendah) sampai 5; null = slot kosong. */
 export function MoodBars({ points }: { points: { label: string; average: number | null }[] }) {
   const { t, i18n } = useTranslation()
   const { bar, gap, font } = points.length > 7 ? DENSE : WIDE
@@ -27,7 +28,8 @@ export function MoodBars({ points }: { points: { label: string; average: number 
     >
       {points.map((p, i) => {
         const x = i * (bar + gap)
-        const h = p.average === null ? 0 : (p.average / 5) * H
+        // The scale starts at 1, not 0, so the months' differences show instead of every bar standing at 60-80%.
+        const h = p.average === null ? 0 : Math.max(MIN_H, ((p.average - 1) / 4) * H)
         const avg = p.average === null ? null : Math.round(p.average)
         return (
           <g key={i}>

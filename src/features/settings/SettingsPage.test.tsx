@@ -20,7 +20,7 @@ test('language switch changes UI text', async () => {
 
 test('reminder can be turned off', async () => {
   const { settingsStore, user } = await renderApp('/settings')
-  await user.selectOptions(await screen.findByRole('combobox', { name: 'Pengingat backup' }), 'off')
+  await user.selectOptions(await screen.findByRole('combobox', { name: 'Pengingat cadangan' }), 'off')
   await waitFor(async () => expect((await settingsStore.getAll()).backupReminderDays).toBeNull())
 })
 

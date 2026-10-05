@@ -42,6 +42,7 @@ export function ChatInfoPage({ date }: { date: DateKey }) {
           <h2>{chatDate(date, i18n.language)}</h2>
           <SaveToDiary date={date} messages={messages} />
           <ConfirmButton
+            className="chat-delete"
             label={t('chat.deleteDay')}
             question={t('chat.deleteConfirm')}
             confirmLabel={t('common.yesDelete')}

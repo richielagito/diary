@@ -586,6 +586,8 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 /* A link alone on its line is a target, not a word in a sentence. */
 .chat-info p > a:only-child { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .chat-info > section { display: grid; justify-items: start; gap: 0.75rem; margin-top: 2rem; }
+/* The destructive action stands apart from saving the chat. */
+.chat-info .chat-delete { margin-top: 1rem; }
 .chat-info h2 { justify-self: stretch; margin: 0; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
 .chat-info p { margin: 0; }
 .chat-info .save-to-diary { justify-self: stretch; }
@@ -634,6 +636,8 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .heat-cell.heat-pad { border-color: transparent; }
 .heat-cell.heat-future { opacity: 0.4; border-style: dashed; }
 .heat-cell.heat-nomood { border: 1.5px solid var(--mood-none); }
+/* Today is marked apart from the rings and fills that carry mood. */
+.heat-cell[data-today] { outline: 2px solid var(--text); outline-offset: 1px; }
 /* relative: offsetLeft sel dihitung terhadap kontainer scroll (auto-scroll ke minggu ini) */
 .heatmap-year .heat-scroll { position: relative; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .heatmap-year .heat-inner { width: max-content; }
@@ -668,7 +672,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .heat-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
 .heat-legend .swatch-none { box-shadow: inset 0 0 0 1.5px var(--mood-none); }
 /* Pale moods (sky, ochre) need an edge to stand off the paper: a hairline of ink mixed into every filled mood mark. */
-.calendar .dot[style], .heat-cell[style*='--mood'], .heat-legend .swatch:not(.swatch-none), .mood-dist .dist-bar span { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--text) 30%, transparent); }
+.calendar .dot[style], .heatmap:not(.heatmap-compact) .heat-cell[style*='--mood'], .heat-legend .swatch:not(.swatch-none), .mood-dist .dist-bar span { box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--text) 30%, transparent); }
 
 /* ---------- Stats ---------- */
 
@@ -806,7 +810,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 /* Quieter lines after a slide's one fact. */
 .slide-quiet { color: var(--muted); }
 .mood-strip { display: flex; gap: 3px; width: 100%; height: 4.5rem; }
-.mood-strip span { flex-basis: 0; min-width: 6px; border-radius: 4px; }
+.mood-strip span { flex-basis: 0; min-width: 6px; border-radius: 4px; display: grid; place-items: center; overflow: hidden; font-size: 1.375rem; }
 .letter-envelope {
   position: relative;
   padding: 3.5rem 1.5rem 2rem;
