@@ -1,6 +1,5 @@
 import type { DateKey, DayEntry } from '../domain/types'
 
-// Lift ditampilkan 1 desimal; di bawah ini tampil sebagai "+0,0"
 // A tag is called "brighter" only from a third of a mood step up: smaller gaps are noise, not something to tell a person.
 const MIN_LIFT = 0.3
 
