@@ -28,7 +28,7 @@ test('skip by default keeps existing, reports result', async () => {
     <ImportDialog parsed={parsed} existing={new Set(['2026-09-01'])} onClose={() => {}} />,
     { entries: [{ date: '2026-09-01', markdown: 'asli' }] },
   )
-  await user.click(await screen.findByRole('button', { name: 'Import' }))
+  await user.click(await screen.findByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('Selesai: 1 ditambah, 0 ditimpa, 1 dilewati.')).toBeInTheDocument()
   expect((await diary.get('2026-09-01'))?.markdown).toBe('asli')
   expect((await diary.get('2026-09-02'))?.markdown).toBe('baru')
@@ -40,7 +40,7 @@ test('overwrite option replaces existing', async () => {
     { entries: [{ date: '2026-09-01', markdown: 'asli' }] },
   )
   await user.click(await screen.findByRole('radio', { name: 'Timpa' }))
-  await user.click(screen.getByRole('button', { name: 'Import' }))
+  await user.click(screen.getByRole('button', { name: 'Impor' }))
   await waitFor(async () => expect((await diary.get('2026-09-01'))?.markdown).toBe('impor'))
 })
 
@@ -49,8 +49,8 @@ test('failure shows message and changes nothing', async () => {
     <ImportDialog parsed={parsed} existing={new Set()} onClose={() => {}} />,
   )
   vi.spyOn(diary, 'importMany').mockRejectedValue(new Error('boom'))
-  await user.click(await screen.findByRole('button', { name: 'Import' }))
-  expect(await screen.findByRole('alert')).toHaveTextContent('Import gagal. Tidak ada data yang berubah.')
+  await user.click(await screen.findByRole('button', { name: 'Impor' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Impor gagal. Tidak ada data yang berubah.')
 })
 
 test('cancel calls onClose', async () => {
@@ -72,7 +72,7 @@ test('chat messages are previewed, restored after the entries and reported', asy
     <ImportDialog parsed={withChats} existing={new Set()} onClose={() => {}} />,
   )
   expect(await screen.findByText('2 pesan curhat')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Import' }))
+  await user.click(screen.getByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('Selesai: 2 ditambah, 0 ditimpa, 0 dilewati.')).toBeInTheDocument()
   expect(screen.getByText('2 pesan curhat dipulihkan.')).toBeInTheDocument()
   expect((await chats.listAll()).map((m) => m.id)).toEqual(['a', 'b'])
@@ -90,7 +90,7 @@ test('a chats-only import can be confirmed', async () => {
   }
   const { chats, user } = await renderWithRepos(<ImportDialog parsed={chatsOnly} existing={new Set()} onClose={() => {}} />)
   expect(await screen.findByText('1 pesan curhat')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Import' }))
+  await user.click(screen.getByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('1 pesan curhat dipulihkan.')).toBeInTheDocument()
   expect(await chats.listAll()).toHaveLength(1)
 })
@@ -101,7 +101,7 @@ test('memories are previewed, restored and reported', async () => {
   const withMemories: ParsedImport = { ...parsed, memories: [memory] }
   const { memories, user } = await renderWithRepos(<ImportDialog parsed={withMemories} existing={new Set()} onClose={() => {}} />)
   expect(await screen.findByText('1 memori AI')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Import' }))
+  await user.click(screen.getByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('1 memori AI dipulihkan.')).toBeInTheDocument()
   expect((await memories.list()).map((m) => m.id)).toEqual(['m1'])
 })
@@ -111,7 +111,7 @@ test('a memory restore failure keeps the diary result and shows an alert', async
   const withMemories: ParsedImport = { ...parsed, memories: [memory] }
   const { memories, user } = await renderWithRepos(<ImportDialog parsed={withMemories} existing={new Set()} onClose={() => {}} />)
   vi.spyOn(memories, 'importMany').mockRejectedValue(new Error('quota'))
-  await user.click(await screen.findByRole('button', { name: 'Import' }))
+  await user.click(await screen.findByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('Selesai: 2 ditambah, 0 ditimpa, 0 dilewati.')).toBeInTheDocument()
   expect(screen.getByRole('alert')).toHaveTextContent('Memori AI gagal dipulihkan.')
   errorSpy.mockRestore()
@@ -144,10 +144,10 @@ test('a chat restore failure after a successful diary import reports both parts 
   }
   const { chats, diary, user } = await renderWithRepos(<ImportDialog parsed={withChats} existing={new Set()} onClose={() => {}} />)
   vi.spyOn(chats, 'importMany').mockRejectedValue(new Error('quota'))
-  await user.click(await screen.findByRole('button', { name: 'Import' }))
+  await user.click(await screen.findByRole('button', { name: 'Impor' }))
   expect(await screen.findByText('Selesai: 2 ditambah, 0 ditimpa, 0 dilewati.')).toBeInTheDocument()
   expect(screen.getByRole('alert')).toHaveTextContent('Entri diary sudah diimpor, tapi pesan curhat gagal dipulihkan.')
-  expect(screen.queryByText('Import gagal. Tidak ada data yang berubah.')).not.toBeInTheDocument()
+  expect(screen.queryByText('Impor gagal. Tidak ada data yang berubah.')).not.toBeInTheDocument()
   expect(screen.queryByText('1 pesan curhat dipulihkan.')).not.toBeInTheDocument()
   expect((await diary.get('2026-09-02'))?.markdown).toBe('baru')
   expect(errorSpy).toHaveBeenCalledWith(expect.any(Error))

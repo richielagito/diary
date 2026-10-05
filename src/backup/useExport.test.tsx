@@ -65,7 +65,7 @@ test('shows alert and does not record lastExportAt on export failure', async () 
   await vi.waitFor(() => expect(result.current).toBeTypeOf('function'))
   await act(() => result.current())
 
-  expect(alertSpy).toHaveBeenCalledWith('Export gagal. Coba lagi.')
+  expect(alertSpy).toHaveBeenCalledWith('Ekspor gagal. Coba lagi.')
   expect(errorSpy).toHaveBeenCalledWith(expect.any(Error))
   expect((await settingsStore.getAll()).lastExportAt).toBeNull()
 

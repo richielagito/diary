@@ -45,6 +45,7 @@ export function DayPage({ date }: { date: DateKey }) {
   const absorbRef = useRef<(incoming: string) => void>(() => {})
   /** True while the page shows the first-run welcome text, which is never stored unless the user edits it. */
   const [welcome, setWelcome] = useState(false)
+  const pointerFocus = useRef(false)
 
   /** Dinaikkan tiap kali `base` diisi teks yang bukan tulisan editor ini sendiri (gabungan dari luar). */
   const foreign = useRef(0)
@@ -264,23 +265,36 @@ export function DayPage({ date }: { date: DateKey }) {
             }}
           >
             {t('day.startWriting')}
-          </button>
+          </button>{' '}
+          <Link to="/guide">{t('day.fullGuide')}</Link>
         </p>
       )}
       {loaded && (
-        <DiaryEditor
-          ref={editorRef}
-          initialMarkdown={loaded.markdown}
-          placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
-          label={t('day.editorLabel')}
-          onChange={(markdown) => {
-            setWelcome(false)
-            autosave.schedule(markdown)
+        // The guide clears on a tap into the editor or on the first key typed, not on keyboard focus alone,
+        // so someone tabbing in can still read it before writing.
+        <div
+          onPointerDownCapture={() => (pointerFocus.current = true)}
+          onKeyDownCapture={(e) => {
+            if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key.length === 1 || ['Enter', 'Backspace', 'Delete'].includes(e.key))) clearWelcome()
           }}
-          onBlur={() => void autosave.flush()}
-          onFocus={clearWelcome}
-          tagSuggest={tagSuggest}
-        />
+        >
+          <DiaryEditor
+            ref={editorRef}
+            initialMarkdown={loaded.markdown}
+            placeholder={t(isToday ? 'day.placeholder' : 'day.placeholderPast')}
+            label={t('day.editorLabel')}
+            onChange={(markdown) => {
+              setWelcome(false)
+              autosave.schedule(markdown)
+            }}
+            onBlur={() => void autosave.flush()}
+            onFocus={() => {
+              if (pointerFocus.current) clearWelcome()
+              pointerFocus.current = false
+            }}
+            tagSuggest={tagSuggest}
+          />
+        </div>
       )}
     </article>
   )

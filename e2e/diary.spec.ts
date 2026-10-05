@@ -32,7 +32,7 @@ test('export then import into a fresh profile restores entries', async ({ page, 
   await page.getByRole('link', { name: 'Pengaturan' }).click()
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Export cadangan (ZIP)' }).click(),
+    page.getByRole('button', { name: 'Ekspor cadangan (ZIP)' }).click(),
   ])
   expect(download.suggestedFilename()).toMatch(/^diary-export-\d{4}-\d{2}-\d{2}\.zip$/)
   const zipPath = await download.path()
@@ -44,7 +44,7 @@ test('export then import into a fresh profile restores entries', async ({ page, 
   // download.path() saves to a temp file without the original extension, but the app
   // decides .zip vs .md by file name, so re-attach the real suggested filename here
   // (this is what happens when a real user re-selects their downloaded export file).
-  await p2.getByLabel('Import').setInputFiles({
+  await p2.getByLabel('Impor').setInputFiles({
     name: download.suggestedFilename(),
     mimeType: 'application/zip',
     buffer: readFileSync(zipPath),
@@ -53,7 +53,7 @@ test('export then import into a fresh profile restores entries', async ({ page, 
   // Scoped to the dialog: the file input labelled "Import" is itself exposed with
   // role=button and accessible name "Import" in Chromium, so the unscoped locator
   // is ambiguous between it and the dialog's actual "Import" confirm button.
-  await p2.getByRole('dialog').getByRole('button', { name: 'Import' }).click()
+  await p2.getByRole('dialog').getByRole('button', { name: 'Impor' }).click()
   await expect(p2.getByText('Selesai: 1 ditambah, 0 ditimpa, 0 dilewati.')).toBeVisible()
   await p2.goto('/day/2026-09-20')
   await expect(editor(p2)).toContainText('Backup ini penting')

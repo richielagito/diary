@@ -97,7 +97,7 @@ export function ChatPage({ date }: { date: DateKey }) {
       )}
 
       {/* Without AI, "I'm listening" would be a promise the page cannot keep; earlier messages still show. */}
-      {!empty && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
+      {!empty && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} canReply={!!settings.ai} />}
 
       {showCrisis && <CrisisCard />}
       {/* The card appears inside the flow; this tells a screen reader it arrived. */}

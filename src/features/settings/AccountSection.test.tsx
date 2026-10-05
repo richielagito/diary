@@ -145,14 +145,14 @@ test('suggests a backup before the first sync only when the device has a diary',
   const server = new FakeServer()
   const first = await renderApp('/settings', { entries: [{ date: DAY, markdown: 'sudah ada' }] }, { sync: withServer(server) })
   await signIn(first.user, server)
-  expect(await screen.findByRole('button', { name: 'Export cadangan' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Ekspor cadangan' })).toBeInTheDocument()
   first.unmount()
 
   const emptyServer = new FakeServer()
   const second = await renderApp('/settings', {}, { sync: withServer(emptyServer) })
   await signIn(second.user, emptyServer)
   expect(await screen.findByRole('heading', { name: 'Kunci pemulihan sync' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Export cadangan' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Ekspor cadangan' })).toBeNull()
 })
 
 test('signs out and keeps the diary', async () => {

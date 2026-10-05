@@ -221,3 +221,14 @@ test('a storage error while stopping keeps the unsaved reply marked as stopped',
   addSpy.mockRestore()
   consoleError.mockRestore()
 })
+
+test('a message left without a reply says so on return and can ask for one', async () => {
+  const { chats, user } = await open(replyWith('Aku dengar.'), {
+    chats: [{ date: DATE, role: 'user', content: 'Tes pesan', createdAt: 1, status: 'complete' }],
+  })
+  expect(await screen.findByText('Pesan terakhir belum dibalas.')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Minta balasan' }))
+  expect(await screen.findByText('Aku dengar.')).toBeInTheDocument()
+  await waitFor(async () => expect((await chats.listByDate(DATE)).map((m) => m.role)).toEqual(['user', 'assistant']))
+  expect(screen.queryByText('Pesan terakhir belum dibalas.')).not.toBeInTheDocument()
+})

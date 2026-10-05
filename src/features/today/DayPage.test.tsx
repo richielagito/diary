@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { AppRoutes } from '../../app/App'
 import { RepoProvider } from '../../app/RepoContext'
@@ -30,7 +30,8 @@ test('mood click saves immediately', async () => {
 test('clicking active mood clears it and removes mood-only entry', async () => {
   const { diary, user } = await open('2026-09-20', { mood: 2 })
   await user.click(await screen.findByRole('button', { name: 'Kurang baik' }))
-  await waitFor(async () => expect(await diary.get('2026-09-20')).toBeUndefined())
+  // The full suite runs many workers at once; the delete can take longer than the default second.
+  await waitFor(async () => expect(await diary.get('2026-09-20')).toBeUndefined(), { timeout: 3000 })
 })
 
 test('mood save failure shows error banner and keeps selection; next success clears it', async () => {
@@ -530,4 +531,15 @@ test('opening a day saves nothing until the user edits it', async () => {
   await new Promise((r) => setTimeout(r, 1200))
   expect(save).not.toHaveBeenCalled()
   expect((await diary.get('2026-09-20'))!.updatedAt).toBe(before)
+})
+
+test('first run: keyboard focus keeps the guide readable; the first key typed clears it', async () => {
+  stubLayout()
+  const { diary, user } = await renderApp('/')
+  const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
+  act(() => box.focus())
+  expect(box).toHaveTextContent('Selamat datang')
+  await user.keyboard('a')
+  expect(box).not.toHaveTextContent('Selamat datang')
+  await waitFor(async () => expect((await diary.get(dateKey()))?.markdown).toBe('a'), { timeout: 3000 })
 })

@@ -62,14 +62,14 @@ test('ollama needs no key and shows the origins hint', async () => {
 test('test connection reports success and failure', async () => {
   const ok = await renderApp('/settings', {}, { createProvider: replyWith('OK') })
   await ok.user.type(await screen.findByLabelText('API key'), 'k')
-  await ok.user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await ok.user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByText('Koneksi berhasil.')).toBeInTheDocument()
 })
 
 test('test connection shows mapped error', async () => {
   const bad = await renderApp('/settings', {}, { createProvider: failWith('auth') })
   await bad.user.type(await screen.findByLabelText('API key'), 'k')
-  await bad.user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await bad.user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByText('API key ditolak. Periksa key di Pengaturan.')).toBeInTheDocument()
 })
 
@@ -116,12 +116,12 @@ test('switching provider clears the API key so it is never sent to another provi
   expect(screen.getByLabelText('API key')).toHaveValue('')
   expect(screen.getByLabelText('API key')).toHaveAttribute('type', 'password')
   await user.type(screen.getByLabelText('Model'), 'some-model')
-  await user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Wajib diisi: API key')
   // Ollama tidak butuh key, jadi config benar-benar dikirim: key lama tidak boleh ikut.
   await user.selectOptions(provider, 'ollama')
   await user.type(screen.getByLabelText('Model'), 'llama')
-  await user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByText('Koneksi berhasil.')).toBeInTheDocument()
   expect(spy).toHaveBeenCalledTimes(1)
   expect(spy.mock.calls[0][0]).toMatchObject({ provider: 'ollama', apiKey: '' })
@@ -302,7 +302,7 @@ test('the connection test reports a failing fast model while the main model work
   const spy = vi.fn(createProvider)
   const { settingsStore, user } = await renderApp('/settings', {}, { createProvider: spy })
   await user.type(await screen.findByLabelText('API key'), 'k')
-  await user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Model utama OK, tapi model cepat gagal: Model tidak ditemukan. Periksa nama model di Pengaturan.',
   )
@@ -316,7 +316,7 @@ test('the connection test skips the fast model when it equals the main model', a
   const { user } = await renderApp('/settings', {}, { createProvider: spy })
   await user.type(await screen.findByLabelText('API key'), 'k')
   await user.type(screen.getByLabelText('Model cepat (opsional)'), 'claude-opus-5-5')
-  await user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   expect(await screen.findByText('Koneksi berhasil.')).toBeInTheDocument()
   expect(spy).toHaveBeenCalledTimes(1)
 })
@@ -359,7 +359,7 @@ test('an unknown provider error shows the provider message so the cause is visib
   const { user } = await renderApp('/settings', {}, { createProvider: overloaded })
   await user.type(await screen.findByLabelText('API key'), 'sk-ant-test')
   vi.spyOn(console, 'error').mockImplementation(() => {})
-  await user.click(screen.getByRole('button', { name: 'Tes koneksi' }))
+  await user.click(screen.getByRole('button', { name: 'Uji koneksi' }))
   const alert = await screen.findByRole('alert')
   expect(alert).toHaveTextContent('Terjadi kesalahan')
   expect(alert).toHaveTextContent('503 The model is overloaded')

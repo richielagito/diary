@@ -18,7 +18,7 @@ test('shown when first entry is older than interval and never exported', async (
     'skip',
   )
   expect(await screen.findByText(/Sudah lama belum membuat cadangan/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Export cadangan' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Ekspor cadangan' })).toBeInTheDocument()
 })
 
 test('hidden right after recent export', async () => {

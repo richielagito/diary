@@ -20,7 +20,7 @@ test('shows how much of the browser storage is used and how many days changed si
   })
   expect(await screen.findByText('Terpakai di browser ini: 3,2 MB dari 1,1 GB')).toBeInTheDocument()
   // Seeding writes both entries now, after the export date.
-  expect(screen.getByText('2 hari berubah sejak export terakhir.')).toBeInTheDocument()
+  expect(screen.getByText('2 hari berubah sejak ekspor terakhir.')).toBeInTheDocument()
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 })
 
@@ -32,6 +32,6 @@ test('warns when storage is nearly full', async () => {
 
 test('without a storage estimate the line stays hidden', async () => {
   await renderApp('/settings', { entries: [{ date: '2026-09-01', markdown: 'x' }] })
-  expect(await screen.findByText('1 hari berubah sejak export terakhir.')).toBeInTheDocument()
+  expect(await screen.findByText('1 hari berubah sejak ekspor terakhir.')).toBeInTheDocument()
   expect(screen.queryByText(/Terpakai di browser ini/)).not.toBeInTheDocument()
 })

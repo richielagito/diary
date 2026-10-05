@@ -34,7 +34,7 @@ export function MoodBars({ points }: { points: { label: string; average: number 
         return (
           <g key={i}>
             {/* The track is an outline, not a fill: a pale mood bar then stands against the page, not against grey. */}
-            <rect x={x + 0.5} y={0.5} width={bar - 1} height={H - 1} rx={4} fill="none" stroke="var(--border)" />
+            <rect x={x + 0.5} y={0.5} width={bar - 1} height={H - 1} rx={4} fill="none" stroke="var(--border-strong)" />
             {avg !== null && <rect x={x} y={H - h} width={bar} height={h} rx={4} fill={`var(--mood-${avg})`} />}
             <text x={x + bar / 2} y={H + 12} textAnchor="middle" fontSize={font} fill="var(--muted)">
               {p.label}

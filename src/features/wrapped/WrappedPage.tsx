@@ -105,6 +105,10 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
   // Tutup memakai replace supaya tombol Back tidak membuka Wrapped lagi
   // Closing returns to the period Wrapped was opened for, not to the current month.
   const back = `/stats?p=${periodId(period)}`
+  const title = t('wrapped.title', { period: periodLabel(period, i18n.language) })
+  useEffect(() => {
+    document.title = `${title} · Diary`
+  }, [title])
   const { index, next, prev, bind } = useSlideNav(slides.length, () => navigate(back, { replace: true }))
 
   if (failed) {
@@ -129,7 +133,7 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
   return (
     <div className="wrapped" style={moodWash(stats.mood.distribution)} {...bind}>
       {/* One page title for every slide; each slide's own title is an h2 under it. */}
-      <h1 className="visually-hidden">{t('wrapped.title', { period: periodLabel(period, i18n.language) })}</h1>
+      <h1 className="visually-hidden">{title}</h1>
       <div className="wrapped-progress" aria-hidden="true">
         {slides.map((id, i) => (
           <span key={id} className={i <= index ? 'filled' : undefined} />
