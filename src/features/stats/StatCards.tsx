@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { MOOD_EMOJI, MOODS_SHOWN } from '../../domain/types'
 import type { PeriodStats } from '../../stats/computeStats'
-import { formatMood, formatNumber, monthKeyLabel, trendLabel } from './format'
-import { MoodBars } from './MoodBars'
+import { formatMood, formatNumber, monthKeyLabel } from './format'
 import { MostFrequentMood } from './MostFrequentMood'
 
 export function ConsistencyCards({ stats }: { stats: PeriodStats }) {
@@ -65,14 +64,6 @@ export function MoodSection({ stats }: { stats: PeriodStats }) {
               </li>
             ))}
           </ul>
-          {/* One point is not a trend. */}
-          {mood.trend.filter((p) => p.average !== null).length >= 2 && (
-            <>
-              <h3>{t('stats.moodTrend')}</h3>
-              <p className="muted">{t(stats.period.kind === 'year' ? 'stats.moodTrendNoteYear' : 'stats.moodTrendNoteMonth')}</p>
-              <MoodBars points={mood.trend.map((p) => ({ label: trendLabel(p, stats.period.kind, lang), average: p.average }))} />
-            </>
-          )}
         </>
       )}
     </section>

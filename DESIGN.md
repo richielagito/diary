@@ -330,7 +330,7 @@ Quiet outline by default; one ink action per group.
 Five emoji in 2.75rem circles. At rest they are greyscale at 78% opacity; hover restores colour; the selected mood gets a 20% mood fill and a 60% mood ring. Tapping the selected mood clears it.
 
 ### Mood Marks
-Calendar dots (7px), heatmap cells (12px year, 8px compact, square month cells), legend swatches and distribution bars fill with the mood colour; heatmap opacity encodes how much was written, never below 50% so the mood hue stays readable. No-mood days are rings in `mood-none`. The mood trend is diverging like the palette: a hairline at 3 (Biasa), each bar rising or dropping by its average's distance from it in the nearest mood's colour, 2px corners.
+Calendar dots (7px), heatmap cells (12px year, 8px compact, square month cells), legend swatches and distribution bars fill with the mood colour; heatmap opacity encodes how much was written, never below 50% so the mood hue stays readable. No-mood days are rings in `mood-none`.
 
 ### Wrapped
 The one expressive surface. A full-screen overlay washed by two drifting radial gradients from the period's two most frequent non-neutral moods (`moodWash`; falls back to mood 3), thin progress segments in ink, Display serif titles, and slides that enter over 520ms (`cubic-bezier(0.16, 1, 0.3, 1)`, rise 16px, slight scale and blur). The AI letter sits in an envelope with a flap, then on a sheet of paper. Under `prefers-reduced-motion` the wash stops drifting, slides appear without animation, and transitions are cut everywhere.

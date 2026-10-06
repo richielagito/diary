@@ -31,7 +31,7 @@ Local-first and private by construction: no account, no server needed, works off
 
 ## Capabilities and Constraints
 
-- Screens: Today (editor + mood), Archive (month calendar, search, tag filter), Chat, Memory, Stats (heatmap, streaks, mood distribution and trend, tags), Wrapped (slides + shareable summary image), Settings (language, theme, AI provider, privacy switches, export/import, account and sync).
+- Screens: Today (editor + mood), Archive (month calendar, search, tag filter), Chat, Memory, Stats (heatmap, streaks, mood distribution, tags), Wrapped (slides + shareable summary image), Settings (language, theme, AI provider, privacy switches, export/import, account and sync).
 - Entries are Markdown, edited in TipTap. Export/import is a ZIP of Markdown files.
 - Mood is an ordinal 1 to 5 scale, shown as emoji. Mood colour is the data colour in the heatmap, calendar, distribution and the share image; heatmap intensity shows how much was written.
 - The Wrapped share image is drawn on a canvas from the CSS custom properties, and never contains diary text.

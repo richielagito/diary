@@ -116,7 +116,7 @@ export function useChat({ date, messages, config, loadPrompt, onReplySaved, now 
       const content = text.trim()
       if (!content || !config || busy.current) return false
       busy.current = true
-      // Streaming from the start: the stored message must never show, even for a moment, as unanswered.
+      // Typing dots from the moment of sending, not only once the message is stored.
       setState({ phase: 'streaming', partial: '' })
 
       // A prior reply that failed to save is still only on screen, not in storage. Save it now,
@@ -162,8 +162,6 @@ export function useChat({ date, messages, config, loadPrompt, onReplySaved, now 
   const retry = useCallback(() => {
     if (busy.current) return
     const current = stateRef.current
-    // A message left unanswered earlier (the reply failed, then the page closed) can still ask for its reply.
-    if (current.phase === 'idle' && messagesRef.current.at(-1)?.role === 'user') return void run(messagesRef.current)
     if (current.phase !== 'error') return
     const unsaved = current.unsaved
     if (unsaved) {

@@ -49,8 +49,8 @@ test('stats heatmap, Wrapped and saving the share image', async ({ page }) => {
   await page.getByRole('link', { name: 'Statistik' }).click()
   await expect(page.getByRole('link', { name: new RegExp(`${todayLabel()}.*Senang`) })).toBeVisible()
 
-  // Stats links to Wrapped only after a week of recorded days; with one day it still opens by its address.
-  await expect(page.getByText(/^Wrapped terbuka setelah 7 hari/)).toBeVisible()
+  // Wrapped's button opens only after a week of recorded days; with one day it still opens by its address.
+  await expect(page.getByRole('button', { name: /^Lihat Wrapped/ })).toBeDisabled()
   await page.goto(`/wrapped/${thisMonth()}`)
   const save = page.getByRole('button', { name: 'Simpan gambar' })
   // Slide: pembuka, mood, tag, penutup (tanpa surat karena AI belum diatur)
@@ -106,8 +106,8 @@ test('Wrapped letter from the persona, without entry text in the request', async
 
   await writeToday(page, 'RAHASIA-e2e hari ini ')
   await page.getByRole('link', { name: 'Statistik' }).click()
-  // Stats links to Wrapped only after a week of recorded days; with one day it still opens by its address.
-  await expect(page.getByText(/^Wrapped terbuka setelah 7 hari/)).toBeVisible()
+  // Wrapped's button opens only after a week of recorded days; with one day it still opens by its address.
+  await expect(page.getByRole('button', { name: /^Lihat Wrapped/ })).toBeDisabled()
   await page.goto(`/wrapped/${thisMonth()}`)
   // Slide: pembuka, mood, surat (tanpa tag), penutup
   await expect(page.getByRole('group', { name: '1 dari 4' })).toBeVisible()

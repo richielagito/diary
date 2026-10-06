@@ -74,13 +74,13 @@ test('first run: picking a mood stores only the mood, never the guide', async ()
   expect((await diary.get(dateKey()))?.markdown ?? '').toBe('')
 })
 
-test('first run: "Mulai menulis" clears the guide and leaves an empty entry to write in', async () => {
-  const { diary, user } = await renderApp('/')
+test('first run: the note ends on a link to the full guide, which goes with the note', async () => {
+  stubLayout()
+  const { user } = await renderApp('/')
   const box = await screen.findByRole('textbox', { name: 'Tulis diary' })
-  await user.click(await screen.findByRole('button', { name: 'Mulai menulis' }))
-  expect(box).not.toHaveTextContent('Selamat datang')
-  expect(screen.queryByRole('button', { name: 'Mulai menulis' })).not.toBeInTheDocument()
-  expect(await diary.isEmpty()).toBe(true)
+  expect(screen.getByRole('link', { name: 'Baca panduan lengkap di sini' })).toHaveAttribute('href', '/guide')
+  await user.click(box)
+  expect(screen.queryByRole('link', { name: 'Baca panduan lengkap di sini' })).not.toBeInTheDocument()
 })
 
 test('no welcome text once the diary has any entry', async () => {

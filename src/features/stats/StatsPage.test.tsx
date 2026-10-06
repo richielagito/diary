@@ -31,7 +31,7 @@ test('month view shows consistency and tags; Wrapped waits for a week of recorde
   const topList = screen.getByText('Tag teratas').nextElementSibling as HTMLElement
   expect(within(topList).getByText('#olahraga')).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: /Lihat Wrapped/ })).not.toBeInTheDocument()
-  expect(screen.getByText('Wrapped terbuka setelah 7 hari tercatat di periode ini. Sejauh ini: 3 hari.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Lihat Wrapped Oktober 2026' })).toBeDisabled()
   expect(screen.getByRole('button', { name: 'Berikutnya' })).toBeDisabled()
 })
 

@@ -114,11 +114,21 @@ export function StatsPage() {
           </button>
         </div>
       </div>
-      {/* A celebration needs something to celebrate: Wrapped opens once a week's worth of days is recorded, and then sits up top. */}
-      {stats.daysWritten >= WRAPPED_MIN_DAYS && (
+      {/* A celebration needs something to celebrate: Wrapped opens once a week's worth of days is recorded. */}
+      {stats.daysWritten >= WRAPPED_MIN_DAYS ? (
         <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
           {t('stats.openWrapped', { period: label })}
         </Link>
+      ) : (
+        <button
+          type="button"
+          className="wrapped-link"
+          style={moodWash(stats.mood.distribution)}
+          disabled
+          title={t('stats.wrappedLater', { min: WRAPPED_MIN_DAYS, count: stats.daysWritten })}
+        >
+          {t('stats.openWrapped', { period: label })}
+        </button>
       )}
       <Heatmap cells={stats.heatmap} weeks={stats.weeks} mode={period.kind} scrollToToday={stats.range.isCurrent} />
       {/* Periode tanpa tulisan: hanya heatmap kosong dan satu kalimat */}
@@ -128,9 +138,6 @@ export function StatsPage() {
           <MoodSection stats={stats} />
           <ConsistencyCards stats={stats} />
           <TagSection stats={stats} />
-          {stats.daysWritten < WRAPPED_MIN_DAYS && (
-            <p className="muted">{t('stats.wrappedLater', { min: WRAPPED_MIN_DAYS, count: stats.daysWritten })}</p>
-          )}
         </>
       ) : (
         <p className="muted">{t('stats.emptyPeriod')}</p>

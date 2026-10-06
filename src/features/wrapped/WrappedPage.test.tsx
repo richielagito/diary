@@ -38,7 +38,7 @@ test('opening slide, progress bar and no main nav', async () => {
   expect(await screen.findByRole('group', { name: '1 dari 4' })).toBeInTheDocument()
   expect(screen.getByRole('heading', { name: 'Oktober 2026, kamu menulis 3 hari (sejauh ini)' })).toBeInTheDocument()
   expect(segments()).toBe(4)
-  expect(screen.getByText('Ketuk atau tekan → untuk lanjut')).toBeInTheDocument()
+  expect(screen.getByText('Ketuk untuk melanjutkan')).toBeInTheDocument()
   expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Tutup' })).toHaveAttribute('href', '/stats?p=2026-10')
 })

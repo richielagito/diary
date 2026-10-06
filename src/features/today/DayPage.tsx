@@ -254,27 +254,11 @@ export function DayPage({ date }: { date: DateKey }) {
         </div>
       </header>
       <MoodPicker value={mood} onChange={onMood} past={!isToday} />
-      {/* The guide gives way as soon as the user goes to write: this button or a tap in the editor clears it. It stays in Settings. */}
-      {welcome && (
-        <p className="day-welcome">
-          <button
-            type="button"
-            onClick={() => {
-              clearWelcome()
-              editorRef.current?.focus()
-            }}
-          >
-            {t('day.startWriting')}
-          </button>{' '}
-          <Link to="/guide" state={{ from: '/' }}>
-            {t('day.fullGuide')}
-          </Link>
-        </p>
-      )}
       {loaded && (
         // The guide clears on a tap into the editor or on the first key typed, not on keyboard focus alone,
         // so someone tabbing in can still read it before writing.
         <div
+          className={welcome ? 'welcome' : undefined}
           onPointerDownCapture={() => (pointerFocus.current = true)}
           onKeyDownCapture={(e) => {
             if (!e.ctrlKey && !e.metaKey && !e.altKey && (e.key.length === 1 || ['Enter', 'Backspace', 'Delete'].includes(e.key))) clearWelcome()
@@ -297,6 +281,14 @@ export function DayPage({ date }: { date: DateKey }) {
             tagSuggest={tagSuggest}
           />
         </div>
+      )}
+      {/* The note's last paragraph, outside the editor so following it does not clear the note first. The guide stays in Settings. */}
+      {welcome && (
+        <p className="day-welcome">
+          <Link to="/guide" state={{ from: '/' }}>
+            {t('day.fullGuide')}
+          </Link>
+        </p>
       )}
     </article>
   )

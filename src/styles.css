@@ -326,7 +326,11 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .save-status[data-state='saving']::before { animation: pulse 1s ease-in-out infinite alternate; }
 @keyframes pulse { from { opacity: 0.2; } to { opacity: 0.8; } }
 
-.day-welcome { margin: -1rem 0 0.75rem; }
+/* While the first-run note shows, the editor hugs it so the guide link reads as its last paragraph. */
+.welcome .editor { min-height: 0; }
+/* The editor's own empty last line would open a gap before that link. */
+.welcome .editor > p:last-child:has(> br:only-child) { display: none; }
+.day-welcome { margin: 0.9em 0 0; font-family: var(--font-text); font-size: 1.125rem; line-height: 1.75; }
 .mood-row { display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem; margin: 0.5rem 0 1.75rem; }
 .mood-picker { display: flex; gap: 0.375rem; }
 .mood-caption { order: -1; display: flex; align-items: center; gap: 0.25rem; margin: 0; min-height: 2.75rem; color: var(--muted); font-size: 0.9375rem; }
@@ -352,9 +356,6 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
   background: color-mix(in oklab, var(--mood) 20%, transparent);
   border-color: color-mix(in oklab, var(--mood) 60%, transparent);
 }
-/* The chosen face carries an ink mark under it, so the choice reads without colour too. */
-.mood-picker button { position: relative; }
-.mood-picker button[aria-pressed='true']::after { content: ''; position: absolute; bottom: -0.5rem; left: 50%; width: 1.25rem; height: 2px; margin-left: -0.625rem; border-radius: 2px; background: var(--text); }
 .mood-picker button:active { transform: scale(0.94); }
 
 .editor {
@@ -451,7 +452,7 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 @media (min-width: 641px) {
   .calendar a, .calendar span.empty, .calendar span.future { aspect-ratio: auto; height: 3.5rem; }
 }
-.calendar span.future { color: var(--muted); }
+.calendar span.future { color: var(--muted); opacity: 0.6; }
 .calendar a[aria-current='date'] { box-shadow: inset 0 0 0 1.5px var(--text); font-weight: 600; }
 .calendar .dot { width: 7px; height: 7px; border-radius: 50%; }
 .calendar .dot-none { box-shadow: inset 0 0 0 1.5px var(--mood-none); }
@@ -505,13 +506,8 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .settings section > p { color: var(--muted); font-size: 0.9375rem; max-width: 65ch; }
 /* A link that stands alone on its line is a target, not a word in a sentence. */
 .settings p > a:only-child { display: inline-flex; align-items: center; min-height: 2.75rem; }
-.settings-jump { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0 0 1.25rem; }
 .ai-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .ai-summary > span { flex-basis: 100%; color: var(--text); }
-.settings-jump { column-gap: 1.25rem; }
-/* In-page jumps are plain links: pills are kept for tags. */
-.settings-jump a { display: inline-flex; align-items: center; justify-content: center; min-width: 2.75rem; min-height: 2.75rem; color: var(--muted); font-size: 0.9375rem; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
-.settings-jump a:hover { color: var(--text); text-decoration-color: currentColor; }
 
 .guide h2 { margin: 2rem 0 0.5rem; font-size: 1.0625rem; }
 .guide ul { margin: 0; padding-left: 1.25rem; font-family: var(--font-text); font-size: 1.0625rem; line-height: 1.7; }
@@ -576,7 +572,6 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .bubble-msg .meta { display: block; font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem; }
 .chat-error { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; max-width: 85%; margin-top: 0.625rem; padding: 0.625rem 0.95rem; border: 1px solid color-mix(in oklab, var(--danger) 45%, transparent); border-radius: 18px 18px 18px 6px; background: color-mix(in oklab, var(--danger) 6%, var(--surface)); font-size: 0.9375rem; line-height: 1.5; }
 .chat-error > span { flex: 1 1 14rem; }
-.chat-unanswered { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin-top: 0.625rem; color: var(--muted); font-size: 0.9375rem; }
 /* The newest bubble rises into place from the composer. */
 .bubble-msg:last-child { animation: bubble-in 260ms cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes bubble-in { from { opacity: 0; transform: translateY(0.5rem); } }
@@ -722,8 +717,6 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .mood-dist .dist-bar { height: 8px; border-radius: 4px; background: var(--sunken); overflow: hidden; }
 .mood-dist .dist-bar span { display: block; height: 100%; border-radius: 4px; }
 .mood-dist .dist-count { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
-.mood-bars { width: 100%; height: auto; display: block; }
-.mood-bars text { font-family: var(--font-ui); }
 .tag-stats { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .tag-stats li { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.65rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; background: var(--surface); }
 .tag-stats a { color: inherit; text-decoration: none; }
@@ -741,7 +734,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .stat-section > p:not([class]), .stats > p.muted { color: var(--muted); font-size: 0.9375rem; }
 .stats > p.muted { margin-top: 1.25rem; font-family: var(--font-text); font-style: italic; font-size: 1.0625rem; }
 
-.stats > .wrapped-link { margin: 0 0 1.25rem; }
+.stats > .wrapped-link { display: flex; width: fit-content; margin: 0 auto 1.25rem; }
 .wrapped-link {
   display: inline-flex;
   align-items: center;
@@ -761,6 +754,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 }
 .wrapped-link:hover:not(:disabled) { background: color-mix(in oklab, var(--text) 86%, var(--bg)); border-color: var(--text); }
 .wrapped-link:active:not(:disabled) { transform: translateY(1px); }
+.wrapped-link:disabled { cursor: default; }
 /* The way into Wrapped previews its colours: the period's two most frequent moods (moodWash). */
 .stats .wrapped-link::before {
   content: '';
@@ -821,7 +815,6 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
   margin: 0;
 }
 .slide-lead { font-family: var(--font-text); font-size: 1.25rem; font-weight: 400; line-height: 1.45; text-wrap: balance; margin: 0; }
-.slide-body .mood-bars { max-width: 100%; }
 .slide-heatmap { width: 100%; }
 .slide-heatmap-month { max-width: 240px; }
 .slide-body .stat-section { width: 100%; text-align: left; }
@@ -833,7 +826,6 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .slide-quiet { color: var(--muted); }
 .mood-strip { display: flex; gap: 3px; width: 100%; height: 4.5rem; }
 .mood-strip span, .heatmap-compact .heat-cell[style*='--mood'] { box-shadow: inset 0 0 0 0.5px color-mix(in oklab, var(--text) 30%, transparent); }
-.mood-bars rect { stroke: color-mix(in oklab, var(--text) 50%, transparent); stroke-width: 1; }
 .mood-strip span { flex-basis: 0; min-width: 6px; border-radius: 4px; display: grid; place-items: center; overflow: hidden; font-size: 1.375rem; }
 .letter-envelope {
   position: relative;

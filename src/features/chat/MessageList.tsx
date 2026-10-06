@@ -8,7 +8,6 @@ interface Props {
   state: ChatPhase
   onRetry: () => void
   /** AI is set up, so a message left without a reply can still ask for one. */
-  canReply: boolean
 }
 
 interface Row {
@@ -19,7 +18,7 @@ interface Row {
   live: boolean
 }
 
-export function MessageList({ messages, state, onRetry, canReply }: Props) {
+export function MessageList({ messages, state, onRetry }: Props) {
   const { t } = useTranslation()
   // Retry cannot help a storage error that has nothing unsaved to resend (the composer already kept the draft).
   const showRetry = state.phase === 'error' && !(state.kind === 'storage' && !state.unsaved)
@@ -64,15 +63,6 @@ export function MessageList({ messages, state, onRetry, canReply }: Props) {
           </li>
         ))}
       </ul>
-      {/* A reply that never came (it failed, then the page closed) is said plainly, with a way to ask again. */}
-      {canReply && state.phase === 'idle' && messages.at(-1)?.role === 'user' && (
-        <div className="chat-unanswered">
-          <span>{t('chat.unanswered')}</span>
-          <button type="button" onClick={onRetry}>
-            {t('chat.askReply')}
-          </button>
-        </div>
-      )}
       {state.phase === 'error' && (
         // In the reply's own place, shaped like the bubble that did not arrive, not a page banner below it.
         <div className="chat-error" role="alert">
