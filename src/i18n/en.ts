@@ -11,7 +11,6 @@ export const en: typeof id = {
     cellWords_other: '{{words}} words',
     cellNoEntry: 'did not write',
     cellFuture: 'not yet',
-    title: 'Stats',
     month: 'Month',
     year: 'Year',
     previous: 'Previous',

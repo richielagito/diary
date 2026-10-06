@@ -9,7 +9,6 @@ export const id = {
     cellWords_other: '{{words}} kata',
     cellNoEntry: 'tidak menulis',
     cellFuture: 'belum terjadi',
-    title: 'Statistik',
     month: 'Bulan',
     year: 'Tahun',
     previous: 'Sebelumnya',
