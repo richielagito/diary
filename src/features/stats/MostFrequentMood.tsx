@@ -13,8 +13,9 @@ export function MostFrequentMood({ distribution, className, label = true }: { di
       {label && <span>{t('stats.mostFrequent')}: </span>}
       <strong>
         <span aria-hidden="true">{moods.map((m) => MOOD_EMOJI[m]).join(' ')}</span> {names}
-      </strong>{' '}
-      <span>· {moods.length > 1 ? t('stats.eachDays', { count: days }) : t('stats.moodDays', { count: days })}</span>
+      </strong>
+      {/* A no-break space ties the dot to the names, so a wrapped line never starts with it. */}
+      <span>{'\u00a0'}· {moods.length > 1 ? t('stats.eachDays', { count: days }) : t('stats.moodDays', { count: days })}</span>
     </p>
   )
 }
