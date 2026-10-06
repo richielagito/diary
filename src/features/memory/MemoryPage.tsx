@@ -42,6 +42,7 @@ function MemoryItem({ memory, index, save }: { memory: Memory; index: number; sa
       />{' '}
       <small>{memory.source === 'user' ? t('memory.byYou') : t('memory.byAi')}</small>{' '}
       <ConfirmButton
+        muted
         label={t('memory.delete')}
         name={memory.text}
         question={t('memory.deleteOne')}
@@ -203,6 +204,7 @@ export function MemoryPage() {
                 <strong>{summaryLabel(s)}</strong>
                 <p>{s.text}</p>
                 <ConfirmButton
+                  muted
                   label={t('memory.delete')}
                   name={summaryLabel(s)}
                   question={t('memory.deleteSummary')}

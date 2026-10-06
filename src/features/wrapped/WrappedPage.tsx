@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { buildLetterInput } from '../../ai/letter/letterInput'
@@ -110,6 +110,14 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
     document.title = `${title} · Diary`
   }, [title])
   const { index, next, prev, bind } = useSlideNav(slides.length, () => navigate(back, { replace: true }))
+  // A new slide takes focus, so a screen reader reads it out instead of staying silent on "Berikutnya".
+  const slideRef = useRef<HTMLElement>(null)
+  const shown = useRef(index)
+  useEffect(() => {
+    if (shown.current === index) return
+    shown.current = index
+    slideRef.current?.focus({ preventScroll: true })
+  }, [index])
 
   if (failed) {
     return (
@@ -150,6 +158,8 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
       </button>
       <section
         key={current}
+        ref={slideRef}
+        tabIndex={-1}
         className="slide slide-in"
         role="group"
         aria-roledescription={t('wrapped.slide')}
@@ -162,6 +172,12 @@ export function WrappedPage({ period }: { period: StatsPeriod }) {
         {current === 'closing' && <ClosingSlide stats={stats} />}
         {current === 'empty' && <EmptySlide />}
       </section>
+      {/* Tap zones and swipes are invisible; the first slide says once how to move on. The buttons above say it to screen readers. */}
+      {index === 0 && slides.length > 1 && (
+        <p className="wrapped-hint" aria-hidden="true">
+          {t('wrapped.hint')}
+        </p>
+      )}
     </div>
   )
 }

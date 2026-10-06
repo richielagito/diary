@@ -2,14 +2,18 @@ import { useTranslation } from 'react-i18next'
 import { formatMood } from './format'
 
 const H = 80
+const MID = H / 2
 const LABEL_H = 16
-const MIN_H = 6
+const MIN_H = 3
 // Lebih dari seminggu titik (tren 12 bulan): batang lebih ramping supaya viewBox sempit
 // dan label bulan tetap terbaca (~10px) saat SVG diskalakan ke lebar ponsel.
 const WIDE = { bar: 32, gap: 8, font: 10 }
 const DENSE = { bar: 20, gap: 6, font: 11 }
 
-/** Tren mood: tinggi batang dari skala 1 (Sedih, batang terendah) sampai 5; null = slot kosong. */
+/**
+ * Tren mood, diverging like the palette: the middle line is 3 (Biasa); a bar rises toward 5 or drops toward 1
+ * by how far the average sits from it, in the nearest mood's colour. null = slot kosong.
+ */
 export function MoodBars({ points }: { points: { label: string; average: number | null }[] }) {
   const { t, i18n } = useTranslation()
   const { bar, gap, font } = points.length > 7 ? DENSE : WIDE
@@ -26,16 +30,16 @@ export function MoodBars({ points }: { points: { label: string; average: number 
       preserveAspectRatio="xMinYMid meet"
       style={{ maxWidth: width * 1.5 }}
     >
+      <line x1={0} x2={width} y1={MID} y2={MID} stroke="var(--border-strong)" />
       {points.map((p, i) => {
         const x = i * (bar + gap)
-        // The scale starts at 1, not 0, so the months' differences show instead of every bar standing at 60-80%.
-        const h = p.average === null ? 0 : Math.max(MIN_H, ((p.average - 1) / 4) * H)
-        const avg = p.average === null ? null : Math.round(p.average)
+        const h = p.average === null ? 0 : Math.max(MIN_H, (Math.abs(p.average - 3) / 2) * MID)
+        const y = p.average !== null && p.average >= 3 ? MID - h : MID
         return (
           <g key={i}>
-            {/* The track is an outline, not a fill: a pale mood bar then stands against the page, not against grey. */}
-            <rect x={x + 0.5} y={0.5} width={bar - 1} height={H - 1} rx={4} fill="none" stroke="var(--border-strong)" />
-            {avg !== null && <rect x={x} y={H - h} width={bar} height={h} rx={4} fill={`var(--mood-${avg})`} />}
+            {p.average !== null && (
+              <rect x={x} y={y} width={bar} height={h} rx={Math.min(2, h / 2)} fill={`var(--mood-${Math.round(p.average)})`} />
+            )}
             <text x={x + bar / 2} y={H + 12} textAnchor="middle" fontSize={font} fill="var(--muted)">
               {p.label}
             </text>

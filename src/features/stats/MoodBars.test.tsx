@@ -24,3 +24,19 @@ test('a year of bars uses a narrower viewBox so month labels stay legible on pho
   expect((fontSize * 288) / width).toBeGreaterThanOrEqual(10)
   expect(svg.querySelectorAll('text')).toHaveLength(12)
 })
+
+test('bars diverge from the Okay line: brighter averages rise, heavier ones drop', () => {
+  const { container } = render(
+    <MoodBars
+      points={[
+        { label: 'a', average: 5 },
+        { label: 'b', average: 1 },
+      ]}
+    />,
+  )
+  const mid = Number(container.querySelector('line')!.getAttribute('y1'))
+  const [up, down] = [...container.querySelectorAll('rect')].map((r) => ({ y: Number(r.getAttribute('y')), h: Number(r.getAttribute('height')) }))
+  expect(up.y + up.h).toBe(mid)
+  expect(down.y).toBe(mid)
+  expect(up.h).toBe(down.h)
+})
