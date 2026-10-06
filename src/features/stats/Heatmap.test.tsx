@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import type { DayEntry } from '../../domain/types'
 import { i18n } from '../../i18n'
@@ -115,4 +116,34 @@ test('compact year grid sizes its columns to the container instead of scrolling'
   // The week count reaches CSS as --weeks; the compact grid spreads that many columns across its width.
   expect((container.querySelector('.heatmap') as HTMLElement).style.getPropertyValue('--weeks')).toBe('53')
   expect(screen.queryAllByRole('link')).toHaveLength(0)
+})
+
+test('the map is one tab stop on today; arrows move by day and week', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(2026, 9, 10, 12))
+  try {
+    const user = userEvent.setup()
+    renderHeat([], month, 'month')
+    const links = screen.getAllByRole('link')
+    expect(links.filter((a) => a.tabIndex === 0)).toHaveLength(1)
+    await user.tab()
+    expect(screen.getByRole('link', { name: /^Sabtu, 10 Oktober 2026/ })).toHaveFocus()
+    await user.keyboard('{ArrowLeft}')
+    expect(screen.getByRole('link', { name: /^Jumat, 9 Oktober 2026/ })).toHaveFocus()
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByRole('link', { name: /^Jumat, 2 Oktober 2026/ })).toHaveFocus()
+    // Next week is the future: no link there, focus stays.
+    await user.keyboard('{ArrowDown}{ArrowDown}')
+    expect(screen.getByRole('link', { name: /^Jumat, 9 Oktober 2026/ })).toHaveFocus()
+
+    renderHeat([], { kind: 'year', year: 2026 }, 'year')
+    const year = screen.getAllByRole('group')[1]
+    within(year).getByRole('link', { name: /^Jumat, 9 Oktober 2026/ }).focus()
+    await user.keyboard('{ArrowLeft}')
+    expect(within(year).getByRole('link', { name: /^Jumat, 2 Oktober 2026/ })).toHaveFocus()
+    await user.keyboard('{ArrowDown}')
+    expect(within(year).getByRole('link', { name: /^Sabtu, 3 Oktober 2026/ })).toHaveFocus()
+  } finally {
+    vi.useRealTimers()
+  }
 })

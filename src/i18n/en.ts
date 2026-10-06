@@ -60,6 +60,7 @@ export const en: typeof id = {
     stop: 'Stop',
     stopped: '(stopped)',
     retry: 'Try again',
+    kept: 'Your message is kept.',
     typing: 'Typing…',
     emptyTitle: 'What is on your mind?',
     emptyBody: '{{name}} is listening. Type below to start.',
@@ -176,7 +177,7 @@ export const en: typeof id = {
       [
         '- **Archive**: a calendar and snippets of what you wrote for every month, and search across all of it.',
         '- **Talk**: chat with an AI about your day. Set it up in Settings first; you choose what the AI may read. The icon beside the title opens the chat details: save it to the diary, earlier chats, and what the AI knows about you.',
-        '- **Stats**: moods, writing habits and your most used tags. Once 7 days are recorded, **Wrapped** opens below it: a story of your month or year.',
+        '- **Stats**: moods, writing habits and your most used tags. Once 7 days are recorded, **Wrapped** opens there: a story of your month or year.',
         '- **Settings**: language, theme and backups. Export a backup now and then to keep your writing safe. This guide is there too.',
       ].join('\n'),
     ].join('\n\n'),

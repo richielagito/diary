@@ -58,6 +58,7 @@ export const id = {
     stop: 'Berhenti',
     stopped: '(dihentikan)',
     retry: 'Coba lagi',
+    kept: 'Pesanmu tetap tersimpan.',
     typing: 'Mengetik…',
     emptyTitle: 'Mau cerita apa?',
     emptyBody: '{{name}} siap mendengarkan. Ketik di bawah untuk mulai.',
@@ -174,7 +175,7 @@ export const id = {
       [
         '- **Arsip**: kalender dan cuplikan tulisan tiap bulan, serta pencarian di semua tulisanmu.',
         '- **Curhat**: ngobrol dengan AI tentang harimu. Atur dulu di Pengaturan; kamu yang memilih apa yang boleh dibaca AI. Ikon di samping judul membuka detail obrolan: simpan jadi diary, obrolan sebelumnya, dan yang AI tahu tentang kamu.',
-        '- **Statistik**: mood, kebiasaan menulis, dan tag yang paling sering muncul. Setelah 7 hari tercatat, di bawahnya terbuka **Wrapped**: rangkuman bulan atau tahunmu.',
+        '- **Statistik**: mood, kebiasaan menulis, dan tag yang paling sering muncul. Setelah 7 hari tercatat, di sana terbuka **Wrapped**: rangkuman bulan atau tahunmu.',
         '- **Pengaturan**: bahasa, tema, dan cadangan. Ekspor cadangan sesekali supaya tulisanmu aman. Panduan ini juga ada di sana.',
       ].join('\n'),
     ].join('\n\n'),

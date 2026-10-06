@@ -266,7 +266,9 @@ export function DayPage({ date }: { date: DateKey }) {
           >
             {t('day.startWriting')}
           </button>{' '}
-          <Link to="/guide">{t('day.fullGuide')}</Link>
+          <Link to="/guide" state={{ from: '/' }}>
+            {t('day.fullGuide')}
+          </Link>
         </p>
       )}
       {loaded && (

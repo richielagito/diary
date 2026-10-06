@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { dateKey, parseDateKey } from '../../domain/date'
@@ -65,6 +65,23 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
     updateEdges()
   }, [current])
 
+  // One tab stop for the whole map, like the Archive calendar: today, else the last day that has passed.
+  const past = cells.filter((c) => c.inRange && !c.future)
+  const focusDate = past.some((c) => c.date === today) ? today : past.at(-1)?.date
+  // Cells run day by day (down the columns in a year, along the rows in a month), so a day is ±1 and a week ±7.
+  const steps: Record<string, number> =
+    mode === 'year' ? { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 } : { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = steps[e.key]
+    if (!step) return
+    const all = [...e.currentTarget.children] as HTMLElement[]
+    const at = all.indexOf(document.activeElement as HTMLElement)
+    const target = all[at + step]
+    if (at < 0 || target?.tagName !== 'A') return
+    e.preventDefault()
+    target.focus()
+  }
+
   const renderCell = (cell: HeatCell) => {
     if (!cell.inRange) return <span key={cell.date} className="heat-cell heat-pad" aria-hidden="true" />
     const label = heatCellLabel(cell, t, language)
@@ -81,6 +98,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
         style={cellStyle(cell)}
         data-current={mark}
         data-today={cell.date === today ? '' : undefined}
+        tabIndex={cell.date === focusDate ? 0 : -1}
       />
     )
   }
@@ -116,7 +134,7 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
               </div>
             )}
             {/* Ringkas (Wrapped): kolom mengisi lebar slide, tanpa scroll */}
-            <div className="heat-grid">
+            <div className="heat-grid" onKeyDown={onKeyDown}>
               {cells.map(renderCell)}
             </div>
           </div>
@@ -128,7 +146,9 @@ export function Heatmap({ cells, weeks, mode, compact = false, scrollToToday = f
               <span key={d}>{weekday.format(new Date(2024, 0, 1 + d))}</span>
             ))}
           </div>
-          <div className="heat-grid">{cells.map(renderCell)}</div>
+          <div className="heat-grid" onKeyDown={onKeyDown}>
+            {cells.map(renderCell)}
+          </div>
         </>
       )}
       {!compact && <MoodLegend note={t('stats.legendWords')} />}

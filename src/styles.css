@@ -713,7 +713,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
   .stat-card strong { font-size: 1.05rem; text-align: right; }
 }
 .stat-section h2 { margin-top: 2.25rem; }
-.mood-average strong { font-family: var(--font-text); font-weight: 500; font-size: 1.25rem; white-space: nowrap; }
+.mood-average strong { font-family: var(--font-text); font-weight: 500; font-size: 1.25rem; }
 .mood-average span { color: var(--muted); }
 .mood-average > span:last-child { white-space: nowrap; }
 .mood-extremes { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; color: var(--muted); font-size: 0.9375rem; }
@@ -723,6 +723,7 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .mood-dist .dist-bar span { display: block; height: 100%; border-radius: 4px; }
 .mood-dist .dist-count { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .mood-bars { width: 100%; height: auto; display: block; }
+.mood-bars text { font-family: var(--font-ui); }
 .tag-stats { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .tag-stats li { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0 0.65rem; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; background: var(--surface); }
 .tag-stats a { color: inherit; text-decoration: none; }

@@ -76,10 +76,14 @@ export function MessageList({ messages, state, onRetry, canReply }: Props) {
       {state.phase === 'error' && (
         // In the reply's own place, shaped like the bubble that did not arrive, not a page banner below it.
         <div className="chat-error" role="alert">
-          <span>{t(`aiError.${state.kind}`)}</span>
+          {/* The user's message is stored before the AI is asked; only a storage failure can lose it. */}
+          <span>
+            {t(`aiError.${state.kind}`)}
+            {state.kind !== 'storage' && ` ${t('chat.kept')}`}
+          </span>
           {/* Errors that only a settings change can fix lead straight there. */}
           {(state.kind === 'auth' || state.kind === 'notFound' || state.kind === 'badRequest') && (
-            <Link className="button" to="/settings#ai">
+            <Link className="button primary" to="/settings#ai">
               {t('chat.openSettings')}
             </Link>
           )}

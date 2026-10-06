@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { ChevronLeft } from '../../app/icons'
 
 /** `**bold**` inside one line of the guide. */
@@ -8,16 +8,17 @@ function inline(line: string) {
 }
 
 /**
- * The guide the first entry opens with, kept reachable after that entry is deleted. Its text is the app's own
- * Markdown (headings and lists only), drawn here without the editor.
+ * The full guide, opened from the first-run note and from Settings; back returns to whichever opened it.
+ * Its text is the app's own Markdown (headings and lists only), drawn here without the editor.
  */
 export function GuidePage() {
   const { t } = useTranslation()
   const blocks = t('guide.body').split(/\n\n/)
+  const back = (useLocation().state as { from?: string } | null)?.from ?? '/settings'
   return (
     <article className="guide">
       <header className="back-header">
-        <Link className="icon-btn" to="/settings" aria-label={t('common.back')}>
+        <Link className="icon-btn" to={back} aria-label={t('common.back')}>
           <ChevronLeft />
         </Link>
         <h1>{t('guide.title')}</h1>

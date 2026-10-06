@@ -7,7 +7,8 @@ export function MostFrequentMood({ distribution, className, label = true }: { di
   const { t, i18n } = useTranslation()
   const { moods, days } = mostFrequentMoods(distribution)
   if (moods.length === 0) return null
-  const names = new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(moods.map((m) => t(`mood.${m}`)))
+  // A tie wraps between names, never inside one ("Kurang baik").
+  const names = new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(moods.map((m) => t(`mood.${m}`).replaceAll(' ', '\u00a0')))
   return (
     <p className={className}>
       {label && <span>{t('stats.mostFrequent')}: </span>}
