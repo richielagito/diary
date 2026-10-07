@@ -21,18 +21,19 @@ function Layout() {
   useApplyPreferences()
   const attention = needsAttention(useSyncStatus())
   const keyboard = useKeyboardOpen()
-  // Pages without a tab of their own light the tab they belong to: a past day is the Archive, memory is Curhat's, the guide is Settings'.
-  const { pathname } = useLocation()
-  const parent = pathname.startsWith('/day/') ? '/archive' : pathname === '/memory' ? '/chat' : pathname === '/guide' ? '/settings' : null
+  // Pages without a tab of their own light the tab they belong to: a past day is the Archive (or the tab its arrows
+  // started from), memory is Curhat's, the guide is Settings'.
+  const { pathname, state } = useLocation()
+  const stepTab = (state as { tab?: string } | null)?.tab
+  const parent = pathname.startsWith('/day/') ? (stepTab ?? '/archive') : pathname === '/memory' ? '/chat' : pathname === '/guide' ? '/settings' : null
   const tab = (to: string) => ({ isActive }: { isActive: boolean }) => (isActive || parent === to ? 'active' : undefined)
 
   // A page change is announced like a page load: its name in the title, and focus at the start of the content.
-  const { state } = useLocation()
   const main = useRef<HTMLElement>(null)
   const first = useRef(true)
   const name =
     pathname === '/' ? t('nav.today')
-    : pathname.startsWith('/day/') ? t('nav.archive')
+    : pathname.startsWith('/day/') ? t(stepTab === '/' ? 'nav.today' : 'nav.archive')
     : pathname.endsWith('/info') ? t('chat.infoTitle')
     : pathname.startsWith('/chat') ? t('nav.chat')
     : pathname === '/archive' ? t('nav.archive')
@@ -60,7 +61,7 @@ function Layout() {
         {t('nav.skip')}
       </a>
       <nav className="nav" aria-label={t('nav.label')}>
-        <NavLink to="/" end>
+        <NavLink to="/" end className={tab('/')}>
           {t('nav.today')}
         </NavLink>
         <NavLink to="/archive" className={tab('/archive')}>

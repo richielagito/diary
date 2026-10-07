@@ -448,10 +448,6 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
   transition: background-color 150ms ease-out;
 }
 .calendar a:hover { background: var(--sunken); }
-/* Wide screens: square day cells would make the month a whole screen tall and push the day list below the fold. */
-@media (min-width: 641px) {
-  .calendar a, .calendar span.empty, .calendar span.future { aspect-ratio: auto; height: 3.5rem; }
-}
 .calendar span.future { color: var(--muted); opacity: 0.6; }
 .calendar a[aria-current='date'] { box-shadow: inset 0 0 0 1.5px var(--text); font-weight: 600; }
 .calendar .dot { width: 7px; height: 7px; border-radius: 50%; }
@@ -734,7 +730,8 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .stat-section > p:not([class]), .stats > p.muted { color: var(--muted); font-size: 0.9375rem; }
 .stats > p.muted { margin-top: 1.25rem; font-family: var(--font-text); font-style: italic; font-size: 1.0625rem; }
 
-.stats > .wrapped-link { display: flex; width: fit-content; margin: 0 auto 1.25rem; }
+/* The period's last word, after everything it sums up. */
+.stats > .wrapped-link { display: flex; width: fit-content; margin: 2.5rem auto 0; }
 .wrapped-link {
   display: inline-flex;
   align-items: center;

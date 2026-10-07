@@ -47,3 +47,20 @@ test('a page change sets the title and moves focus to the content', async () => 
   await waitFor(() => expect(document.title).toBe('Arsip · Diary'))
   expect(document.activeElement).toBe(document.getElementById('main'))
 })
+
+test('stepping back from today keeps the Today tab lit', async () => {
+  const { user } = await renderApp('/')
+  await screen.findByRole('textbox', { name: 'Tulis diary' })
+  await user.click(screen.getByRole('link', { name: 'Hari sebelumnya' }))
+  await user.click(await screen.findByRole('link', { name: 'Hari sebelumnya' }))
+  await waitFor(() => expect(document.title).toBe('Hari ini · Diary'))
+  expect(screen.getByRole('link', { name: 'Hari ini' })).toHaveClass('active')
+  expect(screen.getByRole('link', { name: 'Arsip' })).not.toHaveClass('active')
+})
+
+test('a past day opened directly lights the Archive tab', async () => {
+  await renderApp('/day/2026-01-05')
+  await screen.findByRole('textbox', { name: 'Tulis diary' })
+  expect(screen.getByRole('link', { name: 'Arsip' })).toHaveClass('active')
+  expect(screen.getByRole('link', { name: 'Hari ini' })).not.toHaveClass('active')
+})

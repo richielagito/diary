@@ -201,21 +201,23 @@ export function DayPage({ date }: { date: DateKey }) {
 
   // Arrow keys page through days only when nothing interactive has focus: fields, buttons and links keep their arrows.
   const navigate = useNavigate()
-  const stepped = { stepped: true }
+  const location = useLocation()
+  // Stepping keeps the tab it started from lit: back from today stays under "Hari ini", not the Archive.
+  const from = (location.state as { tab?: string } | null)?.tab ?? (isToday ? '/' : '/archive')
+  const stepped = { stepped: true, tab: from }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return
       const el = e.target as HTMLElement | null
       if (el?.closest('a, button, input, textarea, select, summary, [contenteditable="true"], [role="group"]')) return
-      if (e.key === 'ArrowLeft') navigate(prev, { state: { stepped: true } })
-      else if (e.key === 'ArrowRight' && !isToday) navigate(next, { state: { stepped: true } })
+      if (e.key === 'ArrowLeft') navigate(prev, { state: { stepped: true, tab: from } })
+      else if (e.key === 'ArrowRight' && !isToday) navigate(next, { state: { stepped: true, tab: from } })
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate, prev, next, isToday])
+  }, [navigate, prev, next, isToday, from])
 
   // After stepping to another day, focus lands on its date, so a screen reader hears where it arrived.
-  const location = useLocation()
   const headingRef = useRef<HTMLHeadingElement>(null)
   useEffect(() => {
     if ((location.state as { stepped?: boolean } | null)?.stepped) headingRef.current?.focus()
