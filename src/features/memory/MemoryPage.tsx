@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { ConfirmButton } from '../../app/ConfirmButton'
+import { useInitial } from '../../app/useInitial'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { extractMemories, type ExtractResult } from '../../ai/memory/extractMemories'
 import { MEMORY_MAX, MEMORY_TEXT_MAX } from '../../ai/memory/limits'
@@ -57,8 +58,19 @@ export function MemoryPage() {
   const { t, i18n } = useTranslation()
   const { memories, summaries, letters, chats, settingsStore, createProvider } = useRepos()
   const settings = useSettings()
-  const [memoryList, setMemoryList] = useState<Memory[]>([])
-  const [summaryList, setSummaryList] = useState<Summary[]>([])
+  // Read before the page shows, so it never opens on the empty notes first.
+  const initial = useInitial(memories, 'memory-page', async () => ({
+    memories: await memories.list().catch((err: unknown) => {
+      console.error(err)
+      return []
+    }),
+    summaries: await summaries.list().catch((err: unknown) => {
+      console.error(err)
+      return []
+    }),
+  }))
+  const [memoryList, setMemoryList] = useState<Memory[]>(initial.memories)
+  const [summaryList, setSummaryList] = useState<Summary[]>(initial.summaries)
   const [draft, setDraft] = useState('')
   const [refresh, setRefresh] = useState<ExtractResult | { status: 'running' } | null>(null)
   const [storageFailed, setStorageFailed] = useState(false)

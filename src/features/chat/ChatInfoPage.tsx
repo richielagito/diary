@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { ConfirmButton } from '../../app/ConfirmButton'
 import { ChevronLeft } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
+import { useInitial } from '../../app/useInitial'
 import type { DateKey } from '../../domain/types'
 import type { ChatMessage } from '../../storage/ChatRepository'
 import { chatDate } from './chatDate'
@@ -16,8 +17,19 @@ export function ChatInfoPage({ date }: { date: DateKey }) {
   const { chats, settingsStore } = useRepos()
   const settings = useSettings()
   const navigate = useNavigate()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [dates, setDates] = useState<DateKey[]>([])
+  // Read before the page shows, so its sections do not appear one after another.
+  const initial = useInitial(chats, `chat-info:${date}`, async () => ({
+    messages: await chats.listByDate(date).catch((err: unknown) => {
+      console.error(err)
+      return []
+    }),
+    dates: await chats.datesWithChats().catch((err: unknown) => {
+      console.error(err)
+      return []
+    }),
+  }))
+  const [messages, setMessages] = useState<ChatMessage[]>(initial.messages)
+  const [dates, setDates] = useState<DateKey[]>(initial.dates)
 
   useEffect(() => chats.watchByDate(date, setMessages), [chats, date])
   useEffect(() => {

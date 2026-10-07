@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { startTransition, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
+import { useInitial } from '../../app/useInitial'
 import { monthRange, shiftMonth, type YearMonth } from '../../domain/calendar'
 import { parseDateKey } from '../../domain/date'
 import { excerptAround, searchEntries } from '../../domain/filter'
@@ -25,7 +26,6 @@ const monthId = (v: YearMonth) => `${v.year}-${String(v.month).padStart(2, '0')}
 export function ArchivePage() {
   const { t, i18n } = useTranslation()
   const { diary } = useRepos()
-  const [monthEntries, setMonthEntries] = useState<Map<DateKey, DayEntry>>(new Map())
   const [all, setAll] = useState<DayEntry[] | null>(null)
   // The search and the month live in the URL (?q=#tag&m=2026-08): Back from a day or a result returns to them, and Stats
   // links here with ?q=#tag. The page reads its own state and the URL follows, since URL changes run as transitions:
@@ -48,15 +48,17 @@ export function ArchivePage() {
     )
   }, [params, setParams, query, ym])
 
-  useEffect(() => {
-    let cancelled = false
-    void diary.list(monthRange(ym)).then((list) => {
-      if (!cancelled) setMonthEntries(new Map(list.map((e) => [e.date, e])))
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [diary, ym])
+  // The month is read before it shows: a new month replaces the old one whole, never an empty calendar first.
+  const monthEntries = useInitial(diary, `archive:${monthId(ym)}`, () =>
+    diary.list(monthRange(ym)).then(
+      (list) => new Map<DateKey, DayEntry>(list.map((e) => [e.date, e])),
+      (err: unknown) => {
+        console.error(err)
+        return new Map<DateKey, DayEntry>()
+      },
+    ),
+  )
+  const stepMonth = (by: number) => startTransition(() => setYm((v) => shiftMonth(v, by)))
 
   // Seluruh entri baru dimuat saat user mulai mencari.
   useEffect(() => {
@@ -116,11 +118,11 @@ export function ArchivePage() {
       ) : (
         <>
           <div className="month-nav">
-            <button type="button" className="icon-btn" aria-label={t('archive.prevMonth')} onClick={() => setYm((v) => shiftMonth(v, -1))}>
+            <button type="button" className="icon-btn" aria-label={t('archive.prevMonth')} onClick={() => stepMonth(-1)}>
               <ChevronLeft />
             </button>
             <h1>{title}</h1>
-            <button type="button" className="icon-btn" aria-label={t('archive.nextMonth')} disabled={atCurrentMonth} onClick={() => setYm((v) => shiftMonth(v, 1))}>
+            <button type="button" className="icon-btn" aria-label={t('archive.nextMonth')} disabled={atCurrentMonth} onClick={() => stepMonth(1)}>
               <ChevronRight />
             </button>
           </div>

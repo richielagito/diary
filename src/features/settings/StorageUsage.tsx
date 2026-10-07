@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRepos, useSettings } from '../../app/RepoContext'
+import { useInitial } from '../../app/useInitial'
 
 /** Above this share of the quota the browser may refuse new writes soon. */
 const NEARLY_FULL = 0.8
@@ -19,30 +19,24 @@ export function StorageUsage() {
   const { t, i18n } = useTranslation()
   const { diary } = useRepos()
   const { lastExportAt } = useSettings()
-  const [estimate, setEstimate] = useState<{ usage: number; quota: number } | null>(null)
-  const [changed, setChanged] = useState<number | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    void navigator.storage
-      ?.estimate?.()
-      .then(({ usage, quota }) => {
-        if (!cancelled && usage !== undefined && quota) setEstimate({ usage, quota })
-      })
-      // Informative only: without an estimate the line stays hidden.
-      .catch(() => {})
-    void diary.list().then((all) => {
-      if (!cancelled) setChanged(all.filter((e) => lastExportAt === null || e.updatedAt > lastExportAt).length)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [diary, lastExportAt])
+  // Read before Settings shows, so these lines do not appear late and push the page down.
+  const { entries, estimate } = useInitial(diary, 'storage-usage', async () => ({
+    entries: await diary.list().catch((err: unknown) => {
+      console.error(err)
+      return null
+    }),
+    // Informative only: without an estimate the line stays hidden.
+    estimate: await (navigator.storage?.estimate?.() ?? Promise.resolve(null)).then(
+      (e) => (e?.usage !== undefined && e.quota ? { usage: e.usage, quota: e.quota } : null),
+      () => null,
+    ),
+  }))
+  const changed = entries?.filter((e) => lastExportAt === null || e.updatedAt > lastExportAt).length ?? 0
 
   const full = estimate ? estimate.usage / estimate.quota : 0
   return (
     <>
-      {changed !== null && changed > 0 && <p>{t('settings.changedSinceExport', { count: changed })}</p>}
+      {changed > 0 && <p>{t('settings.changedSinceExport', { count: changed })}</p>}
       {estimate && (
         <p className="storage-usage">
           {t('settings.storageUsed', { used: formatBytes(estimate.usage, i18n.language), quota: formatBytes(estimate.quota, i18n.language) })}

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Settings } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
+import { useInitial } from '../../app/useInitial'
 import { detectCrisis } from '../../ai/safety/crisis'
 import type { DateKey, Mood } from '../../domain/types'
 import type { ChatMessage } from '../../storage/ChatRepository'
@@ -19,7 +20,14 @@ export function ChatPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
   const { diary, chats, memories, summaries } = useRepos()
   const settings = useSettings()
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  // Read before the page shows, so a conversation never opens on the empty-chat note first.
+  const initial = useInitial(chats, `chat:${date}`, () =>
+    chats.listByDate(date).catch((err: unknown) => {
+      console.error(err)
+      return []
+    }),
+  )
+  const [messages, setMessages] = useState<ChatMessage[]>(initial)
 
   useEffect(() => chats.watchByDate(date, setMessages), [chats, date])
 
