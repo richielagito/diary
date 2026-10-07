@@ -83,7 +83,8 @@
 /* ---------- Base ---------- */
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* Room for the scrollbar is kept on both sides, so moving between a short page and a long one never shifts the centred column. */
+html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable both-edges; }
 body {
   margin: 0;
   background: var(--bg);

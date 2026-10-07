@@ -5,7 +5,7 @@ import { useRepos } from '../../app/RepoContext'
 import { dateKey } from '../../domain/date'
 import type { DayEntry } from '../../domain/types'
 import { computeStats } from '../../stats/computeStats'
-import { comparePeriods, parsePeriodId, periodContaining, periodId, shiftPeriod, type StatsPeriod } from '../../stats/range'
+import { comparePeriods, parsePeriodId, periodContaining, periodId, shiftPeriod } from '../../stats/range'
 import { ConsistencyCards, MoodSection, TagSection } from './StatCards'
 import { periodLabel } from './format'
 import { Heatmap } from './Heatmap'
@@ -23,14 +23,18 @@ export function StatsPage() {
   /** Raised by "Coba lagi" after a failed load, to read the diary again. */
   const [attempt, setAttempt] = useState(0)
   // The period lives in the URL (?p=2026-10 or ?p=2026): Back from a day or from Wrapped returns to it.
+  // The page reads its own state and the URL follows: URL changes run as transitions, and a second click before
+  // the redraw would start from the period last drawn.
   const [params, setParams] = useSearchParams()
-  const periodParam = params.get('p')
-  const period = useMemo(() => {
-    const p = periodParam ? parsePeriodId(periodParam) : null
+  const [period, setPeriod] = useState(() => {
+    const p = params.get('p') ? parsePeriodId(params.get('p')!) : null
     return p && comparePeriods(p, periodContaining(p.kind, today)) <= 0 ? p : periodContaining('month', today)
-  }, [periodParam, today])
-  const setPeriod = (next: StatsPeriod | ((p: StatsPeriod) => StatsPeriod)) =>
-    setParams({ p: periodId(typeof next === 'function' ? next(period) : next) }, { replace: true })
+  })
+  useEffect(() => {
+    const id = periodId(period)
+    // A first visit keeps its plain address: no ?p= for the current month.
+    if ((params.get('p') ?? periodId(periodContaining('month', today))) !== id) setParams({ p: id }, { replace: true })
+  }, [params, setParams, period, today])
 
   useEffect(() => {
     let cancelled = false

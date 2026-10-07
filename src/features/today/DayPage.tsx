@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { useRepos } from '../../app/RepoContext'
+import { useInitial } from '../../app/useInitial'
 import { addDays, dateKey, parseDateKey } from '../../domain/date'
 import { mergeText } from '../../domain/mergeText'
-import { StaleTextError } from '../../storage/DiaryRepository'
+import { StaleTextError, type DiaryRepository } from '../../storage/DiaryRepository'
 import type { DateKey, Mood } from '../../domain/types'
 import { DiaryEditor, type DiaryEditorHandle } from '../../editor/DiaryEditor'
-import { takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
+import { peekUnsavedDraft, takeUnsavedDraft, useAutosave } from '../../editor/useAutosave'
 import { useExport } from '../../backup/useExport'
 import { BackupBanner } from './BackupBanner'
 import { MoodPicker } from './MoodPicker'
@@ -24,27 +25,51 @@ function withDraft(err: unknown, draft: { markdown: string; base: string }) {
   return Object.defineProperty(target, 'draft', { value: draft, configurable: true })
 }
 
+/** The day as stored, and whether it opens as the first-run page. Null when it could not be read: the page shows no editor. */
+async function loadDay(diary: DiaryRepository, date: DateKey) {
+  try {
+    const entry = await diary.get(date)
+    // First run: today's page of an empty diary opens on a welcome text. It is stored only once the user edits it,
+    // so a new device that later signs in does not push it into an account that already has a diary.
+    const firstRun = !entry && date === dateKey() && (await diary.isEmpty())
+    return { entry, firstRun }
+  } catch (err) {
+    console.error(err)
+    return null
+  }
+}
+
 export function DayPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
   const { diary } = useRepos()
   const exportNow = useExport()
   const editorRef = useRef<DiaryEditorHandle>(null)
-  const [loaded, setLoaded] = useState<{ markdown: string } | null>(null)
-  const [mood, setMood] = useState<Mood | null>(null)
+  // The day is read before the page shows, so stepping between days never flashes a page without its text.
+  const initial = useInitial(diary, `day:${date}`, () => loadDay(diary, date))
+  const [loaded] = useState(() => {
+    if (!initial) return null
+    const stored = initial.entry?.markdown ?? ''
+    // Teks yang gagal tersimpan waktu halaman ini ditutup menang atas isi lama, lalu disimpan ulang.
+    // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
+    const draft = peekUnsavedDraft(date)
+    const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : initial.firstRun ? t('day.welcome') : stored
+    return { markdown, draft: !!draft, welcome: initial.firstRun && !draft }
+  })
+  const [mood, setMood] = useState<Mood | null>(initial?.entry?.mood ?? null)
   const [moodError, setMoodError] = useState(false)
   /** The day already had an entry when it opened: before any new edit, its status reads as saved, not blank. */
-  const [stored, setStored] = useState(false)
+  const stored = !!initial?.entry
   /** True sejak mood diklik sampai tersimpan; selama itu watch tidak menimpa mood di layar. */
   const moodPending = useRef(false)
 
   /** Teks tersimpan yang terakhir sudah tercakup di editor ini: dasar gabung kalau yang tersimpan berubah dari luar. */
-  const base = useRef('')
+  const base = useRef(initial?.entry?.markdown ?? '')
   /** Teks yang sedang ditulis, supaya kabar tentang tulisan sendiri tidak dikira perubahan dari luar. */
   const sending = useRef<string | null>(null)
   const alive = useRef(true)
   const absorbRef = useRef<(incoming: string) => void>(() => {})
   /** True while the page shows the first-run welcome text, which is never stored unless the user edits it. */
-  const [welcome, setWelcome] = useState(false)
+  const [welcome, setWelcome] = useState(!!loaded?.welcome)
   const pointerFocus = useRef(false)
 
   /** Dinaikkan tiap kali `base` diisi teks yang bukan tulisan editor ini sendiri (gabungan dari luar). */
@@ -125,30 +150,12 @@ export function DayPage({ date }: { date: DateKey }) {
     schedule(merged)
   }
 
+  // The draft shown is taken once the page is on screen, and saved again.
   useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      const entry = await diary.get(date)
-      // First run: today's page of an empty diary opens on a welcome text. It is stored only once the user edits it,
-      // so a new device that later signs in does not push it into an account that already has a diary.
-      const firstRun = !entry && date === dateKey() && (await diary.isEmpty())
-      if (cancelled) return
-      // Teks yang gagal tersimpan waktu halaman ini ditutup menang atas isi lama, lalu disimpan ulang.
-      const draft = takeUnsavedDraft(date)
-      const stored = entry?.markdown ?? ''
-      base.current = stored
-      // Draft tanpa dasar yang diketahui menang (mergeText dengan dasar = tersimpan mengembalikan draft).
-      const markdown = draft ? mergeText(draft.markdown, stored, draft.base ?? stored) : firstRun ? t('day.welcome') : stored
-      setWelcome(firstRun && !draft)
-      setLoaded({ markdown })
-      setStored(!!entry)
-      if (draft) schedule(markdown)
-      setMood(entry?.mood ?? null)
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [diary, date, schedule, t])
+    if (!loaded?.draft) return
+    takeUnsavedDraft(date)
+    schedule(loaded.markdown)
+  }, [date, loaded, schedule])
 
   // Perubahan dari luar (sync atau tab lain) untuk tanggal ini.
   useEffect(() => {

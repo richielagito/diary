@@ -29,6 +29,11 @@ export function rememberUnsavedDraft(date: DateKey, markdown: string, base?: str
   unsavedDrafts.set(date, { markdown, base })
 }
 
+/** Lihat draft yang belum tersimpan untuk tanggal ini tanpa menghapusnya (aman dipanggil saat render). */
+export function peekUnsavedDraft(date: DateKey): UnsavedDraft | undefined {
+  return unsavedDrafts.get(date)
+}
+
 /** Ambil lalu hapus draft yang belum tersimpan untuk tanggal ini. */
 export function takeUnsavedDraft(date: DateKey): UnsavedDraft | undefined {
   const draft = unsavedDrafts.get(date)

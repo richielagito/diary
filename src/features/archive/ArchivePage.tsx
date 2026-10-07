@@ -10,45 +10,43 @@ import { ChevronLeft, ChevronRight } from '../../app/icons'
 import { MonthCalendar } from './MonthCalendar'
 import { MonthEntries } from './MonthEntries'
 
+/** `?m=2026-08`, or the current month when it is missing, malformed or in the future. */
+function parseMonth(param: string | null): YearMonth {
+  const now = new Date()
+  const m = param?.match(/^(\d{4})-(\d{2})$/)
+  const asked = m ? { year: Number(m[1]), month: Number(m[2]) } : null
+  const current = { year: now.getFullYear(), month: now.getMonth() + 1 }
+  const valid = asked && asked.month >= 1 && asked.month <= 12 && asked.year * 12 + asked.month <= current.year * 12 + current.month
+  return valid ? asked : current
+}
+
+const monthId = (v: YearMonth) => `${v.year}-${String(v.month).padStart(2, '0')}`
+
 export function ArchivePage() {
   const { t, i18n } = useTranslation()
   const { diary } = useRepos()
   const [monthEntries, setMonthEntries] = useState<Map<DateKey, DayEntry>>(new Map())
   const [all, setAll] = useState<DayEntry[] | null>(null)
-  // The query lives in the URL: Back from a result returns to the same search, and Stats links here with ?q=#tag.
+  // The search and the month live in the URL (?q=#tag&m=2026-08): Back from a day or a result returns to them, and Stats
+  // links here with ?q=#tag. The page reads its own state and the URL follows, since URL changes run as transitions:
+  // a field fed by one drops fast keystrokes, and a second click before the redraw would not move a month further.
   const [params, setParams] = useSearchParams()
-  const query = params.get('q') ?? ''
-  const setQuery = (q: string) =>
+  const [query, setQuery] = useState(() => params.get('q') ?? '')
+  const [ym, setYm] = useState(() => parseMonth(params.get('m')))
+  useEffect(() => {
+    const month = monthId(ym)
+    if ((params.get('q') ?? '') === query && monthId(parseMonth(params.get('m'))) === month) return
     setParams(
       (p) => {
         const n = new URLSearchParams(p)
-        if (q) n.set('q', q)
+        if (query) n.set('q', query)
         else n.delete('q')
+        n.set('m', month)
         return n
       },
       { replace: true },
     )
-  // The month lives in the URL too (?m=2026-08), so Back from a day returns to the month it was opened from.
-  const monthParam = params.get('m')
-  const ym = useMemo<YearMonth>(() => {
-    const now = new Date()
-    const m = monthParam?.match(/^(\d{4})-(\d{2})$/)
-    const asked = m ? { year: Number(m[1]), month: Number(m[2]) } : null
-    const current = { year: now.getFullYear(), month: now.getMonth() + 1 }
-    const valid = asked && asked.month >= 1 && asked.month <= 12 && asked.year * 12 + asked.month <= current.year * 12 + current.month
-    return valid ? asked : current
-  }, [monthParam])
-  const setYm = (f: (v: YearMonth) => YearMonth) => {
-    const next = f(ym)
-    setParams(
-      (p) => {
-        const n = new URLSearchParams(p)
-        n.set('m', `${next.year}-${String(next.month).padStart(2, '0')}`)
-        return n
-      },
-      { replace: true },
-    )
-  }
+  }, [params, setParams, query, ym])
 
   useEffect(() => {
     let cancelled = false
