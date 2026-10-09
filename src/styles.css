@@ -573,13 +573,15 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat { --chat-top: 5.5rem; display: flex; flex-direction: column; gap: 1rem; min-height: calc(100dvh - var(--chat-top)); }
 /* The chat fills the screen down to the nav, so the conversation sits on the bottom edge as in a chat app. */
 .shell:has(.chat) { padding-bottom: 0; }
-.chat > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.chat > header h1 { margin: 0; }
-.chat > header p { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
+/* Wider screens scroll the page and the composer is sticky; the area only takes over on phones (below). */
+.chat-scroll { display: contents; }
+.chat header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.chat header h1 { margin: 0; }
+.chat header p { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
 /* The way into the chat's details wears the default button, so it reads as something to press. */
-.chat > header .icon-btn { flex: none; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); transition: border-color 150ms ease-out, transform 100ms ease-out; }
-.chat > header .icon-btn:hover { border-color: var(--text); background: var(--surface); }
-.chat > header .icon-btn:active { transform: translateY(1px); }
+.chat header .icon-btn { flex: none; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); transition: border-color 150ms ease-out, transform 100ms ease-out; }
+.chat header .icon-btn:hover { border-color: var(--text); background: var(--surface); }
+.chat header .icon-btn:active { transform: translateY(1px); }
 /* The slim bar that stands in for the header once it has scrolled away: one line, the column's width. */
 .chat-bar {
   position: fixed;
@@ -659,8 +661,11 @@ html:has(.composer) { scroll-padding-bottom: 6rem; }
 /* Phones: the chat ends on the bottom nav, and the composer sits right on it. */
 @media (max-width: 640px) {
   .shell:has(.chat) { padding-bottom: var(--nav-h); }
-  .chat { --chat-top: calc(var(--nav-h) + 1.25rem + env(safe-area-inset-top)); }
-  .composer { padding-bottom: 0.5rem; }
+  /* The chat is exactly one screen tall and the conversation scrolls inside it, so the page never scrolls and the
+     composer is an ordinary last row: nothing sticky for the iOS keyboard to strand or scroll back to. */
+  .chat { --chat-top: calc(var(--nav-h) + 1.25rem + env(safe-area-inset-top)); height: calc(100dvh - var(--chat-top)); min-height: 0; gap: 0; }
+  .chat-scroll { display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 0.5rem; }
+  .composer { position: static; padding-bottom: 0.5rem; }
   .chat-bar { padding-top: calc(0.25rem + env(safe-area-inset-top)); }
 }
 .crisis { border: 1px solid color-mix(in oklab, var(--danger) 45%, transparent); border-radius: 12px; padding: 1rem 1.25rem; background: color-mix(in oklab, var(--danger) 6%, var(--surface)); }

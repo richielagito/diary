@@ -15,6 +15,11 @@ import { loadChatPrompt } from './systemPromptSource'
 import { useAiMaintenance } from './useAiMaintenance'
 import { useChat } from './useChat'
 
+/** The conversation's own area where it scrolls by itself (phones), otherwise the page. */
+function scrollerOf(area: HTMLElement | null): HTMLElement {
+  return area && getComputedStyle(area).overflowY === 'auto' ? area : document.documentElement
+}
+
 export function ChatPage({ date }: { date: DateKey }) {
   const { t, i18n } = useTranslation()
   const { diary, chats, memories, summaries } = useRepos()
@@ -58,17 +63,24 @@ export function ChatPage({ date }: { date: DateKey }) {
 
   // Follow the conversation: open at the latest message (where the crisis card sits too), and keep following
   // new and streaming replies unless the user has scrolled up to reread.
+  // Phones scroll the conversation inside its own area above an unmoving composer: a sticky composer is what the
+  // iOS keyboard strands mid-screen and scrolls back to while typing. Wider screens scroll the page.
+  const scrollArea = useRef<HTMLDivElement>(null)
   const following = useRef(true)
   useEffect(() => {
     const onScroll = () => {
-      following.current = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 160
+      const s = scrollerOf(scrollArea.current)
+      following.current = s.clientHeight + s.scrollTop >= s.scrollHeight - 160
     }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    // Capture: scroll events from the area do not bubble to the document.
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    return () => document.removeEventListener('scroll', onScroll, { capture: true })
   }, [])
   const partial = chat.state.phase === 'streaming' ? chat.state.partial : ''
   useEffect(() => {
-    if (following.current) window.scrollTo?.({ top: document.documentElement.scrollHeight })
+    if (!following.current) return
+    const s = scrollerOf(scrollArea.current)
+    s.scrollTo?.({ top: s.scrollHeight })
   }, [messages.length, partial, showCrisis, chat.state.phase])
 
   const empty = messages.length === 0 && chat.state.phase === 'idle'
@@ -94,50 +106,52 @@ export function ChatPage({ date }: { date: DateKey }) {
 
   return (
     <section className="chat">
-      <header ref={header}>
-        <div>
-          <h1>{t('chat.title')}</h1>
-          <p>{chatDate(date, i18n.language)}</p>
-        </div>
-        <Link className="icon-btn" to={`/chat/${date}/info`} aria-label={t('chat.infoTitle')} title={t('chat.infoTitle')}>
-          <Settings />
-        </Link>
-      </header>
-      {/* A visual echo of the header above: hidden from assistive tech, which still has the real one. */}
-      <div className="chat-bar" data-shown={compact || undefined} aria-hidden="true" inert={!compact}>
-        <p>
-          <strong>{t('chat.title')}</strong> <span>{chatDate(date, i18n.language)}</span>
-        </p>
-        <Link className="icon-btn" to={`/chat/${date}/info`} tabIndex={-1} title={t('chat.infoTitle')}>
-          <Settings />
-        </Link>
-      </div>
-
-      {!settings.ai ? (
-        <div className="chat-empty">
-          <h2>{t('chat.noConfigTitle')}</h2>
-          <p>{t('chat.noConfigBody')}</p>
-          <Link className="button primary" to="/settings#ai">
-            {t('chat.openSettings')}
+      <div className="chat-scroll" ref={scrollArea}>
+        <header ref={header}>
+          <div>
+            <h1>{t('chat.title')}</h1>
+            <p>{chatDate(date, i18n.language)}</p>
+          </div>
+          <Link className="icon-btn" to={`/chat/${date}/info`} aria-label={t('chat.infoTitle')} title={t('chat.infoTitle')}>
+            <Settings />
+          </Link>
+        </header>
+        {/* A visual echo of the header above: hidden from assistive tech, which still has the real one. */}
+        <div className="chat-bar" data-shown={compact || undefined} aria-hidden="true" inert={!compact}>
+          <p>
+            <strong>{t('chat.title')}</strong> <span>{chatDate(date, i18n.language)}</span>
+          </p>
+          <Link className="icon-btn" to={`/chat/${date}/info`} tabIndex={-1} title={t('chat.infoTitle')}>
+            <Settings />
           </Link>
         </div>
-      ) : (
-        empty && (
+
+        {!settings.ai ? (
           <div className="chat-empty">
-            <h2>{t('chat.emptyTitle')}</h2>
-            <p>{t('chat.emptyBody', { name: settings.persona.name.trim() || t('chat.title') })}</p>
+            <h2>{t('chat.noConfigTitle')}</h2>
+            <p>{t('chat.noConfigBody')}</p>
+            <Link className="button primary" to="/settings#ai">
+              {t('chat.openSettings')}
+            </Link>
           </div>
-        )
-      )}
+        ) : (
+          empty && (
+            <div className="chat-empty">
+              <h2>{t('chat.emptyTitle')}</h2>
+              <p>{t('chat.emptyBody', { name: settings.persona.name.trim() || t('chat.title') })}</p>
+            </div>
+          )
+        )}
 
-      {/* Without AI, "I'm listening" would be a promise the page cannot keep; earlier messages still show. */}
-      {!empty && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
+        {/* Without AI, "I'm listening" would be a promise the page cannot keep; earlier messages still show. */}
+        {!empty && <MessageList messages={messages} state={chat.state} onRetry={chat.retry} />}
 
-      {showCrisis && <CrisisCard />}
-      {/* The card appears inside the flow; this tells a screen reader it arrived. */}
-      <p className="visually-hidden" aria-live="assertive">
-        {showCrisis ? t('crisis.title') : ''}
-      </p>
+        {showCrisis && <CrisisCard />}
+        {/* The card appears inside the flow; this tells a screen reader it arrived. */}
+        <p className="visually-hidden" aria-live="assertive">
+          {showCrisis ? t('crisis.title') : ''}
+        </p>
+      </div>
 
       {settings.ai && <Composer streaming={chat.state.phase === 'streaming'} onSend={chat.send} onStop={chat.stop} />}
     </section>
