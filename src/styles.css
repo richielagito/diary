@@ -576,7 +576,10 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat > header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .chat > header h1 { margin: 0; }
 .chat > header p { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.9375rem; }
-.chat > header .icon-btn { margin-right: -0.5rem; }
+/* The way into the chat's details wears the default button, so it reads as something to press. */
+.chat > header .icon-btn { flex: none; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); transition: border-color 150ms ease-out, transform 100ms ease-out; }
+.chat > header .icon-btn:hover { border-color: var(--text); background: var(--surface); }
+.chat > header .icon-btn:active { transform: translateY(1px); }
 .chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 0.5rem; padding: 2rem 0; text-align: center; }
 .chat-empty h2 { margin: 0; font-family: var(--font-text); font-size: 1.125rem; font-weight: 500; }
 .chat-empty p { margin: 0; max-width: 30ch; color: var(--muted); font-size: 0.9375rem; }
