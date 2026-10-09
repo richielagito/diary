@@ -84,6 +84,8 @@
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Development's sample-data mode (?demo): a quiet tag, so it is never mistaken for the real diary. */
+html[data-demo] body::after { content: 'Demo'; position: fixed; top: 0.5rem; right: 0.5rem; z-index: 50; padding: 0.15rem 0.5rem; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--muted); font: 600 0.6875rem/1.4 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
 /* Room for the scrollbar is kept on both sides, so moving between a short page and a long one never shifts the centred
    column. Wide screens only: a phone's scrollbar floats over the page, and a narrow window needs every pixel. */
 @media (min-width: 641px) { html { scrollbar-gutter: stable both-edges; } }

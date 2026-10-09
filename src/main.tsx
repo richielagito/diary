@@ -19,15 +19,36 @@ import { DexieSummaryRepository } from './storage/DexieSummaryRepository'
 import { defaultSettings } from './storage/SettingsStore'
 import './styles.css'
 
+/**
+ * Development only: `?demo` switches this browser to a separate database filled with sample data, with sync off;
+ * `?demo=off` switches back. The real diary in the `diary` database is never read or written meanwhile.
+ */
+function demoMode() {
+  const param = new URLSearchParams(location.search).get('demo')
+  try {
+    if (param === 'off') localStorage.removeItem('diary-demo')
+    else if (param !== null) localStorage.setItem('diary-demo', '1')
+    return localStorage.getItem('diary-demo') === '1'
+  } catch {
+    return param !== null && param !== 'off'
+  }
+}
+
 async function start() {
   const root = createRoot(document.getElementById('root')!)
   const defaults = defaultSettings(navigator.language)
-  const db = new DiaryDB()
+  const demo = import.meta.env.DEV && demoMode()
+  const db = new DiaryDB(demo ? 'diary-demo' : undefined)
 
   if (!(await openDatabase(db))) {
     await initI18n(defaults.language)
     root.render(<UnavailableScreen />)
     return
+  }
+
+  if (import.meta.env.DEV && demo) {
+    document.documentElement.dataset.demo = ''
+    if ((await db.entries.count()) === 0) await (await import('./dev/demoSeed')).seedDemo(db)
   }
 
   const settingsStore = new DexieSettingsStore(db, defaults)
@@ -41,7 +62,7 @@ async function start() {
 
   // Tanpa VITE_API_URL tidak ada akun dan tidak ada sync: aplikasi berjalan sepenuhnya lokal.
   const apiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim()
-  let sync = apiUrl ? createSyncController({ db, api: createApi(apiUrl) }) : null
+  let sync = apiUrl && !demo ? createSyncController({ db, api: createApi(apiUrl) }) : null
   try {
     await sync?.start()
   } catch {

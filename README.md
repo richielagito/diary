@@ -62,6 +62,8 @@ npm run dev
 
 Then open the address Vite prints (by default http://localhost:5173).
 
+To see every screen with content, open it with `?demo` (for example http://localhost:5173/?demo). In development only, this switches the browser to a separate database filled with about ten months of sample entries, chats and memories, with sync off, and marks the page "Demo". Your own local diary is not touched. `?demo=off` switches back.
+
 To use the AI companion, open **Pengaturan** (Settings), choose a provider, paste your API key, and press **Simpan**.
 
 ## Sync server
