@@ -160,7 +160,7 @@ function ShareStats({ stats }: { stats: PeriodStats }) {
   const { busy, failed, save } = useShareCard(stats)
   return (
     <>
-      <button type="button" className="share-stats" disabled={busy} onClick={() => void save()}>
+      <button type="button" className="share-stats primary" disabled={busy} onClick={() => void save()}>
         <PaperAirplane />
         {t('stats.share')}
       </button>
