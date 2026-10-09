@@ -8,7 +8,7 @@ export function TagSlide({ stats }: { stats: PeriodStats }) {
   const [first, ...rest] = stats.tags.top
   const top = new Set(stats.tags.top.map((x) => x.tag))
   const lift = stats.tags.moodLift[0]
-  const fresh = stats.period.kind === 'year' ? stats.tags.fresh.filter((tag) => !top.has(tag)).slice(0, 3) : []
+  const fresh = stats.tags.fresh.filter((tag) => !top.has(tag)).slice(0, 3)
   if (!first) return null
   return (
     <div className="slide-body">

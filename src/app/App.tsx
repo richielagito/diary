@@ -100,7 +100,8 @@ function WrappedRoute() {
   useApplyPreferences()
   const period = parsePeriodId(id)
   const today = dateKey()
-  if (!period || periodRange(period, today).from > today) return <Navigate to="/stats" replace />
+  // Wrapped is yearly: a month has its stats, a year earns the celebration.
+  if (period?.kind !== 'year' || periodRange(period, today).from > today) return <Navigate to="/stats" replace />
   return <WrappedPage key={id} period={period} />
 }
 

@@ -29,7 +29,6 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
         distribution: stats.mood.distribution,
         heatmap: stats.heatmap,
         weeks: stats.weeks,
-        mode: stats.period.kind,
         topTags: stats.tags.top.slice(0, 3).map((x) => x.tag),
         appName: 'Diary',
       }

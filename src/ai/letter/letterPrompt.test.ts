@@ -17,7 +17,7 @@ const entry = (date: string, mood: Mood | null, tags: string[] = []): DayEntry =
   updatedAt: 1,
 })
 const entries = [entry('2026-09-01', 4, ['kerja']), entry('2026-09-02', 2, ['kerja']), entry('2026-09-03', 5, ['lari'])]
-const stats = computeStats(entries, { kind: 'month', year: 2026, month: 9 }, '2026-09-10')
+const stats = computeStats(entries, { kind: 'year', year: 2026 }, '2026-09-10')
 const memory = (text: string): Memory => ({ id: text, text, source: 'auto', createdAt: 1, updatedAt: 1 })
 const summary = (id: string, kind: Summary['kind'], periodStart: string, text: string): Summary => ({
   id,
@@ -48,7 +48,7 @@ test('the input never carries entry markdown', () => {
 
 test('input carries stats, rounded values and period info', () => {
   const input = buildLetterInput(base)
-  expect(input).toMatchObject({ periodId: '2026-09', kind: 'month', isCurrent: true, daysWritten: 3, elapsedDays: 10, totalWords: 30 })
+  expect(input).toMatchObject({ periodId: '2026', isCurrent: true, daysWritten: 3, elapsedDays: 253, totalWords: 30 })
   expect(input.mood.average).toBeCloseTo(3.67, 5)
   expect(input.tags.top[0]).toEqual({ tag: 'kerja', days: 2 })
 })
@@ -67,30 +67,20 @@ test('memoryEnabled false drops memories, summariesEnabled false drops summaries
   expect(text).not.toContain('Monthly summaries:')
 })
 
-test('week summaries and month summaries outside the period are excluded', () => {
+test('month summaries of the year are kept in order; week summaries and other years are excluded', () => {
   const input = buildLetterInput({
     ...base,
     summaries: [
       summary('week:2026-09-07', 'week', '2026-09-07', 'Minggu ini'),
-      summary('month:2026-08', 'month', '2026-08-01', 'Agustus lalu'),
-      summary('month:2026-09', 'month', '2026-09-01', 'September ini'),
-    ],
-  })
-  expect(input.summaries).toEqual([{ label: 'September', text: 'September ini' }])
-})
-
-test('year period keeps month summaries in order', () => {
-  const yearStats = computeStats(entries, { kind: 'year', year: 2026 }, '2026-09-10')
-  const input = buildLetterInput({
-    ...base,
-    stats: yearStats,
-    summaries: [
       summary('month:2026-09', 'month', '2026-09-01', 'B'),
       summary('month:2026-03', 'month', '2026-03-01', 'A'),
       summary('month:2025-12', 'month', '2025-12-01', 'lama'),
     ],
   })
-  expect(input.summaries.map((s) => s.text)).toEqual(['A', 'B'])
+  expect(input.summaries).toEqual([
+    { label: 'Maret', text: 'A' },
+    { label: 'September', text: 'B' },
+  ])
 })
 
 test('system prompt names the persona and language', () => {

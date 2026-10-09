@@ -5,8 +5,7 @@ import { formatNumber, periodLabel } from '../../stats/format'
 export function OpeningSlide({ stats }: { stats: PeriodStats }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language
-  const key = stats.period.kind === 'year' ? 'wrapped.openingYear' : 'wrapped.openingMonth'
-  const title = t(key, { count: stats.daysWritten, period: periodLabel(stats.period, lang), days: formatNumber(stats.daysWritten, lang) })
+  const title = t('wrapped.opening', { count: stats.daysWritten, period: periodLabel(stats.period, lang), days: formatNumber(stats.daysWritten, lang) })
   return (
     <div className="slide-body">
       {/* "So far" qualifies the title, so it is said quietly beside it rather than in display size. */}

@@ -22,7 +22,7 @@ export function StatsPage() {
   const [failed, setFailed] = useState(false)
   /** Raised by "Coba lagi" after a failed load, to read the diary again. */
   const [attempt, setAttempt] = useState(0)
-  // The period lives in the URL (?p=2026-10 or ?p=2026): Back from a day or from Wrapped returns to it.
+  // The period lives in the URL (?p=2026-10 or ?p=2026): Back from a day or from Wrapped (yearly) returns to it.
   // The page reads its own state and the URL follows: URL changes run as transitions, and a second click before
   // the redraw would start from the period last drawn.
   const [params, setParams] = useSearchParams()
@@ -130,22 +130,23 @@ export function StatsPage() {
       ) : (
         <p className="muted">{t('stats.emptyPeriod')}</p>
       )}
-      {/* A celebration needs something to celebrate: Wrapped opens once a week's worth of days is recorded. */}
-      {stats.daysWritten >= WRAPPED_MIN_DAYS ? (
-        <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
-          {t('stats.openWrapped', { period: label })}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          className="wrapped-link"
-          style={moodWash(stats.mood.distribution)}
-          disabled
-          title={t('stats.wrappedLater', { min: WRAPPED_MIN_DAYS, count: stats.daysWritten })}
-        >
-          {t('stats.openWrapped', { period: label })}
-        </button>
-      )}
+      {/* Wrapped is yearly, so it stays special; and a celebration needs something to celebrate: a week's worth of recorded days. */}
+      {period.kind === 'year' &&
+        (stats.daysWritten >= WRAPPED_MIN_DAYS ? (
+          <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
+            {t('stats.openWrapped', { period: label })}
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className="wrapped-link"
+            style={moodWash(stats.mood.distribution)}
+            disabled
+            title={t('stats.wrappedLater', { min: WRAPPED_MIN_DAYS, count: stats.daysWritten })}
+          >
+            {t('stats.openWrapped', { period: label })}
+          </button>
+        ))}
     </section>
   )
 }

@@ -40,7 +40,7 @@ function counting(inner: CreateProvider) {
 
 test('opens the letter, caches it, and reopens without a second call', async () => {
   const { calls, createProvider } = counting(replyWith('Paragraf satu.\n\nParagraf dua.'))
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByText('Paragraf satu.')).toBeInTheDocument()
@@ -57,7 +57,7 @@ test('opens the letter, caches it, and reopens without a second call', async () 
 
 test('shows the error and retries', async () => {
   let provider: CreateProvider = failWith('auth')
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: (c) => provider(c) })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: (c) => provider(c) })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByText('API key ditolak. Periksa key di Pengaturan.')).toBeInTheDocument()
@@ -68,8 +68,8 @@ test('shows the error and retries', async () => {
 
 test('a stale letter is not shown and survives a failed rewrite', async () => {
   const { user, letters } = await renderApp(
-    '/wrapped/2026-10',
-    { ...seed, letters: [{ periodId: '2026-10', text: 'Surat lama', fingerprint: 'old', createdAt: 1 }] },
+    '/wrapped/2026',
+    { ...seed, letters: [{ periodId: '2026', text: 'Surat lama', fingerprint: 'old', createdAt: 1 }] },
     { createProvider: failWith('network') },
   )
   await toLetter(user)
@@ -77,13 +77,13 @@ test('a stale letter is not shown and survives a failed rewrite', async () => {
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByRole('button', { name: 'Coba lagi' })).toBeInTheDocument()
   expect(screen.queryByText('Surat lama')).not.toBeInTheDocument()
-  expect((await letters.get('2026-10'))?.text).toBe('Surat lama')
+  expect((await letters.get('2026'))?.text).toBe('Surat lama')
 })
 
 test('leaving the slide aborts silently and stores nothing', async () => {
   const c = controllable()
   const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
-  const { user, letters } = await renderApp('/wrapped/2026-10', seed, { createProvider: c.createProvider })
+  const { user, letters } = await renderApp('/wrapped/2026', seed, { createProvider: c.createProvider })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Teman sedang menulis…')
@@ -91,13 +91,13 @@ test('leaving the slide aborts silently and stores nothing', async () => {
   await screen.findByRole('group', { name: '5 dari 5' })
   c.finish()
   await waitFor(() => expect(c.requests[0].signal.aborted).toBe(true))
-  expect(await letters.get('2026-10')).toBeUndefined()
+  expect(await letters.get('2026')).toBeUndefined()
   expect(errors).not.toHaveBeenCalled()
   errors.mockRestore()
 })
 
 test('clicking the envelope button does not advance the slide', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: replyWith('x') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: replyWith('x') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(screen.getByRole('group', { name: '4 dari 5' })).toBeInTheDocument()
@@ -110,7 +110,7 @@ function wrappedRoot() {
 }
 
 test('the sealed envelope and the error block are not tap targets for navigation', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: failWith('network') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: failWith('network') })
   await toLetter(user)
   wrappedRoot()
   fireEvent.click(screen.getByText('Ada pesan dari Teman'), { clientX: 800 })
@@ -121,7 +121,7 @@ test('the sealed envelope and the error block are not tap targets for navigation
 })
 
 test('tapping the right side of an open letter advances', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: replyWith('Paragraf satu.\n\nParagraf dua.') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: replyWith('Paragraf satu.\n\nParagraf dua.') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   const paragraph = await screen.findByText('Paragraf satu.')
@@ -131,7 +131,7 @@ test('tapping the right side of an open letter advances', async () => {
 })
 
 test('swiping on an open letter changes the slide', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: replyWith('Paragraf satu.') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: replyWith('Paragraf satu.') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   const paragraph = await screen.findByText('Paragraf satu.')
@@ -141,7 +141,7 @@ test('swiping on an open letter changes the slide', async () => {
 })
 
 test('selecting letter text does not change the slide', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: replyWith('Paragraf satu.') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: replyWith('Paragraf satu.') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   const paragraph = await screen.findByText('Paragraf satu.')
@@ -169,7 +169,7 @@ test('selecting letter text does not change the slide', async () => {
 })
 
 test('an aborted error that is not ours shows the error state', async () => {
-  const { user } = await renderApp('/wrapped/2026-10', seed, { createProvider: failWith('aborted') })
+  const { user } = await renderApp('/wrapped/2026', seed, { createProvider: failWith('aborted') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Dihentikan.')
@@ -178,7 +178,7 @@ test('an aborted error that is not ours shows the error state', async () => {
 })
 
 test('an unrelated settings write does not reseal an open letter', async () => {
-  const { user, settingsStore } = await renderApp('/wrapped/2026-10', seed, { createProvider: replyWith('Halo kamu.') })
+  const { user, settingsStore } = await renderApp('/wrapped/2026', seed, { createProvider: replyWith('Halo kamu.') })
   await toLetter(user)
   await user.click(screen.getByRole('button', { name: 'Buka' }))
   expect(await screen.findByText('Halo kamu.')).toBeInTheDocument()

@@ -28,7 +28,7 @@ Diary is a local-first PWA: it works offline, can be installed on a phone, and n
 **Stats and Wrapped**
 - Mood heatmap by month or year: colour shows mood, intensity shows how much you wrote.
 - Writing streaks, mood distribution, top tags, and tags that go with better moods.
-- Wrapped: a yearly or monthly story in slides, with an optional short letter from your companion.
+- Wrapped: a yearly story in slides, with an optional short letter from your companion.
 - A summary image you can save or share. It never contains diary text.
 
 **Sync between devices (optional)**

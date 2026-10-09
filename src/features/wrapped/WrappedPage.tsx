@@ -41,7 +41,7 @@ export function moodWash(distribution: Record<Mood, number>): CSSProperties {
   return { '--wrap-a': color(a), '--wrap-b': color(b ?? a) } as CSSProperties
 }
 
-export function WrappedPage({ period }: { period: StatsPeriod }) {
+export function WrappedPage({ period }: { period: Extract<StatsPeriod, { kind: 'year' }> }) {
   const { t, i18n } = useTranslation()
   const { diary, memories, summaries } = useRepos()
   const settings = useSettings()

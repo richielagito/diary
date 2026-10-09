@@ -875,7 +875,6 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 }
 .slide-lead { font-family: var(--font-text); font-size: 1.25rem; font-weight: 400; line-height: 1.45; text-wrap: balance; margin: 0; }
 .slide-heatmap { width: 100%; }
-.slide-heatmap-month { max-width: 240px; }
 .slide-body .stat-section { width: 100%; text-align: left; }
 /* The serif slide title is the heading; the section's own h2 would repeat it. */
 .slide-body .stat-section > h2 { display: none; }

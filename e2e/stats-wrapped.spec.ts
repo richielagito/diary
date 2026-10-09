@@ -24,8 +24,8 @@ const editor = (page: Page) => page.getByRole('textbox', { name: 'Tulis diary' }
 const todayLabel = () =>
   new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date())
 
-/** This month as a Wrapped period id, e.g. "2026-10". */
-const thisMonth = () => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: 'Asia/Jakarta' }).format(new Date())
+/** This year as a Wrapped period id, e.g. "2026". */
+const thisYear = () => new Intl.DateTimeFormat('en-CA', { year: 'numeric', timeZone: 'Asia/Jakarta' }).format(new Date())
 
 async function writeToday(page: Page, text: string) {
   await page.goto('/')
@@ -49,9 +49,10 @@ test('stats heatmap, Wrapped and saving the share image', async ({ page }) => {
   await page.getByRole('link', { name: 'Statistik' }).click()
   await expect(page.getByRole('link', { name: new RegExp(`${todayLabel()}.*Senang`) })).toBeVisible()
 
-  // Wrapped's button opens only after a week of recorded days; with one day it still opens by its address.
+  // Wrapped lives in the Year view and opens only after a week of recorded days; with one day it still opens by its address.
+  await page.getByRole('button', { name: 'Tahun' }).click()
   await expect(page.getByRole('button', { name: /^Lihat Wrapped/ })).toBeDisabled()
-  await page.goto(`/wrapped/${thisMonth()}`)
+  await page.goto(`/wrapped/${thisYear()}`)
   const save = page.getByRole('button', { name: 'Simpan gambar' })
   // Slide: pembuka, mood, tag, penutup (tanpa surat karena AI belum diatur)
   await expect(page.getByRole('group', { name: /^1 dari \d+$/ })).toBeVisible()
@@ -62,7 +63,7 @@ test('stats heatmap, Wrapped and saving the share image', async ({ page }) => {
   await expect(save).toBeVisible()
 
   const [download] = await Promise.all([page.waitForEvent('download'), save.click()])
-  expect(download.suggestedFilename()).toMatch(/^diary-wrapped-\d{4}-\d{2}\.png$/)
+  expect(download.suggestedFilename()).toMatch(/^diary-wrapped-\d{4}\.png$/)
 })
 
 test('320px phone: nav fits on one line and the year heatmap opens at today', async ({ page }) => {
@@ -106,9 +107,10 @@ test('Wrapped letter from the persona, without entry text in the request', async
 
   await writeToday(page, 'RAHASIA-e2e hari ini ')
   await page.getByRole('link', { name: 'Statistik' }).click()
-  // Wrapped's button opens only after a week of recorded days; with one day it still opens by its address.
+  // Wrapped lives in the Year view and opens only after a week of recorded days; with one day it still opens by its address.
+  await page.getByRole('button', { name: 'Tahun' }).click()
   await expect(page.getByRole('button', { name: /^Lihat Wrapped/ })).toBeDisabled()
-  await page.goto(`/wrapped/${thisMonth()}`)
+  await page.goto(`/wrapped/${thisYear()}`)
   // Slide: pembuka, mood, surat (tanpa tag), penutup
   await expect(page.getByRole('group', { name: '1 dari 4' })).toBeVisible()
   await page.keyboard.press('ArrowRight')

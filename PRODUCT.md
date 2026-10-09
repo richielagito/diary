@@ -14,7 +14,7 @@ People who want to keep a private daily diary, mostly on their phone with the ap
 
 ## Product Purpose
 
-A simple, minimalist diary that lives on the user's device. One entry per day, a one-tap mood, inline `#tags`, autosave. An optional AI companion, using the user's own API key, can talk about the day, remember facts the user can see and edit, and help turn a chat into an entry. Stats and a yearly or monthly Wrapped show the user patterns in their own mood and writing.
+A simple, minimalist diary that lives on the user's device. One entry per day, a one-tap mood, inline `#tags`, autosave. An optional AI companion, using the user's own API key, can talk about the day, remember facts the user can see and edit, and help turn a chat into an entry. Stats and a yearly Wrapped show the user patterns in their own mood and writing.
 
 Success: the user opens the app, writes, and closes it without friction, and comes back the next day.
 

@@ -10,7 +10,6 @@ import type { PersonaSettings } from '../prompt/persona'
 /** Bahan surat Wrapped: hanya statistik, memori, ringkasan bulanan dan persona. Tidak pernah isi entri. */
 export interface LetterInput {
   periodId: string
-  kind: 'month' | 'year'
   periodLabel: string
   isCurrent: boolean
   daysWritten: number
@@ -57,7 +56,6 @@ export function buildLetterInput(args: {
     : []
   return {
     periodId: periodId(period),
-    kind: period.kind,
     periodLabel: periodLabel(period, language),
     isCurrent: range.isCurrent,
     daysWritten: stats.daysWritten,
@@ -68,7 +66,7 @@ export function buildLetterInput(args: {
       average: mood.average === null ? null : round(mood.average, 2),
       distribution: { ...mood.distribution },
       trend: mood.trend.map((p) => ({
-        label: trendLabel(p, period.kind, language),
+        label: trendLabel(p, 'year', language),
         average: p.average === null ? null : round(p.average, 2),
       })),
       brightest: mood.brightest === null ? null : monthKeyLabel(mood.brightest, language),
