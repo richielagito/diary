@@ -42,6 +42,7 @@ export const id = {
     tagDays_one: '{{count}} hari',
     tagDays_other: '{{count}} hari',
     noTagsYet: 'Belum ada tag. Ketik #tag di diary untuk mengelompokkan cerita.',
+    share: 'Bagikan statistik',
     openWrapped: 'Lihat Wrapped {{period}}',
     wrappedLater_one: 'Wrapped terbuka setelah {{min}} hari tercatat di tahun ini. Sejauh ini: {{count}} hari.',
     wrappedLater_other: 'Wrapped terbuka setelah {{min}} hari tercatat di tahun ini. Sejauh ini: {{count}} hari.',

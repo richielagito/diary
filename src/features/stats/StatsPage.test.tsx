@@ -1,6 +1,14 @@
 import { screen, within } from '@testing-library/react'
 import { DexieDiaryRepository } from '../../storage/DexieDiaryRepository'
 import { renderApp } from '../../test/renderApp'
+import { renderShareCard } from '../wrapped/shareCard'
+import { shareImage } from '../wrapped/shareImage'
+
+vi.mock('../wrapped/shareCard', async (orig) => ({
+  ...(await orig<typeof import('../wrapped/shareCard')>()),
+  renderShareCard: vi.fn(),
+}))
+vi.mock('../wrapped/shareImage', () => ({ shareImage: vi.fn() }))
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -51,6 +59,17 @@ test('switching to year with a week of recorded days opens the Wrapped link', as
   expect(screen.getByRole('link', { name: 'Lihat Wrapped 2026' })).toHaveAttribute('href', '/wrapped/2026')
 })
 
+test('month view shares its stats image; the year view leaves it to Wrapped', async () => {
+  vi.mocked(renderShareCard).mockResolvedValue(new Blob(['png']))
+  const { user } = await renderApp('/stats', seed)
+  await user.click(await screen.findByRole('button', { name: 'Bagikan statistik' }))
+  expect(vi.mocked(renderShareCard).mock.calls[0][0]).toMatchObject({ periodLabel: 'Oktober 2026', mode: 'month', subtitle: '(sejauh ini)' })
+  expect(vi.mocked(shareImage).mock.calls[0][0].name).toBe('diary-stats-2026-10.png')
+  await user.click(screen.getByRole('button', { name: 'Tahun' }))
+  expect(await screen.findByRole('heading', { name: '2026' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Bagikan statistik' })).not.toBeInTheDocument()
+})
+
 test('previous stops at the first entry period', async () => {
   const { user } = await renderApp('/stats', { entries: [{ date: '2026-09-03', markdown: 'x', mood: 3 as const }] })
   await user.click(await screen.findByRole('button', { name: 'Sebelumnya' }))
@@ -70,6 +89,7 @@ test('period without entries shows only the empty heatmap and one sentence', asy
   expect(screen.getByRole('group', { name: 'Heatmap mood' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: /Kamis, 8 Oktober 2026: tidak menulis/ })).toBeInTheDocument()
   expect(screen.queryByRole('link', { name: /Lihat Wrapped/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Bagikan statistik' })).not.toBeInTheDocument()
   // Tanpa kartu konsistensi, ajakan mood, maupun ajakan tag
   expect(screen.queryByText('Hari menulis')).not.toBeInTheDocument()
   expect(screen.queryByText('Menulis beruntun')).not.toBeInTheDocument()

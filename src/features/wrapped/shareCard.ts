@@ -17,6 +17,7 @@ export interface ShareCardData {
   distribution: Record<Mood, number>
   heatmap: HeatCell[]
   weeks: number
+  mode: 'month' | 'year'
   topTags: string[] // maks 3, tanpa '#'
   appName: string
 }
@@ -66,14 +67,17 @@ function roundedRect(ctx: Ctx2D, x: number, y: number, w: number, h: number, rad
 
 /** Menggambar heatmap dan mengembalikan jumlah sel dalam periode yang digambar. */
 export function drawHeatmap(ctx: Ctx2D, data: ShareCardData, palette: SharePalette, x: number, y: number, width: number): number {
-  const gap = 3
-  const size = Math.min((width - gap * (data.weeks - 1)) / data.weeks, 24)
+  const year = data.mode === 'year'
+  const columns = year ? data.weeks : 7
+  const gap = year ? 3 : 8
+  const size = Math.min((width - gap * (columns - 1)) / columns, year ? 24 : 72)
   let drawn = 0
   data.heatmap.forEach((cell, i) => {
     if (!cell.inRange) return
-    // One column per week, as in the year heatmap.
-    const cx = x + Math.floor(i / 7) * (size + gap)
-    const cy = y + (i % 7) * (size + gap)
+    const week = Math.floor(i / 7)
+    const day = i % 7
+    const cx = x + (year ? week : day) * (size + gap)
+    const cy = y + (year ? day : week) * (size + gap)
     roundedRect(ctx, cx, cy, size, size, size / 5)
     if (cell.entry && cell.entry.mood !== null) {
       ctx.globalAlpha = LEVEL_OPACITY[cell.entry.level]
@@ -84,7 +88,7 @@ export function drawHeatmap(ctx: Ctx2D, data: ShareCardData, palette: SharePalet
       // Tanpa mood: cincin, seperti di aplikasi.
       ctx.globalAlpha = LEVEL_OPACITY[cell.entry.level]
       ctx.strokeStyle = palette.mood.none
-      ctx.lineWidth = 2
+      ctx.lineWidth = year ? 2 : 4
       ctx.stroke()
       ctx.globalAlpha = 1
     } else {

@@ -792,7 +792,8 @@ a.heat-cell:hover { transform: scale(1.25); position: relative; z-index: 1; }
 .stats > p.muted { margin-top: 1.25rem; font-family: var(--font-text); font-style: italic; font-size: 1.0625rem; }
 
 /* The period's last word, after everything it sums up. */
-.stats > .wrapped-link { display: flex; width: fit-content; margin: 2.5rem auto 0; }
+.stats > .wrapped-link, .stats > .share-stats { display: flex; width: fit-content; margin: 2.5rem auto 0; }
+.stats > .share-stats + [role='alert'] { text-align: center; }
 .wrapped-link {
   display: inline-flex;
   align-items: center;

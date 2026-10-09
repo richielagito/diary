@@ -4,12 +4,13 @@ import { Link, useSearchParams } from 'react-router'
 import { useRepos } from '../../app/RepoContext'
 import { dateKey } from '../../domain/date'
 import type { DayEntry } from '../../domain/types'
-import { computeStats } from '../../stats/computeStats'
+import { computeStats, type PeriodStats } from '../../stats/computeStats'
 import { comparePeriods, parsePeriodId, periodContaining, periodId, shiftPeriod } from '../../stats/range'
 import { ConsistencyCards, MoodSection, TagSection } from './StatCards'
 import { periodLabel } from './format'
 import { Heatmap } from './Heatmap'
 import { moodWash } from '../wrapped/WrappedPage'
+import { useShareCard } from '../wrapped/useShareCard'
 import { ChevronLeft, ChevronRight } from '../../app/icons'
 
 const WRAPPED_MIN_DAYS = 7
@@ -131,6 +132,8 @@ export function StatsPage() {
         <p className="muted">{t('stats.emptyPeriod')}</p>
       )}
       {/* Wrapped is yearly, so it stays special; and a celebration needs something to celebrate: a week's worth of recorded days. */}
+      {/* A month has no Wrapped, but its share image can still be saved; a year's lives at the end of Wrapped. */}
+      {period.kind === 'month' && stats.daysWritten > 0 && <ShareStats stats={stats} />}
       {period.kind === 'year' &&
         (stats.daysWritten >= WRAPPED_MIN_DAYS ? (
           <Link className="wrapped-link" style={moodWash(stats.mood.distribution)} to={`/wrapped/${periodId(period)}`}>
@@ -148,5 +151,18 @@ export function StatsPage() {
           </button>
         ))}
     </section>
+  )
+}
+
+function ShareStats({ stats }: { stats: PeriodStats }) {
+  const { t } = useTranslation()
+  const { busy, failed, save } = useShareCard(stats)
+  return (
+    <>
+      <button type="button" className="share-stats" disabled={busy} onClick={() => void save()}>
+        {t('stats.share')}
+      </button>
+      {failed && <p role="alert">{t('wrapped.saveFailed')}</p>}
+    </>
   )
 }

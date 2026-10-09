@@ -33,10 +33,11 @@ const entries: DayEntry[] = [
   { ...base, date: '2026-10-05', markdown: 'halo', mood: null },
 ]
 
-function dataFor(): ShareCardData {
-  const stats = computeStats(entries, { kind: 'year', year: 2026 }, '2026-10-10')
+function dataFor(kind: 'month' | 'year'): ShareCardData {
+  const period = kind === 'month' ? ({ kind, year: 2026, month: 10 } as const) : ({ kind, year: 2026 } as const)
+  const stats = computeStats(entries, period, '2026-10-10')
   return {
-    periodLabel: '2026',
+    periodLabel: 'Oktober 2026',
     subtitle: '(sejauh ini)',
     stats: [
       { label: 'Hari menulis', value: '3' },
@@ -46,6 +47,7 @@ function dataFor(): ShareCardData {
     distribution: stats.mood.distribution as Record<Mood, number>,
     heatmap: stats.heatmap,
     weeks: stats.weeks,
+    mode: kind,
     topTags: ['olahraga'],
     appName: 'Diary',
   }
@@ -53,16 +55,16 @@ function dataFor(): ShareCardData {
 
 test('draws label and stat values, never diary text', () => {
   const { ctx, calls } = fakeCtx()
-  drawShareCard(ctx, dataFor(), palette)
+  drawShareCard(ctx, dataFor('month'), palette)
   const texts = calls.filter(([n]) => n === 'fillText').map(([, a]) => String(a[0]))
-  expect(texts).toContain('2026')
+  expect(texts).toContain('Oktober 2026')
   expect(texts).toContain('1.234')
   expect(texts).toContain('#olahraga')
   expect(texts.join('|')).not.toContain('RAHASIA-123')
 })
 
-test('the heatmap draws one rect per in-range cell', () => {
-  const data = dataFor()
+test.each(['month', 'year'] as const)('%s heatmap draws one rect per in-range cell', (kind) => {
+  const data = dataFor(kind)
   const { ctx, calls } = fakeCtx()
   const n = drawHeatmap(ctx, data, palette, 80, 1200, 920)
   const inRange = data.heatmap.filter((c) => c.inRange).length
@@ -72,16 +74,16 @@ test('the heatmap draws one rect per in-range cell', () => {
 
 test('the tag line is clamped to the content width', () => {
   const { ctx, calls } = fakeCtx()
-  drawShareCard(ctx, { ...dataFor(), topTags: ['satu', 'dua', 'tiga'] }, palette)
+  drawShareCard(ctx, { ...dataFor('month'), topTags: ['satu', 'dua', 'tiga'] }, palette)
   const tags = calls.find(([n, a]) => n === 'fillText' && String(a[0]).startsWith('#satu'))!
   expect(tags[1]).toEqual(['#satu  #dua  #tiga', 80, 1840, 920])
   // Teks lain tetap tanpa maxWidth
-  const label = calls.find(([n, a]) => n === 'fillText' && a[0] === '2026')!
+  const label = calls.find(([n, a]) => n === 'fillText' && a[0] === 'Oktober 2026')!
   expect(label[1]).toHaveLength(3)
 })
 
 test('falls back to rect where roundRect is missing', () => {
-  const data = dataFor()
+  const data = dataFor('month')
   const { ctx, calls } = fakeCtx({ roundRect: undefined })
   expect(() => drawShareCard(ctx, data, palette)).not.toThrow()
   const bars = Object.values(data.distribution).filter((n) => n > 0).length
@@ -95,7 +97,7 @@ test('word levels use the same opacity as the on-screen heatmap', () => {
     future: false,
     entry: { mood: 4, words: 1, level },
   })
-  const data = { ...dataFor(), heatmap: [cell(1, 1), cell(2, 2), cell(3, 3), cell(4, 4)], weeks: 1 }
+  const data = { ...dataFor('month'), heatmap: [cell(1, 1), cell(2, 2), cell(3, 3), cell(4, 4)], weeks: 1 }
   const { ctx, calls } = fakeCtx()
   drawHeatmap(ctx, data, palette, 0, 0, 920)
   const alphas = calls.filter(([n]) => n === 'set:globalAlpha').map(([, a]) => a[0])

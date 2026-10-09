@@ -44,6 +44,7 @@ export const en: typeof id = {
     tagDays_one: '{{count}} day',
     tagDays_other: '{{count}} days',
     noTagsYet: 'No tags yet. Type #tag in your diary to group your stories.',
+    share: 'Share stats',
     openWrapped: 'View Wrapped {{period}}',
     wrappedLater_one: 'Wrapped opens once {{min}} days are recorded this year. So far: {{count}} day.',
     wrappedLater_other: 'Wrapped opens once {{min}} days are recorded this year. So far: {{count}} days.',
