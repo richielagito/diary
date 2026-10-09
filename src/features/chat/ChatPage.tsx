@@ -73,9 +73,28 @@ export function ChatPage({ date }: { date: DateKey }) {
 
   const empty = messages.length === 0 && chat.state.phase === 'idle'
 
+  // Once the title has scrolled away, a slim bar keeps the date and the way to the details in reach.
+  const header = useRef<HTMLElement>(null)
+  const [compact, setCompact] = useState(false)
+  useEffect(() => {
+    const el = header.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    // On wider screens the top nav is sticky, so the title counts as gone once it slips under the nav.
+    // ponytail: measured once; crossing the 640px breakpoint mid-page keeps the old offset until the page remounts.
+    const nav = document.querySelector<HTMLElement>('.nav')
+    const navBottom = nav && getComputedStyle(nav).position === 'sticky' ? Math.round(nav.getBoundingClientRect().height) : 0
+    el.parentElement?.style.setProperty('--chat-bar-top', `${navBottom}px`)
+    const observer = new IntersectionObserver(
+      ([e]) => setCompact(!e.isIntersecting && e.boundingClientRect.top < navBottom),
+      { rootMargin: `-${navBottom}px 0px 0px 0px` },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section className="chat">
-      <header>
+      <header ref={header}>
         <div>
           <h1>{t('chat.title')}</h1>
           <p>{chatDate(date, i18n.language)}</p>
@@ -84,6 +103,15 @@ export function ChatPage({ date }: { date: DateKey }) {
           <Settings />
         </Link>
       </header>
+      {/* A visual echo of the header above: hidden from assistive tech, which still has the real one. */}
+      <div className="chat-bar" data-shown={compact || undefined} aria-hidden="true" inert={!compact}>
+        <p>
+          <strong>{t('chat.title')}</strong> <span>{chatDate(date, i18n.language)}</span>
+        </p>
+        <Link className="icon-btn" to={`/chat/${date}/info`} tabIndex={-1} title={t('chat.infoTitle')}>
+          <Settings />
+        </Link>
+      </div>
 
       {!settings.ai ? (
         <div className="chat-empty">
