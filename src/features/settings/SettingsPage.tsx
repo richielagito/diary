@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
+import { ArrowDownTray, ArrowUpTray } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { readImportFiles, type ParsedImport } from '../../backup/importFiles'
 import { useExport } from '../../backup/useExport'
@@ -93,6 +94,7 @@ export function SettingsPage() {
         </div>
         <p className="settings-actions">
           <button type="button" className="primary" onClick={() => void exportNow()}>
+            <ArrowDownTray />
             {t('settings.export')}
           </button>
           {/* The native control's text is the browser's, not the app's language: hidden, with its own label as the button. */}
@@ -108,6 +110,7 @@ export function SettingsPage() {
             }}
           />
           <label htmlFor={importId} className="file-btn">
+            <ArrowUpTray />
             {t('settings.chooseFile')}
           </label>
         </p>

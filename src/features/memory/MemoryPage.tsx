@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
-import { ChevronLeft, ChevronRight } from '../../app/icons'
+import { ArrowPath, ChevronLeft, ChevronRight, Plus } from '../../app/icons'
 import { ConfirmButton } from '../../app/ConfirmButton'
 import { useInitial } from '../../app/useInitial'
 import { useRepos, useSettings } from '../../app/RepoContext'
@@ -186,12 +186,14 @@ export function MemoryPage() {
           onChange={(e) => setDraft(e.target.value)}
         />{' '}
         <button type="button" onClick={() => void add()} disabled={full || !draft.trim()}>
+          <Plus />
           {t('memory.add')}
         </button>
       </p>
       {full && <p>{t('memory.full', { max: MEMORY_MAX })}</p>}
       <p>
         <button type="button" onClick={() => void runRefresh()} disabled={!settings.ai || !settings.aiMemoryEnabled || refresh?.status === 'running'}>
+          <ArrowPath />
           {refresh?.status === 'running' ? t('memory.refreshing') : t('memory.refresh')}
         </button>
       </p>

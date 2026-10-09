@@ -183,6 +183,9 @@ p > button.quiet:first-child { margin-left: -0.5rem; }
 .icon-btn:disabled, .icon-btn[aria-disabled='true'] { opacity: 0.3; }
 .icon-btn[aria-disabled='true'] { pointer-events: none; }
 .icon { display: block; }
+/* A labelled button with an icon: the icon leads, a step smaller than the 20px icon-only size. */
+:where(button, .file-btn, .wrapped-link):where(:has(> .icon)) { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+:where(button, .file-btn, .wrapped-link):where(:not(.icon-btn, .bubble button)) > .icon { flex: none; width: 1.125rem; height: 1.125rem; margin-left: -0.125rem; }
 
 :where(input:not([type='checkbox'], [type='radio'], [type='file']), select, textarea) {
   font: inherit;
@@ -402,12 +405,8 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 .tag-suggest--overlay { position: absolute; z-index: 1; margin: 0; white-space: nowrap; background: var(--bg); border-radius: 999px; }
 
 .bubble { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; box-shadow: var(--shadow-pop); }
-.bubble button { border: 0; background: none; min-height: 2rem; min-width: 2rem; padding: 0.25rem 0.55rem; border-radius: 6px; cursor: pointer; font-family: var(--font-text); font-size: 1rem; }
-.bubble [data-format='bold'], .bubble [data-format='heading'] { font-weight: 700; }
-.bubble [data-format='italic'] { font-style: italic; }
-.bubble [data-format='strike'] { text-decoration: line-through; }
-.bubble [data-format='bulletList'] { font-size: 1.5rem; line-height: 1; }
-.bubble [data-format='code'] { font-family: var(--font-mono); font-size: 0.8rem; }
+.bubble button { display: grid; place-items: center; border: 0; background: none; min-height: 2rem; min-width: 2rem; padding: 0.25rem 0.45rem; border-radius: 6px; cursor: pointer; }
+.bubble .icon { width: 1.125rem; height: 1.125rem; }
 .bubble hr { width: 1px; margin: 4px 2px; border: 0; background: var(--border); }
 .bubble button:hover { background: var(--sunken); }
 .bubble button[aria-pressed='true'] { background: var(--text); color: var(--bg); }

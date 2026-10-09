@@ -11,7 +11,7 @@ import { periodLabel } from './format'
 import { Heatmap } from './Heatmap'
 import { moodWash } from '../wrapped/WrappedPage'
 import { useShareCard } from '../wrapped/useShareCard'
-import { ChevronLeft, ChevronRight } from '../../app/icons'
+import { ArrowPath, ChevronLeft, ChevronRight, PaperAirplane } from '../../app/icons'
 
 const WRAPPED_MIN_DAYS = 7
 
@@ -65,6 +65,7 @@ export function StatsPage() {
             setAttempt((n) => n + 1)
           }}
         >
+          <ArrowPath />
           {t('common.retry')}
         </button>
       </div>
@@ -160,6 +161,7 @@ function ShareStats({ stats }: { stats: PeriodStats }) {
   return (
     <>
       <button type="button" className="share-stats" disabled={busy} onClick={() => void save()}>
+        <PaperAirplane />
         {t('stats.share')}
       </button>
       {failed && <p role="alert">{t('wrapped.saveFailed')}</p>}

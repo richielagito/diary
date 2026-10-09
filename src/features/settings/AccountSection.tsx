@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from '../../app/icons'
+import { ArrowDownTray, ArrowPath, ChevronRight, DocumentDuplicate } from '../../app/icons'
 import { ApiError, EMAIL_CODE_LENGTH, NetworkError } from '../../account/api'
 import { useRepos } from '../../app/RepoContext'
 import { useSync, useSyncStatus } from '../../app/SyncContext'
@@ -208,6 +208,7 @@ function KeySetup({ sync, status, run, busy }: { sync: SyncController; status: S
         <p>
           {t('account.backupFirst')}{' '}
           <button type="button" onClick={() => void exportNow()}>
+            <ArrowDownTray />
             {t('account.exportBackup')}
           </button>
         </p>
@@ -301,6 +302,7 @@ function NewKey({
       </p>
       <p>
         <button type="button" onClick={() => void navigator.clipboard?.writeText(key).then(() => setCopied(true), () => {})}>
+          <DocumentDuplicate />
           {copied ? t('account.copied') : t('account.copy')}
         </button>{' '}
         <a href={`data:text/plain;charset=utf-8,${encodeURIComponent(file)}`} download="diary-recovery-key.txt">
@@ -354,6 +356,7 @@ function Active({ sync, status, run, busy }: { sync: SyncController; status: Syn
       {status.problem && <p role="alert">{t(`account.problem.${status.problem}`)}</p>}
       <p>
         <button type="button" className="primary" disabled={busy || status.syncing} onClick={() => void run(() => sync.syncNow())}>
+          <ArrowPath />
           {t('account.syncNow')}
         </button>
       </p>

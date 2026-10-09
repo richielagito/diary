@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ArrowDownTray } from '../../app/icons'
 import { useRepos, useSettings } from '../../app/RepoContext'
 import { useExport } from '../../backup/useExport'
 import { shouldRemindBackup } from '../../domain/reminder'
@@ -29,6 +30,7 @@ export function BackupBanner() {
     <div className="banner">
       <span>{t('backup.reminder')}</span>
       <button type="button" onClick={() => void exportNow()}>
+        <ArrowDownTray />
         {t('backup.action')}
       </button>
       <button

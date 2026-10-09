@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { ArrowPath } from '../../app/icons'
 import type { ChatMessage } from '../../storage/ChatRepository'
 import type { ChatPhase } from './useChat'
 
@@ -79,6 +80,7 @@ export function MessageList({ messages, state, onRetry }: Props) {
           )}
           {showRetry && (
             <button type="button" onClick={onRetry}>
+              <ArrowPath />
               {t('chat.retry')}
             </button>
           )}

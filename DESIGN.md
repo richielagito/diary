@@ -293,7 +293,7 @@ Flat by default. Depth comes from tone (paper, white surface, sunken linen) and 
 
 Gently rounded, never pill-heavy. Heat cells and swatches are tiny marks at 2 to 3px; the selected segment of a segmented control is 7px inside its 10px track. Controls and code blocks use 8px; banners, fieldsets and calendar days 10px; dialogs, the composer field and the crisis card 12px. Circles and pills (999px) are reserved for icon buttons, the mood picker, tag and history chips, and dots. Chat bubbles are 18px with one 6px tail corner on the speaker's side. The Wrapped letter is nearly square (4px) and its envelope 6px, with a clipped triangular flap. Borders are 1px; the only 1.5px strokes are the today ring and the no-mood ring.
 
-Icons are line icons on a 20px grid, one 1.75 stroke, round caps and joins, `currentColor`, inline SVG (`src/app/icons.tsx`), and always decorative beside a labelled control.
+Icons are Heroicons outline paths (MIT) copied into `src/app/icons.tsx` as inline SVG: drawn at 20px with a 2.1 stroke on their 24 grid (a 1.75px line), round caps and joins, `currentColor`, and always decorative beside a labelled control. A labelled button may lead with one at 18px for its action (share, export, import, retry, sync, copy, add); the editor's bubble toolbar is icons only.
 
 ## Components
 
@@ -345,7 +345,7 @@ The one expressive surface. A full-screen overlay washed by two drifting radial 
 - **Do** use Literata through `--font-text` for written and page content, and the system sans for controls.
 - **Do** separate content with hairlines and sunken fills; reserve `--shadow-pop` for floating layers and paper objects.
 - **Do** keep one primary (ink) button per group.
-- **Do** self-host fonts and inline icons as 20px, 1.75-stroke SVG; the app makes no asset requests.
+- **Do** self-host fonts and inline icons as 20px Heroicons outline SVG; the app makes no asset requests.
 - **Do** gate every animation behind `prefers-reduced-motion`.
 
 ### Don't:

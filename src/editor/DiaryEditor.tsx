@@ -3,6 +3,7 @@ import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Bold, CodeBracket, H2, Italic, ListBullet, NumberedList, Strikethrough } from '../app/icons'
 import { createExtensions } from './extensions'
 import { TagSuggest } from './tagSuggest'
 
@@ -145,16 +146,16 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
     toggle(editor.chain().focus()).run()
   }
   const buttons = [
-    { key: 'bold', label: 'B', run: format((c) => c.toggleBold()) },
-    { key: 'italic', label: 'I', run: format((c) => c.toggleItalic()) },
-    { key: 'strike', label: 'S', run: format((c) => c.toggleStrike()) },
-    { key: 'code', label: '</>', run: format((c) => c.toggleCode()) },
+    { key: 'bold', icon: <Bold />, run: format((c) => c.toggleBold()) },
+    { key: 'italic', icon: <Italic />, run: format((c) => c.toggleItalic()) },
+    { key: 'strike', icon: <Strikethrough />, run: format((c) => c.toggleStrike()) },
+    { key: 'code', icon: <CodeBracket />, run: format((c) => c.toggleCode()) },
   ] as const
   // Line formats act on the whole paragraph the selection sits in. Typing "## ", "- " or "1. " at a line start does the same.
   const blocks = [
-    { key: 'heading', label: 'H', run: format((c) => c.toggleHeading({ level: 2 })) },
-    { key: 'bulletList', label: '•', run: format((c) => c.toggleBulletList()) },
-    { key: 'orderedList', label: '1.', run: format((c) => c.toggleOrderedList()) },
+    { key: 'heading', icon: <H2 />, run: format((c) => c.toggleHeading({ level: 2 })) },
+    { key: 'bulletList', icon: <ListBullet />, run: format((c) => c.toggleBulletList()) },
+    { key: 'orderedList', icon: <NumberedList />, run: format((c) => c.toggleOrderedList()) },
   ] as const
   const button = (b: (typeof buttons)[number] | (typeof blocks)[number]) => (
     <button
@@ -166,7 +167,7 @@ export function DiaryEditor({ initialMarkdown, placeholder, label, onChange, onB
       aria-pressed={active?.[b.key]}
       onClick={b.run}
     >
-      {b.label}
+      {b.icon}
     </button>
   )
 

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ArrowDownTray, ArrowPath } from '../../app/icons'
 import type { SaveStatus } from '../../editor/useAutosave'
 
 export function SaveStatusText({ status, onExport, onRetry }: { status: SaveStatus; onExport: () => void; onRetry: () => void }) {
@@ -8,9 +9,11 @@ export function SaveStatusText({ status, onExport, onRetry }: { status: SaveStat
       <div className="banner error" role="alert">
         <span>{t('save.error')}</span>
         <button type="button" onClick={onRetry}>
+          <ArrowPath />
           {t('save.retry')}
         </button>
         <button type="button" onClick={onExport}>
+          <ArrowDownTray />
           {t('save.exportNow')}
         </button>
       </div>

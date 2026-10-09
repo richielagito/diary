@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { PaperAirplane } from '../../../app/icons'
 import { MOOD_EMOJI, MOODS_SHOWN } from '../../../domain/types'
 import type { PeriodStats } from '../../../stats/computeStats'
 import { periodId } from '../../../stats/range'
@@ -35,6 +36,7 @@ export function ClosingSlide({ stats }: { stats: PeriodStats }) {
       )}
       <p className="slide-lead">{t('wrapped.thanks')}</p>
       <button type="button" className="wrapped-link" disabled={busy} onClick={() => void save()}>
+        <PaperAirplane />
         {t('wrapped.saveImage')}
       </button>
       {failed && <p role="alert">{t('wrapped.saveFailed')}</p>}
