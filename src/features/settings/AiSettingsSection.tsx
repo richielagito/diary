@@ -227,9 +227,7 @@ export function AiSettingsSection() {
         </summary>
         <p>{t('aiSettings.privacyDetail')}</p>
       </details>
-      <p>
-        <Link to="/memory" state={{ from: '/settings#ai' }}>{t('aiSettings.memoryLink')}</Link>
-      </p>
+      <h3>{t('aiSettings.connection')}</h3>
       {!showForm && settings.ai && (
         <p className="ai-summary">
           <span>
@@ -325,10 +323,10 @@ export function AiSettingsSection() {
               )}
             </Field>
           </details>
-          <p>
+          <p className="settings-actions">
             <button type="button" className="primary" onClick={() => void save()}>
               {t('aiSettings.save')}
-            </button>{' '}
+            </button>
             <button type="button" onClick={() => void runTest()} disabled={status.kind === 'testing'}>
               {status.kind === 'testing' ? t('aiSettings.testing') : t('aiSettings.test')}
             </button>
@@ -344,37 +342,9 @@ export function AiSettingsSection() {
       {status.kind === 'testFail' && <p role="alert">{errorText(status.error, status.detail)}</p>}
       {status.kind === 'testFastFail' && <p role="alert">{t('aiSettings.fastTestFailed', { reason: errorText(status.error, status.detail) })}</p>}
       {askSharing && <SharingChoices onDone={() => setAskSharing(false)} />}
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.aiTagSuggest}
-            aria-describedby={tagSuggestHintId}
-            onChange={(e) => void saveTagSuggest(e.target.checked)}
-          />{' '}
-          {t('aiSettings.tagSuggest')}
-        </label>
-        <br />
-        <small id={tagSuggestHintId}>{t('aiSettings.tagSuggestHint')}</small>
-      </p>
-
-      <details className="settings-advanced">
-        <summary>
-          <ChevronRight />
-          {t('aiSettings.persona')}
-        </summary>
-        <p>{t('aiSettings.personaAutosave')}</p>
-        <Field label={t('aiSettings.style')}>
-          {(id) => (
-            <select id={id} value={settings.persona.style} onChange={(e) => void savePersona({ style: e.target.value as PersonaStyle })}>
-              {PERSONA_STYLES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`aiSettings.styles.${s}`)}
-                </option>
-              ))}
-            </select>
-          )}
-        </Field>
+      <h3>{t('aiSettings.companion')}</h3>
+      <p>{t('aiSettings.personaAutosave')}</p>
+      <div className="field-pair">
         <Field label={t('aiSettings.name')}>
           {(id) => (
             <input
@@ -388,24 +358,52 @@ export function AiSettingsSection() {
             />
           )}
         </Field>
-        <Field label={t('aiSettings.customInstruction')}>
+        <Field label={t('aiSettings.style')}>
           {(id) => (
-            <span>
-              <textarea
-                id={id}
-                maxLength={PERSONA_MAX_INSTRUCTION}
-                value={instruction}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setInstruction(value)
-                  void savePersona({ customInstruction: value })
-                }}
-              />
-              <small>{t('aiSettings.charCount', { count: instruction.length, max: PERSONA_MAX_INSTRUCTION })}</small>
-            </span>
+            <select id={id} value={settings.persona.style} onChange={(e) => void savePersona({ style: e.target.value as PersonaStyle })}>
+              {PERSONA_STYLES.map((s) => (
+                <option key={s} value={s}>
+                  {t(`aiSettings.styles.${s}`)}
+                </option>
+              ))}
+            </select>
           )}
         </Field>
-      </details>
+      </div>
+      <Field label={t('aiSettings.customInstruction')}>
+        {(id) => (
+          <span>
+            <textarea
+              id={id}
+              maxLength={PERSONA_MAX_INSTRUCTION}
+              value={instruction}
+              onChange={(e) => {
+                const value = e.target.value
+                setInstruction(value)
+                void savePersona({ customInstruction: value })
+              }}
+            />
+            <small>{t('aiSettings.charCount', { count: instruction.length, max: PERSONA_MAX_INSTRUCTION })}</small>
+          </span>
+        )}
+      </Field>
+
+      <h3>{t('aiSettings.dataTitle')}</h3>
+      <p className="check-row">
+        <label>
+          <input
+            type="checkbox"
+            checked={settings.aiTagSuggest}
+            aria-describedby={tagSuggestHintId}
+            onChange={(e) => void saveTagSuggest(e.target.checked)}
+          />
+          {t('aiSettings.tagSuggest')}
+        </label>
+        <small id={tagSuggestHintId}>{t('aiSettings.tagSuggestHint')}</small>
+      </p>
+      <p>
+        <Link to="/memory" state={{ from: '/settings#ai' }}>{t('aiSettings.memoryLink')}</Link>
+      </p>
       {settings.ai && (
         <ConfirmButton
           className="settings-danger"

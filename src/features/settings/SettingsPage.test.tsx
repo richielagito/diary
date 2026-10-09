@@ -34,7 +34,7 @@ test('import file pick failure alerts the user', async () => {
   const { diary, user } = await renderApp('/settings')
   const error = vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.spyOn(diary, 'list').mockRejectedValue(new Error('DatabaseClosedError'))
-  await user.upload(await screen.findByLabelText('Impor'), new File(['isi'], '2026-09-05.md'))
+  await user.upload(await screen.findByLabelText('Impor dari file ZIP atau Markdown'), new File(['isi'], '2026-09-05.md'))
   expect(await screen.findByRole('alert')).toHaveTextContent('Impor gagal. Tidak ada data yang berubah.')
   expect(error).toHaveBeenCalled()
 })
@@ -42,7 +42,7 @@ test('import file pick failure alerts the user', async () => {
 test('import flow: pick md file, preview, confirm', async () => {
   const { diary, user } = await renderApp('/settings')
   const md = serializeEntry({ date: '2026-09-05', markdown: 'dari file', mood: 4, createdAt: 1, updatedAt: 2 })
-  await user.upload(await screen.findByLabelText('Impor'), new File([md], '2026-09-05.md'))
+  await user.upload(await screen.findByLabelText('Impor dari file ZIP atau Markdown'), new File([md], '2026-09-05.md'))
   expect(await screen.findByText('1 entri baru')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Impor' }))
   await waitFor(async () => expect((await diary.get('2026-09-05'))?.markdown).toBe('dari file'))

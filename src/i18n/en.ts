@@ -93,6 +93,9 @@ export const en: typeof id = {
     body: 'It sounds like you are going through something very hard. If you feel like hurting yourself or you are in danger, please contact one of the services below or someone you trust right now.',
   },
   aiSettings: {
+    connection: 'Connection',
+    companion: 'Companion',
+    dataTitle: 'Data and memory',
     personaAutosave: 'Style, name and instructions save automatically.',
     sharingTitle: 'What may be sent to the AI?',
     sharingIntro: 'AI is connected. Each choice below sends part of your diary or chats to your AI provider. Tick what you allow; you can change any of it later.',
@@ -131,7 +134,6 @@ export const en: typeof id = {
     privacyDetail:
       'Messages to the AI and diary context fall under that provider’s privacy policy. With sync on, your AI settings and chats are also uploaded to the sync server, encrypted with your sync recovery key.',
     ollamaHint: 'Start Ollama with OLLAMA_ORIGINS allowing this app’s address.',
-    persona: 'Style and name of your companion',
     connected: 'Connected: {{provider}} · {{model}}',
     edit: 'Change',
     style: 'Speaking style',
@@ -223,6 +225,7 @@ export const en: typeof id = {
     moodOnly: 'Mood only, nothing written.',
   },
   settings: {
+    appearance: 'Appearance',
     language: 'Language',
     theme: 'Theme',
     themeSystem: 'Follow system',
@@ -230,8 +233,7 @@ export const en: typeof id = {
     themeDark: 'Dark',
     backup: 'Backup',
     export: 'Export a backup (ZIP)',
-    import: 'Import',
-    chooseFile: 'Choose a ZIP or Markdown file',
+    chooseFile: 'Import a ZIP or Markdown file',
     lastExport: 'Last export: {{date}}',
     never: 'Never exported',
     changedSinceExport_one: '{{count}} day changed since the last export.',

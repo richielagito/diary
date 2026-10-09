@@ -503,9 +503,24 @@ dialog { background: var(--surface); color: var(--text); border: 1px solid var(-
 
 /* ---------- Settings ---------- */
 
-.settings section { padding: 1.5rem 0; border-top: 1px solid var(--border); }
-.settings section:first-of-type { border-top: 0; padding-top: 0.5rem; }
-.settings section > h2:first-child { margin-top: 0; }
+.settings section { padding: 2rem 0; border-top: 1px solid var(--border); }
+.settings section:first-of-type { border-top: 0; padding-top: 1rem; }
+.settings section > h2:first-child { margin: 0 0 0.75rem; font-size: 1.25rem; }
+/* Subgroups inside a section: ink, so they lead the muted lines under them; more air above than below. */
+.settings h3 { margin: 2.25rem 0 0.25rem; color: var(--text); font-size: 1rem; }
+.settings h3 + p { margin-top: 0; }
+/* Two short, related controls share a line when there is room; labels stay above their controls. */
+.field-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); column-gap: 0.75rem; max-width: 24rem; }
+.settings .field-pair .field > :is(input, select) { width: 100%; }
+.backup-status { display: grid; gap: 0.35rem; margin-bottom: 1.25rem; font-size: 0.9375rem; color: var(--muted); }
+.backup-status p { margin: 0; }
+.backup-status > p:first-child { color: var(--text); }
+.settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.check-row { display: grid; gap: 0.1rem; }
+.check-row label { display: flex; gap: 0.6rem; }
+/* The hint lines up with the label text, not under the box. */
+.check-row small { padding-left: calc(1.05rem + 0.6rem); max-width: 60ch; }
+.settings-footer { margin: 0; padding-top: 1.25rem; border-top: 1px solid var(--border); }
 .settings section > p { color: var(--muted); font-size: 0.9375rem; max-width: 65ch; }
 /* A link that stands alone on its line is a target, not a word in a sentence. */
 .settings p > a:only-child { display: inline-flex; align-items: center; min-height: 2.75rem; }
@@ -530,14 +545,14 @@ label:has(> input[type='checkbox']) { align-items: center; min-height: 2.75rem; 
 .settings section > p:has(> button), .settings section > p:has(> label), .settings section > p:has(> a) { color: var(--text); }
 /* Labels sit above their controls at every width: one reading line, no zig-zag between columns. */
 .settings .field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; margin: 0.875rem 0; }
-.settings .field > label { font-weight: 500; font-size: 0.9375rem; }
+.settings .field > label { font-weight: 500; font-size: 0.875rem; }
 .settings .field > * { min-width: 0; max-width: 100%; }
 .settings .field > :is(input, select) { width: min(100%, 24rem); }
 .settings .field > span { display: flex; gap: 0.5rem; width: min(100%, 24rem); }
 .settings .field > span > :is(input, textarea) { flex: 1; min-width: 0; }
 .settings .field > span:has(> textarea) { flex-direction: column; }
 .settings .field > span > small { align-self: flex-end; }
-.settings .field > small { flex-basis: 100%; }
+.settings .field > small { flex-basis: 100%; max-width: 34rem; }
 .settings form { margin-bottom: 1rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .file-btn { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.5rem 0.95rem; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); font-size: 0.9375rem; cursor: pointer; transition: border-color 150ms ease-out; }

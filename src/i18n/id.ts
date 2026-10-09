@@ -91,6 +91,9 @@ export const id = {
     body: 'Kedengarannya kamu sedang melalui masa yang sangat berat. Kalau kamu merasa ingin menyakiti diri atau sedang dalam bahaya, hubungi layanan di bawah atau orang yang kamu percaya sekarang juga.',
   },
   aiSettings: {
+    connection: 'Koneksi',
+    companion: 'Teman curhat',
+    dataTitle: 'Data dan memori',
     personaAutosave: 'Gaya, nama, dan instruksi tersimpan otomatis.',
     sharingTitle: 'Apa saja yang boleh dikirim ke AI?',
     sharingIntro: 'AI sudah tersambung. Tiap pilihan di bawah mengirim sebagian isi diary atau curhat ke provider AI-mu. Centang yang kamu izinkan; semuanya bisa diubah lagi kapan saja.',
@@ -129,7 +132,6 @@ export const id = {
     privacyDetail:
       'Pesan ke AI dan konteks diary tunduk pada kebijakan privasi provider itu. Kalau sync aktif, pengaturan AI dan obrolanmu juga diunggah ke server sync, terenkripsi dengan kunci pemulihan sync-mu.',
     ollamaHint: 'Jalankan Ollama dengan OLLAMA_ORIGINS yang mengizinkan alamat aplikasi ini.',
-    persona: 'Gaya dan nama teman curhat',
     connected: 'Tersambung: {{provider}} · {{model}}',
     edit: 'Ubah',
     style: 'Gaya bicara',
@@ -221,6 +223,7 @@ export const id = {
     moodOnly: 'Hanya mood, tanpa tulisan.',
   },
   settings: {
+    appearance: 'Tampilan',
     language: 'Bahasa',
     theme: 'Tema',
     themeSystem: 'Ikuti sistem',
@@ -228,8 +231,7 @@ export const id = {
     themeDark: 'Gelap',
     backup: 'Cadangan',
     export: 'Ekspor cadangan (ZIP)',
-    import: 'Impor',
-    chooseFile: 'Pilih file ZIP atau Markdown',
+    chooseFile: 'Impor dari file ZIP atau Markdown',
     lastExport: 'Ekspor terakhir: {{date}}',
     never: 'Belum pernah ekspor',
     changedSinceExport_one: '{{count}} hari berubah sejak ekspor terakhir.',

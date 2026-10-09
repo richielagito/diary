@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router'
 import { useRepos, useSettings } from '../../app/RepoContext'
@@ -27,6 +27,7 @@ export function SettingsPage() {
   const [importing, setImporting] = useState<{ parsed: ParsedImport; existing: Set<DateKey> } | null>(null)
 
   const [importFailed, setImportFailed] = useState(false)
+  const importId = useId()
 
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return
@@ -53,93 +54,95 @@ export function SettingsPage() {
     <div className="settings">
       <h1>{t('nav.settings')}</h1>
       <section>
-        <Field label={t('settings.language')}>
-          {(id) => (
-            <select
-              id={id}
-              value={settings.language}
-              onChange={(e) => void settingsStore.set('language', e.target.value as Language)}
-            >
-              <option value="id">Bahasa Indonesia</option>
-              <option value="en">English</option>
-            </select>
-          )}
-        </Field>
-        <Field label={t('settings.theme')}>
-          {(id) => (
-            <select
-              id={id}
-              value={settings.theme}
-              onChange={(e) => void settingsStore.set('theme', e.target.value as Theme)}
-            >
-              <option value="system">{t('settings.themeSystem')}</option>
-              <option value="light">{t('settings.themeLight')}</option>
-              <option value="dark">{t('settings.themeDark')}</option>
-            </select>
-          )}
-        </Field>
+        <h2>{t('settings.appearance')}</h2>
+        <div className="field-pair">
+          <Field label={t('settings.language')}>
+            {(id) => (
+              <select
+                id={id}
+                value={settings.language}
+                onChange={(e) => void settingsStore.set('language', e.target.value as Language)}
+              >
+                <option value="id">Bahasa Indonesia</option>
+                <option value="en">English</option>
+              </select>
+            )}
+          </Field>
+          <Field label={t('settings.theme')}>
+            {(id) => (
+              <select
+                id={id}
+                value={settings.theme}
+                onChange={(e) => void settingsStore.set('theme', e.target.value as Theme)}
+              >
+                <option value="system">{t('settings.themeSystem')}</option>
+                <option value="light">{t('settings.themeLight')}</option>
+                <option value="dark">{t('settings.themeDark')}</option>
+              </select>
+            )}
+          </Field>
+        </div>
       </section>
 
       <section>
         <h2>{t('settings.backup')}</h2>
-        <p>{lastExport}</p>
-        <StorageUsage />
-        <button type="button" className="primary" onClick={() => void exportNow()}>
-          {t('settings.export')}
-        </button>
-        <Field label={t('settings.import')}>
-          {(id) => (
-            <span>
-              {/* The native control's text is the browser's, not the app's language: hidden, with its own label as the button. */}
-              <input
-                id={id}
-                className="visually-hidden"
-                type="file"
-                accept=".zip,.md"
-                multiple
-                onChange={(e) => {
-                  void onFiles(e.target.files)
-                  e.target.value = ''
-                }}
-              />
-              <label htmlFor={id} className="file-btn">
-                {t('settings.chooseFile')}
-              </label>
-            </span>
-          )}
-        </Field>
+        {/* Facts first, then the two actions side by side, then the standing preference. */}
+        <div className="backup-status">
+          <p>{lastExport}</p>
+          <StorageUsage />
+        </div>
+        <p className="settings-actions">
+          <button type="button" className="primary" onClick={() => void exportNow()}>
+            {t('settings.export')}
+          </button>
+          {/* The native control's text is the browser's, not the app's language: hidden, with its own label as the button. */}
+          <input
+            id={importId}
+            className="visually-hidden"
+            type="file"
+            accept=".zip,.md"
+            multiple
+            onChange={(e) => {
+              void onFiles(e.target.files)
+              e.target.value = ''
+            }}
+          />
+          <label htmlFor={importId} className="file-btn">
+            {t('settings.chooseFile')}
+          </label>
+        </p>
         {importFailed && <p role="alert">{t('import.failed')}</p>}
         <Field label={t('settings.reminder')}>
           {(id) => (
-            <select
-              id={id}
-              value={settings.backupReminderDays ?? 'off'}
-              onChange={(e) =>
-                void settingsStore.set('backupReminderDays', e.target.value === 'off' ? null : Number(e.target.value))
-              }
-            >
-              {REMINDER_OPTIONS.map((d) => (
-                <option key={d} value={d}>
-                  {t('settings.reminderDays', { count: d })}
-                </option>
-              ))}
-              <option value="off">{t('settings.reminderOff')}</option>
-            </select>
+            <>
+              <select
+                id={id}
+                value={settings.backupReminderDays ?? 'off'}
+                onChange={(e) =>
+                  void settingsStore.set('backupReminderDays', e.target.value === 'off' ? null : Number(e.target.value))
+                }
+              >
+                {REMINDER_OPTIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {t('settings.reminderDays', { count: d })}
+                  </option>
+                ))}
+                <option value="off">{t('settings.reminderOff')}</option>
+              </select>
+              {settings.persistGranted === true && <small>{t('settings.persistGranted')}</small>}
+              {settings.persistGranted === false && <small>{t('settings.persistDenied')}</small>}
+            </>
           )}
         </Field>
-        {settings.persistGranted === true && <p>{t('settings.persistGranted')}</p>}
-        {settings.persistGranted === false && <p>{t('settings.persistDenied')}</p>}
       </section>
 
       <AccountSection />
 
       <AiSettingsSection />
 
-      <section>
-        <p>
-          <Link to="/guide">{t('guide.title')}</Link>
-        </p>
-      </section>
+      <p className="settings-footer">
+        <Link to="/guide">{t('guide.title')}</Link>
+      </p>
 
       {importing && (
         <ImportDialog parsed={importing.parsed} existing={importing.existing} onClose={() => setImporting(null)} />
