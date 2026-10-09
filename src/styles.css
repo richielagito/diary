@@ -580,7 +580,7 @@ input:focus-visible + .file-btn { outline: 2px solid var(--text); outline-offset
 .chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 0.5rem; padding: 2rem 0; text-align: center; }
 .chat-empty h2 { margin: 0; font-family: var(--font-text); font-size: 1.125rem; font-weight: 500; }
 .chat-empty p { margin: 0; max-width: 30ch; color: var(--muted); font-size: 0.9375rem; }
-.api-key-help { max-width: 34rem; text-align: left; }
+.api-key-help { max-width: 34rem; }
 .api-key-help ul { margin: 0.25rem 0; padding-left: 1.25rem; }
 .api-key-help li a { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .api-key-help p { max-width: none; }

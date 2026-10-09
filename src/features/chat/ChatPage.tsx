@@ -10,7 +10,6 @@ import type { ChatMessage } from '../../storage/ChatRepository'
 import { chatDate } from './chatDate'
 import { Composer } from './Composer'
 import { CrisisCard } from './CrisisCard'
-import { ApiKeyHelp } from '../settings/ApiKeyHelp'
 import { MessageList } from './MessageList'
 import { loadChatPrompt } from './systemPromptSource'
 import { useAiMaintenance } from './useAiMaintenance'
@@ -93,7 +92,6 @@ export function ChatPage({ date }: { date: DateKey }) {
           <Link className="button primary" to="/settings#ai">
             {t('chat.openSettings')}
           </Link>
-          <ApiKeyHelp />
         </div>
       ) : (
         empty && (
